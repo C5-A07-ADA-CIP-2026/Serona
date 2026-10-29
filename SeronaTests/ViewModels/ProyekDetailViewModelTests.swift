@@ -48,13 +48,13 @@ struct ProyekDetailViewModelTests {
             updates: [ColorMeasurement(visibleAverage: 735, clear: 1200, nir: 200, waterPH: 10.5)]
         ))
 
-        await viewModel.mulaiPindai()
+        await viewModel.pindaiDenganWarnaAwal()
         let didUpdate = await waitUntil { viewModel.measurements.current.first?.value == "73.5%" }
 
         #expect(didUpdate)
         #expect(viewModel.isDataScanned)
         #expect(viewModel.measurements.initial[0].value == "100%")
-        #expect(viewModel.measurements.initial[2].value == "11")
+        #expect(viewModel.measurements.initial[2].value == "—")
         #expect(viewModel.measurements.current[1].value == "10.5")
         #expect(viewModel.latestConcentration == 73.5)
         #expect(viewModel.latestWaterPH == 10.5)
@@ -69,7 +69,7 @@ struct ProyekDetailViewModelTests {
             )
         )
 
-        await viewModel.mulaiPindai()
+        await viewModel.pindaiDenganWarnaAwal()
         let didWarn = await waitUntil { viewModel.colorConcentrationWarning != nil }
 
         #expect(didWarn)
@@ -85,7 +85,7 @@ struct ProyekDetailViewModelTests {
             )
         )
 
-        await viewModel.mulaiPindai()
+        await viewModel.pindaiDenganWarnaAwal()
         let didConsume = await waitUntil { viewModel.measurements.current.first?.value == "90.0%" }
 
         #expect(didConsume)
@@ -99,7 +99,7 @@ struct ProyekDetailViewModelTests {
             proyek: makeProyek(batasPH: 7.5),
             service: StubDeviceConnectionService(liveUpdates: updates)
         )
-        await viewModel.mulaiPindai()
+        await viewModel.pindaiDenganWarnaAwal()
 
         liveReadings.yield(ColorMeasurement(visibleAverage: 1000, clear: 1200, nir: 200, waterPH: 7.4))
         let didWarn = await waitUntil { viewModel.waterPHWarning != nil }
@@ -164,7 +164,7 @@ struct ProyekDetailViewModelTests {
     func cancelledReadShowsNoError() async {
         let viewModel = makeViewModel(service: StubDeviceConnectionService(readError: CancellationError()))
 
-        await viewModel.mulaiPindai()
+        await viewModel.pindaiDenganWarnaAwal()
 
         #expect(viewModel.colorMeasurementError == nil)
         #expect(!viewModel.isDataScanned)
@@ -176,7 +176,7 @@ struct ProyekDetailViewModelTests {
         struct ReadFailure: Error {}
         let viewModel = makeViewModel(service: StubDeviceConnectionService(readError: ReadFailure()))
 
-        await viewModel.mulaiPindai()
+        await viewModel.pindaiDenganWarnaAwal()
 
         #expect(viewModel.colorMeasurementError?.hasPrefix("Gagal membaca data warna") == true)
         #expect(!viewModel.isDataScanned)
@@ -190,7 +190,7 @@ struct ProyekDetailViewModelTests {
     func stopEndsStream() async {
         let (updates, liveReadings) = AsyncStream<ColorMeasurement>.makeStream()
         let viewModel = makeViewModel(service: StubDeviceConnectionService(liveUpdates: updates))
-        await viewModel.mulaiPindai()
+        await viewModel.pindaiDenganWarnaAwal()
         liveReadings.yield(ColorMeasurement(visibleAverage: 950, clear: 1200, nir: 200))
         let isStreaming = await waitUntil { viewModel.latestConcentration == 95 }
         #expect(isStreaming)
@@ -226,8 +226,8 @@ struct ProyekDetailViewModelTests {
         let viewModel = makeViewModel(proyek: proyek, service: StubDeviceConnectionService(
             updates: [ColorMeasurement(visibleAverage: 850, clear: 1200, nir: 200, waterPH: 6.5)]
         ))
-        await viewModel.mulaiPindai()
-        let didStream = await waitUntil { viewModel.latestConcentration != nil }
+        await viewModel.pindaiDenganWarnaAwal()
+        let didStream = await waitUntil { viewModel.latestConcentration == 85 }
         #expect(didStream)
 
         let didFinish = viewModel.selesaikan(in: persistence)
@@ -239,8 +239,8 @@ struct ProyekDetailViewModelTests {
         #expect(persistence.events == [.save])
     }
 
-    @Test("Final readings are nil when the sensor has not streamed yet")
-    func finishBeforeFirstStreamedReading() async {
+    @Test("Final readings are nil when the initial color was never set and the sensor sent no pH")
+    func finishBeforeInitialColorIsSet() async {
         let proyek = makeProyek()
         let viewModel = makeViewModel(proyek: proyek)
         await viewModel.mulaiPindai()
@@ -260,8 +260,8 @@ struct ProyekDetailViewModelTests {
         let viewModel = makeViewModel(proyek: proyek, service: StubDeviceConnectionService(
             updates: [ColorMeasurement(visibleAverage: 850, clear: 1200, nir: 200, waterPH: 6.5)]
         ))
-        await viewModel.mulaiPindai()
-        let didStream = await waitUntil { viewModel.latestConcentration != nil }
+        await viewModel.pindaiDenganWarnaAwal()
+        let didStream = await waitUntil { viewModel.latestConcentration == 85 }
         #expect(didStream)
 
         let didFinish = viewModel.selesaikan(in: persistence)
@@ -280,7 +280,7 @@ struct ProyekDetailViewModelTests {
         let persistence = RecordingModelPersistence()
         persistence.saveError = StubSaveError()
         let viewModel = makeViewModel(proyek: proyek)
-        await viewModel.mulaiPindai()
+        await viewModel.pindaiDenganWarnaAwal()
         #expect(!viewModel.selesaikan(in: persistence))
 
         persistence.saveError = nil
@@ -295,7 +295,7 @@ struct ProyekDetailViewModelTests {
     func finishTwiceSavesOnce() async {
         let persistence = RecordingModelPersistence()
         let viewModel = makeViewModel()
-        await viewModel.mulaiPindai()
+        await viewModel.pindaiDenganWarnaAwal()
         #expect(viewModel.selesaikan(in: persistence))
 
         #expect(!viewModel.selesaikan(in: persistence))
@@ -307,12 +307,12 @@ struct ProyekDetailViewModelTests {
     func finishEndsStream() async {
         let (updates, liveReadings) = AsyncStream<ColorMeasurement>.makeStream()
         let viewModel = makeViewModel(service: StubDeviceConnectionService(liveUpdates: updates))
-        await viewModel.mulaiPindai()
+        await viewModel.pindaiDenganWarnaAwal()
         #expect(viewModel.selesaikan(in: RecordingModelPersistence()))
 
         liveReadings.yield(ColorMeasurement(visibleAverage: 500, clear: 1200, nir: 200, waterPH: 1))
         let didChange = await waitUntil(timeout: .milliseconds(300)) {
-            viewModel.latestConcentration != nil || viewModel.waterPHWarning != nil
+            viewModel.latestConcentration == 50 || viewModel.waterPHWarning != nil
         }
 
         #expect(!didChange)

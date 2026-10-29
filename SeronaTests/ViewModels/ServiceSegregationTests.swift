@@ -58,7 +58,7 @@ struct ServiceSegregationTests {
         let proyek = Proyek(nama: "A", perangkatNama: "ESP 32", resep: .sample(batasKepekatan: 90), jumlahKain: 1)
         let viewModel = ProyekDetailViewModel(proyek: proyek, service: MeasurementOnlySource())
 
-        await viewModel.mulaiPindai()
+        await viewModel.pindaiDenganWarnaAwal()
         let didStream = await waitUntil { viewModel.latestConcentration == 80 }
 
         #expect(viewModel.isDataScanned)

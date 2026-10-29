@@ -129,37 +129,21 @@ struct ProyekDetailView: View {
                     }
                 }
                 WarnaSwatchView(namaWarna: proyek.namaWarna, warnaHex: proyek.warnaHex)
-                ResepWarnaView(
-                    pewarna: proyek.pewarna,
-                    zatPembantu: proyek.zatPembantu,
-                    air: proyek.air > 0 ? proyek.air : nil
-                )
             }
-
-            BarisInfo(judul: "Jumlah Kain", nilai: "\(proyek.jumlahKain)", tebal: true)
 
             if proyek.status == .nonaktif {
                 hasilAkhir
             } else if viewModel.isDataScanned, !isMemulai {
-                pengukuran
+                PengukuranSectionView(viewModel: viewModel)
             }
-        }
-    }
 
-    private var pengukuran: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            JudulBagian(teks: "Pengukuran")
-            ForEach(viewModel.measurements.displayedMeasurements) { measurement in
-                BarisInfo(
-                    judul: measurement.title,
-                    nilai: measurement.value,
-                    tebal: measurement.isCurrent,
-                    peringatan: viewModel.isBelowLimit(measurement)
-                )
-            }
-            if isLarutanMenurun {
-                LarutanMenurunBanner { viewModel.tampilkanQualityAlert() }
-            }
+            ResepWarnaView(
+                pewarna: proyek.pewarna,
+                zatPembantu: proyek.zatPembantu,
+                air: proyek.air > 0 ? proyek.air : nil
+            )
+
+            BarisInfo(judul: "Jumlah Kain", nilai: "\(proyek.jumlahKain)", tebal: true)
         }
     }
 
@@ -212,7 +196,7 @@ struct ProyekDetailView: View {
         isMemulai = true
         Task {
             async let minimum: Void = Task.sleep(for: .seconds(1.5))
-            await viewModel.mulaiPindai(in: modelContext)
+            await viewModel.mulaiPindai()
             guard viewModel.colorMeasurementError == nil else {
                 isMemulai = false
                 return
