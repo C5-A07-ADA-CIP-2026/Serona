@@ -7,7 +7,8 @@ import SwiftData
 import SwiftUI
 
 /// The live readings of a scanned project. The initial color and pH are set from the "awal" rows,
-/// right below the "sekarang" row they take their value from.
+/// right below the "sekarang" row they take their value from. The clean water row comes first: with the probe in
+/// clean water it is the reference the color concentration is measured against.
 struct PengukuranSectionView: View {
     @ObservedObject var viewModel: ProyekDetailViewModel
     @Environment(\.modelContext) private var modelContext
@@ -15,6 +16,16 @@ struct PengukuranSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             JudulBagian(teks: "Pengukuran")
+            if viewModel.isCleanWaterSet || viewModel.canSetCleanWater {
+                BarisAwalView(
+                    judul: "Air Bersih",
+                    nilai: "Tersimpan",
+                    isSet: viewModel.isCleanWaterSet,
+                    canSet: viewModel.canSetCleanWater,
+                    onSet: { umumkan("Air bersih ditetapkan", jika: viewModel.tetapkanAirBersih(in: modelContext)) },
+                    onReset: { viewModel.ukurUlangAirBersih(in: modelContext) }
+                )
+            }
             ForEach(viewModel.measurements.displayedMeasurements) { measurement in
                 row(for: measurement)
             }

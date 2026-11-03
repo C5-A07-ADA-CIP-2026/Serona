@@ -32,6 +32,12 @@ final class Proyek {
     /// The baseline read when the scan started (nil until then). Its presence marks the project as scanned,
     /// so reopening it resumes at the same stage.
     var visibleAverageAwal: Double?
+    /// The channel / clear ratios of that baseline reading, which the concentration is measured against.
+    /// Nil for projects set before the device sent channels; they keep using `visibleAverageAwal`.
+    var rasioAwal: [Double]?
+    /// The channel / clear ratios of clean water, the reference the absorbance of the bath is measured against.
+    /// Nil until the user sets it; without it the concentration keeps the older, baseline-only formula.
+    var rasioAirBersih: [Double]?
     var phAwal: Double?
     @Relationship(deleteRule: .nullify) var resep: Resep?
 
@@ -94,11 +100,37 @@ final class Proyek {
         status = .nonaktif
     }
 
+    /// The recipe's water for all the cloth, in liters (the recipe grams are per cloth).
+    var volumeResepLiter: Double {
+        Double(air * jumlahKain) / 1000
+    }
+
+    /// The dye to add to bring the bath back to 100%: C_target x V x the share that is missing, split by
+    /// ingredient like the recipe. `volumeLiter` is the bath after the water was added; without a positive
+    /// one the bath is taken at the recipe volume (no water added).
+    func pewarnaYangDitambah(kepekatan percent: Double, volumeLiter: Double? = nil) -> [Bahan] {
+        let kurang = max(0, 1 - percent / 100)
+        var skala = 1.0
+        if let volumeLiter, volumeLiter > 0, volumeResepLiter > 0 {
+            skala = volumeLiter / volumeResepLiter
+        }
+        return pewarna.map { Bahan(kode: $0.kode, gram: $0.gram * Double(jumlahKain) * kurang * skala) }
+    }
+
     /// Undoes `selesaikan` when the change could not be saved.
     func batalkanSelesai() {
         kepekatanAkhir = nil
         phAkhir = nil
         status = .aktif
+    }
+}
+
+extension Bahan {
+    /// Grams rounded up to a whole gram, in kg from 1000 grams: "30gr", "1.5kg".
+    static func formatBerat(gram: Double) -> String {
+        let dibulatkan = gram.rounded(.up)
+        guard dibulatkan >= 1000 else { return String(format: "%.0fgr", dibulatkan) }
+        return String(format: "%gkg", dibulatkan / 1000)
     }
 }
 
@@ -210,6 +242,21 @@ struct ProyekColorMeasurements: Equatable {
             id: updatedCurrent[index].id,
             title: updatedCurrent[index].title,
             value: measurement.formattedConcentration(relativeTo: baseline),
+            isCurrent: updatedCurrent[index].isCurrent
+        )
+        return replacingCurrent(updatedCurrent)
+    }
+
+    func withCurrentConcentration(percent: Double) -> ProyekColorMeasurements {
+        var updatedCurrent = current
+        guard let index = updatedCurrent.firstIndex(where: { $0.id == "current-color-concentration" }) else {
+            return self
+        }
+
+        updatedCurrent[index] = ProyekMeasurement(
+            id: updatedCurrent[index].id,
+            title: updatedCurrent[index].title,
+            value: ColorMeasurement.formatPercent(percent),
             isCurrent: updatedCurrent[index].isCurrent
         )
         return replacingCurrent(updatedCurrent)
