@@ -12,7 +12,11 @@ struct PerbaikiLarutanView: View {
     @ObservedObject var viewModel: ProyekDetailViewModel
 
     init(issue: QualityIssue, viewModel: ProyekDetailViewModel) {
-        _guide = State(wrappedValue: PerbaikiLarutanViewModel(issue: issue))
+        _guide = State(wrappedValue: PerbaikiLarutanViewModel(
+            issue: issue,
+            proyek: viewModel.proyek,
+            pHSebelum: viewModel.latestWaterPH
+        ))
         self.viewModel = viewModel
     }
 
@@ -48,6 +52,11 @@ struct PerbaikiLarutanView: View {
             }
         }
         .presentationDetents([.large])
+        .onChange(of: viewModel.qualityAlert) { _, alert in
+            if let alert {
+                guide.updateIssue(alert.issue)
+            }
+        }
         .onChange(of: guide.isFinished) { _, isFinished in
             if isFinished {
                 dismiss()
@@ -67,7 +76,7 @@ struct PerbaikiLarutanView: View {
             content(of: step)
 
             Button {
-                guide.lanjut()
+                guide.lanjut(waterPH: viewModel.latestWaterPH)
             } label: {
                 Text(guide.buttonTitle(for: step))
                     .frame(maxWidth: .infinity)
@@ -89,16 +98,38 @@ struct PerbaikiLarutanView: View {
         switch step {
         case .air:
             airRow
+
         case .phAir:
-            BarisInfo(judul: "Tambahkan Soda Abu", nilai: "\(PerbaikiLarutanViewModel.gramSodaAbu)gr", tebal: true)
+            if let soda = guide.penambahanSoda {
+                ForEach(soda.bahan, id: \.kode) { bahan in
+                    BarisInfo(
+                        judul: "Tambahkan \(bahan.kode)",
+                        nilai: Bahan.formatBerat(gram: bahan.gram),
+                        tebal: true
+                    )
+                }
+            } else {
+                BarisInfo(judul: "Tambahkan Soda Abu", nilai: "\(PerbaikiLarutanViewModel.gramSodaAbu)gr", tebal: true)
+            }
             BarisInfo(judul: "pH Sekarang", nilai: reading("current-water-ph"))
             BarisInfo(judul: "pH Awal", nilai: reading("initial-water-ph"))
+
         case .kepekatan:
-            BarisInfo(
-                judul: "Tambahkan \(viewModel.proyek.pewarna.first?.kode ?? "Pewarna")",
-                nilai: "\(PerbaikiLarutanViewModel.gramPewarna)gr",
-                tebal: true
-            )
+            if let tambahan = viewModel.penambahanPewarna(volumeLiter: guide.volumeBakLiter) {
+                ForEach(tambahan, id: \.kode) { bahan in
+                    BarisInfo(
+                        judul: "Tambahkan \(bahan.kode)",
+                        nilai: Bahan.formatBerat(gram: bahan.gram),
+                        tebal: true
+                    )
+                }
+            } else {
+                BarisInfo(
+                    judul: "Tambahkan \(viewModel.proyek.pewarna.first?.kode ?? "Pewarna")",
+                    nilai: "\(PerbaikiLarutanViewModel.gramPewarna)gr",
+                    tebal: true
+                )
+            }
             BarisInfo(judul: "Kepekatan Warna Sekarang", nilai: reading("current-color-concentration"))
             BarisInfo(judul: "Kepekatan Warna Awal", nilai: reading("initial-color-concentration"))
         }
@@ -111,7 +142,7 @@ struct PerbaikiLarutanView: View {
 
             Spacer()
 
-            Text("\(guide.jumlahAir)")
+            Text("\(guide.jumlahAirFormatted)")
                 .monospacedDigit()
                 .frame(minWidth: 72)
                 .padding(.vertical, 8)

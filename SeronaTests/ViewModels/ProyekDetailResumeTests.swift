@@ -21,46 +21,53 @@ struct ProyekDetailResumeTests {
         ProyekDetailViewModel(proyek: proyek ?? makeProyek(), service: service)
     }
 
-    @Test("Scanning saves the baseline on the project")
-    func scanSavesBaseline() async {
+    @Test("Scanning saves nothing: the initial color and pH are left for the user to set")
+    func scanSavesNothing() async {
         let proyek = makeProyek()
         let persistence = RecordingModelPersistence()
         let viewModel = makeViewModel(proyek: proyek, service: StubDeviceConnectionService(
             initial: ColorMeasurement(visibleAverage: 1000, clear: 1200, nir: 200, waterPH: 11)
         ))
 
-        await viewModel.mulaiPindai(in: persistence)
+        await viewModel.mulaiPindai()
 
-        #expect(proyek.visibleAverageAwal == 1000)
-        #expect(proyek.phAwal == 11)
-        #expect(persistence.events == [.save])
+        #expect(viewModel.isDataScanned)
+        #expect(proyek.visibleAverageAwal == nil)
+        #expect(proyek.phAwal == nil)
+        #expect(persistence.events.isEmpty)
     }
 
-    @Test("A failed save of the baseline is reported but the scan continues")
-    func scanSaveFailureIsReported() async {
+    @Test("Setting the initial color saves the baseline on the project")
+    func setColorSavesBaseline() async {
+        let proyek = makeProyek()
         let persistence = RecordingModelPersistence()
-        persistence.saveError = StubSaveError()
-        let viewModel = makeViewModel()
+        let viewModel = makeViewModel(proyek: proyek, service: StubDeviceConnectionService(
+            initial: ColorMeasurement(visibleAverage: 1000, clear: 1200, nir: 200, waterPH: 11)
+        ))
 
-        await viewModel.mulaiPindai(in: persistence)
+        await viewModel.pindaiDenganWarnaAwal(in: persistence)
 
-        #expect(viewModel.saveError == "Gagal menyimpan proyek: disk penuh")
-        #expect(viewModel.isDataScanned)
+        #expect(proyek.visibleAverageAwal == 1000)
+        #expect(persistence.events == [.save])
     }
 
     @Test("Reopening a scanned project resumes at the scanned stage without reading the device again")
     func reopenRestoresScannedStage() async {
         let proyek = makeProyek()
         let first = makeViewModel(proyek: proyek, service: StubDeviceConnectionService(
-            initial: ColorMeasurement(visibleAverage: 1000, clear: 1200, nir: 200, waterPH: 11)
+            initial: ColorMeasurement(visibleAverage: 1000, clear: 1200, nir: 200, waterPH: 11),
+            updates: [ColorMeasurement(visibleAverage: 1000, clear: 1200, nir: 200, waterPH: 11)]
         ))
-        await first.mulaiPindai(in: RecordingModelPersistence())
+        await first.pindaiDenganWarnaAwal(in: RecordingModelPersistence())
+        _ = await waitUntil { first.latestWaterPH == 11 }
+        first.tetapkanPHAwal(in: RecordingModelPersistence())
         first.berhenti()
 
         let service = StubDeviceConnectionService()
         let reopened = makeViewModel(proyek: proyek, service: service)
 
         #expect(reopened.isDataScanned)
+        #expect(reopened.isInitialPHSet)
         #expect(reopened.measurements.initial[2].value == "11")
         #expect(service.readCounter.value == 0)
     }
@@ -68,7 +75,7 @@ struct ProyekDetailResumeTests {
     @Test("A reopened project streams current values relative to the saved baseline")
     func reopenResumesStreaming() async {
         let proyek = makeProyek()
-        await makeViewModel(proyek: proyek).mulaiPindai(in: RecordingModelPersistence())
+        await makeViewModel(proyek: proyek).pindaiDenganWarnaAwal(in: RecordingModelPersistence())
         let reopened = makeViewModel(proyek: proyek, service: StubDeviceConnectionService(
             updates: [ColorMeasurement(visibleAverage: 735, clear: 1200, nir: 200, waterPH: 10.5)]
         ))
@@ -83,7 +90,7 @@ struct ProyekDetailResumeTests {
     @Test("A reopened project can still be finished")
     func reopenedProjectCanFinish() async {
         let proyek = makeProyek()
-        await makeViewModel(proyek: proyek).mulaiPindai(in: RecordingModelPersistence())
+        await makeViewModel(proyek: proyek).pindaiDenganWarnaAwal(in: RecordingModelPersistence())
         let reopened = makeViewModel(proyek: proyek)
 
         #expect(reopened.selesaikan(in: RecordingModelPersistence()))

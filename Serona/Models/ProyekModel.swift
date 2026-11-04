@@ -32,6 +32,12 @@ final class Proyek {
     /// The baseline read when the scan started (nil until then). Its presence marks the project as scanned,
     /// so reopening it resumes at the same stage.
     var visibleAverageAwal: Double?
+    /// The channel / clear ratios of that baseline reading, which the concentration is measured against.
+    /// Nil for projects set before the device sent channels; they keep using `visibleAverageAwal`.
+    var rasioAwal: [Double]?
+    /// The channel / clear ratios of clean water, the reference the absorbance of the bath is measured against.
+    /// Nil until the user sets it; without it the concentration keeps the older, baseline-only formula.
+    var rasioAirBersih: [Double]?
     var phAwal: Double?
     @Relationship(deleteRule: .nullify) var resep: Resep?
 
@@ -94,11 +100,50 @@ final class Proyek {
         status = .nonaktif
     }
 
+    /// The recipe's water for all the cloth, in liters (the recipe grams are per cloth).
+    var volumeResepLiter: Double {
+        Double(air * jumlahKain) / 1000
+    }
+
+    /// The dye the bath should hold (g/L): the recipe's dye for all the cloth over the recipe water.
+    var targetPewarnaGramPerLiter: Double {
+        guard volumeResepLiter > 0 else { return 0 }
+        return pewarna.reduce(0) { $0 + $1.gram } * Double(jumlahKain) / volumeResepLiter
+    }
+
+    /// The dye in the bath now (g/L). The calibration is a = A0 / C_target, so C = A / a is the target times the
+    /// absorbance share (`percent` of the initial one) that is left.
+    func konsentrasiPewarnaGramPerLiter(kepekatan percent: Double) -> Double {
+        targetPewarnaGramPerLiter * max(0, percent) / 100
+    }
+
+    /// The dye to add to bring the bath back to its target: (C_target - C_bath) x V, split by ingredient like the
+    /// recipe. `volumeLiter` is the bath after the water was added; without a positive one the bath is taken at the
+    /// recipe volume (no water added).
+    func pewarnaYangDitambah(kepekatan percent: Double, volumeLiter: Double? = nil) -> [Bahan] {
+        var volume = volumeResepLiter
+        if let volumeLiter, volumeLiter > 0 {
+            volume = volumeLiter
+        }
+        let totalGram = max(0, targetPewarnaGramPerLiter - konsentrasiPewarnaGramPerLiter(kepekatan: percent)) * volume
+        let totalResep = pewarna.reduce(0) { $0 + $1.gram }
+        return pewarna.map { Bahan(kode: $0.kode, gram: totalResep > 0 ? totalGram * $0.gram / totalResep : 0) }
+    }
+
     /// Undoes `selesaikan` when the change could not be saved.
     func batalkanSelesai() {
         kepekatanAkhir = nil
         phAkhir = nil
         status = .aktif
+    }
+}
+
+extension Bahan {
+    /// Grams rounded up to a whole gram, in kg from 1000 grams: "30gr", "1.5kg".
+    static func formatBerat(gram: Double) -> String {
+        let dibulatkan = gram.rounded(.up)
+        guard dibulatkan >= 1000 else { return String(format: "%.0fgr", dibulatkan) }
+        return String(format: "%gkg", dibulatkan / 1000)
     }
 }
 
@@ -215,6 +260,21 @@ struct ProyekColorMeasurements: Equatable {
         return replacingCurrent(updatedCurrent)
     }
 
+    func withCurrentConcentration(percent: Double) -> ProyekColorMeasurements {
+        var updatedCurrent = current
+        guard let index = updatedCurrent.firstIndex(where: { $0.id == "current-color-concentration" }) else {
+            return self
+        }
+
+        updatedCurrent[index] = ProyekMeasurement(
+            id: updatedCurrent[index].id,
+            title: updatedCurrent[index].title,
+            value: ColorMeasurement.formatPercent(percent),
+            isCurrent: updatedCurrent[index].isCurrent
+        )
+        return replacingCurrent(updatedCurrent)
+    }
+
     func withCurrentWaterPH(_ waterPH: Double?) -> ProyekColorMeasurements {
         var updatedCurrent = current
         guard let index = updatedCurrent.firstIndex(where: { $0.id == "current-water-ph" }) else {
@@ -228,6 +288,52 @@ struct ProyekColorMeasurements: Equatable {
             isCurrent: updatedCurrent[index].isCurrent
         )
         return replacingCurrent(updatedCurrent)
+    }
+
+    /// Clears the current concentration (the baseline it was measured against is gone).
+    func withoutCurrentConcentration() -> ProyekColorMeasurements {
+        var updatedCurrent = current
+        guard let index = updatedCurrent.firstIndex(where: { $0.id == "current-color-concentration" }) else {
+            return self
+        }
+
+        updatedCurrent[index] = ProyekMeasurement(
+            id: updatedCurrent[index].id,
+            title: updatedCurrent[index].title,
+            value: Self.unknownValue,
+            isCurrent: updatedCurrent[index].isCurrent
+        )
+        return replacingCurrent(updatedCurrent)
+    }
+
+    /// Shows `waterPH` as the initial pH, or the unknown value when it is nil.
+    func withInitialWaterPH(_ waterPH: Double?) -> ProyekColorMeasurements {
+        replacingInitial(id: "initial-water-ph", value: waterPH.map(Self.format) ?? Self.unknownValue)
+    }
+
+    /// Shows the initial concentration (always 100%) once the user has set it, the unknown value before.
+    func withInitialConcentration(isSet: Bool) -> ProyekColorMeasurements {
+        replacingInitial(id: "initial-color-concentration", value: isSet ? "100%" : Self.unknownValue)
+    }
+
+    private func replacingInitial(id: String, value: String) -> ProyekColorMeasurements {
+        var updatedInitial = initial
+        guard let index = updatedInitial.firstIndex(where: { $0.id == id }) else {
+            return self
+        }
+
+        updatedInitial[index] = ProyekMeasurement(
+            id: id,
+            title: updatedInitial[index].title,
+            value: value,
+            isCurrent: updatedInitial[index].isCurrent
+        )
+        return ProyekColorMeasurements(
+            colorConcentrationLimit: colorConcentrationLimit,
+            waterPHLimit: waterPHLimit,
+            initial: updatedInitial,
+            current: current
+        )
     }
 
     private func replacingCurrent(_ current: [ProyekMeasurement]) -> ProyekColorMeasurements {
