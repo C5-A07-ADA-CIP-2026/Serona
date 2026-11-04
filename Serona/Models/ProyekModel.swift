@@ -105,16 +105,29 @@ final class Proyek {
         Double(air * jumlahKain) / 1000
     }
 
-    /// The dye to add to bring the bath back to 100%: C_target x V x the share that is missing, split by
-    /// ingredient like the recipe. `volumeLiter` is the bath after the water was added; without a positive
-    /// one the bath is taken at the recipe volume (no water added).
+    /// The dye the bath should hold (g/L): the recipe's dye for all the cloth over the recipe water.
+    var targetPewarnaGramPerLiter: Double {
+        guard volumeResepLiter > 0 else { return 0 }
+        return pewarna.reduce(0) { $0 + $1.gram } * Double(jumlahKain) / volumeResepLiter
+    }
+
+    /// The dye in the bath now (g/L). The calibration is a = A0 / C_target, so C = A / a is the target times the
+    /// absorbance share (`percent` of the initial one) that is left.
+    func konsentrasiPewarnaGramPerLiter(kepekatan percent: Double) -> Double {
+        targetPewarnaGramPerLiter * max(0, percent) / 100
+    }
+
+    /// The dye to add to bring the bath back to its target: (C_target - C_bath) x V, split by ingredient like the
+    /// recipe. `volumeLiter` is the bath after the water was added; without a positive one the bath is taken at the
+    /// recipe volume (no water added).
     func pewarnaYangDitambah(kepekatan percent: Double, volumeLiter: Double? = nil) -> [Bahan] {
-        let kurang = max(0, 1 - percent / 100)
-        var skala = 1.0
-        if let volumeLiter, volumeLiter > 0, volumeResepLiter > 0 {
-            skala = volumeLiter / volumeResepLiter
+        var volume = volumeResepLiter
+        if let volumeLiter, volumeLiter > 0 {
+            volume = volumeLiter
         }
-        return pewarna.map { Bahan(kode: $0.kode, gram: $0.gram * Double(jumlahKain) * kurang * skala) }
+        let totalGram = max(0, targetPewarnaGramPerLiter - konsentrasiPewarnaGramPerLiter(kepekatan: percent)) * volume
+        let totalResep = pewarna.reduce(0) { $0 + $1.gram }
+        return pewarna.map { Bahan(kode: $0.kode, gram: totalResep > 0 ? totalGram * $0.gram / totalResep : 0) }
     }
 
     /// Undoes `selesaikan` when the change could not be saved.

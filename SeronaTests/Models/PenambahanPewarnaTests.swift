@@ -59,4 +59,22 @@ struct PenambahanPewarnaTests {
         #expect(Bahan.formatBerat(gram: 999.5) == "1kg")
         #expect(Bahan.formatBerat(gram: 1500) == "1.5kg")
     }
+
+    @Test("The target is the recipe's dye over its water in g/L; the bath holds that share of it")
+    func dyeConcentrationInGramPerLiter() {
+        let proyek = makeProyek() // 15 g per cloth x 10 cloths over 10 L of water
+
+        #expect(abs(proyek.targetPewarnaGramPerLiter - 15) < 1e-9)
+        #expect(abs(proyek.konsentrasiPewarnaGramPerLiter(kepekatan: 100) - 15) < 1e-9)
+        #expect(abs(proyek.konsentrasiPewarnaGramPerLiter(kepekatan: 70) - 10.5) < 1e-9)
+    }
+
+    @Test("Dose = (target - bath g/L) x bath volume, the same as the missing share of the recipe")
+    func doseFollowsGramPerLiter() {
+        let proyek = makeProyek()
+        let selisih = proyek.targetPewarnaGramPerLiter - proyek.konsentrasiPewarnaGramPerLiter(kepekatan: 70)
+        let total = proyek.pewarnaYangDitambah(kepekatan: 70, volumeLiter: 20).reduce(0) { $0 + $1.gram }
+
+        #expect(abs(total - selisih * 20) < 1e-9)
+    }
 }

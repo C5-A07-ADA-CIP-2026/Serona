@@ -72,12 +72,14 @@ struct QualityAlertSheetView: View {
     }
 }
 
-/// The red bar under the readings while the solution is below a limit. Tapping it shows the alert again.
+/// The red banner under the readings while the solution is below a limit. Tapping it opens the repair guide.
 struct LarutanMenurunBanner: View {
-    let onTap: () -> Void
+    var onTap: (() -> Void)?
 
     var body: some View {
-        Button(action: onTap) {
+        Button {
+            onTap?()
+        } label: {
             HStack {
                 Text("Kualitas Larutan Menurun")
                 Spacer()
@@ -90,7 +92,8 @@ struct LarutanMenurunBanner: View {
             .background(Color.latarPeringatan, in: RoundedRectangle(cornerRadius: 10))
         }
         .buttonStyle(.plain)
-        .accessibilityHint("Menampilkan peringatan")
+        .disabled(onTap == nil)
+        .accessibilityElement(children: .combine)
     }
 }
 

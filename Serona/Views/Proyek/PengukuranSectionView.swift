@@ -11,6 +11,8 @@ import SwiftUI
 /// clean water it is the reference the color concentration is measured against.
 struct PengukuranSectionView: View {
     @ObservedObject var viewModel: ProyekDetailViewModel
+    /// Opens the repair guide for what is below its limit; the banner calls it.
+    var onPerbaiki: (QualityIssue) -> Void = { _ in }
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
@@ -29,8 +31,8 @@ struct PengukuranSectionView: View {
             ForEach(viewModel.measurements.displayedMeasurements) { measurement in
                 row(for: measurement)
             }
-            if viewModel.isConcentrationLow || viewModel.isWaterPHLow {
-                LarutanMenurunBanner { viewModel.tampilkanQualityAlert() }
+            if let issue = viewModel.qualityAlert?.issue ?? viewModel.currentIssue {
+                LarutanMenurunBanner { onPerbaiki(issue) }
             }
         }
         .sensoryFeedback(.success, trigger: viewModel.isInitialColorSet) { _, isSet in isSet }

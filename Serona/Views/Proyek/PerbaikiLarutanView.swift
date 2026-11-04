@@ -52,6 +52,11 @@ struct PerbaikiLarutanView: View {
             }
         }
         .presentationDetents([.large])
+        .onChange(of: viewModel.qualityAlert) { _, alert in
+            if let alert {
+                guide.updateIssue(alert.issue)
+            }
+        }
         .onChange(of: guide.isFinished) { _, isFinished in
             if isFinished {
                 dismiss()
@@ -93,6 +98,7 @@ struct PerbaikiLarutanView: View {
         switch step {
         case .air:
             airRow
+
         case .phAir:
             if let soda = guide.penambahanSoda {
                 ForEach(soda.bahan, id: \.kode) { bahan in
@@ -107,6 +113,7 @@ struct PerbaikiLarutanView: View {
             }
             BarisInfo(judul: "pH Sekarang", nilai: reading("current-water-ph"))
             BarisInfo(judul: "pH Awal", nilai: reading("initial-water-ph"))
+
         case .kepekatan:
             if let tambahan = viewModel.penambahanPewarna(volumeLiter: guide.volumeBakLiter) {
                 ForEach(tambahan, id: \.kode) { bahan in
@@ -135,7 +142,7 @@ struct PerbaikiLarutanView: View {
 
             Spacer()
 
-            Text("\(guide.jumlahAir)")
+            Text("\(guide.jumlahAirFormatted)")
                 .monospacedDigit()
                 .frame(minWidth: 72)
                 .padding(.vertical, 8)

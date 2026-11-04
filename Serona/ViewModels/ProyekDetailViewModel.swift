@@ -80,6 +80,16 @@ final class ProyekDetailViewModel: ObservableObject {
         latestWaterPH.map { $0 < measurements.waterPHLimit } ?? false
     }
 
+    /// What is below its limit right now; nil while both readings are within their limits.
+    var currentIssue: QualityIssue? {
+        switch (isConcentrationLow, isWaterPHLow) {
+        case (true, true): .keduanya
+        case (true, false): .kepekatan
+        case (false, true): .phAir
+        case (false, false): nil
+        }
+    }
+
     /// True for the "current" row whose reading is below its limit.
     func isBelowLimit(_ measurement: ProyekMeasurement) -> Bool {
         switch measurement.id {
@@ -148,10 +158,8 @@ final class ProyekDetailViewModel: ObservableObject {
         var startsNewDip = false
         if let concentration {
             latestConcentration = concentration
-            if let warning = warningTracker.concentrationWarning(
-                for: concentration,
-                limit: updated.colorConcentrationLimit
-            ) {
+            let limit = updated.colorConcentrationLimit
+            if let warning = warningTracker.concentrationWarning(for: concentration, limit: limit) {
                 colorConcentrationWarning = warning
                 startsNewDip = true
             }
@@ -163,9 +171,12 @@ final class ProyekDetailViewModel: ObservableObject {
             waterPHWarning = warning
         }
 
-        // The sheet shows once per dip; the red rows and banner follow the readings.
-        if startsNewDip {
-            qualityAlert = makeQualityAlert()
+        // The sheet shows once per dip; a new low merges into the alert that is already up.
+        if let currentIssue {
+            let issue = qualityAlert?.issue.combining(with: currentIssue) ?? currentIssue
+            if issue != qualityAlert?.issue, qualityAlert != nil || startsNewDip {
+                qualityAlert = makeQualityAlert(for: issue)
+            }
         }
     }
 
@@ -173,32 +184,22 @@ final class ProyekDetailViewModel: ObservableObject {
     /// Nil without a channel baseline or channels in the reading.
     private func concentrationPercent(of measurement: ColorMeasurement) -> Double? {
         guard let initialRatios else { return nil }
-        if let clean = proyek.rasioAirBersih {
-            let absorbanceBased = measurement.concentration(relativeToRatios: initialRatios, cleanRatios: clean)
-            if let absorbanceBased {
-                return absorbanceBased
-            }
+        let absorbanceBased = proyek.rasioAirBersih.flatMap {
+            measurement.concentration(relativeToRatios: initialRatios, cleanRatios: $0)
         }
-        return measurement.concentration(relativeToRatios: initialRatios)
+        return absorbanceBased ?? measurement.concentration(relativeToRatios: initialRatios)
     }
 
-    private func makeQualityAlert() -> QualityAlert? {
-        switch (isConcentrationLow, isWaterPHLow) {
-        case (true, true):
-            QualityAlert(issue: .keduanya, message: MeasurementWarningTracker.bothMessage)
-        case (true, false):
-            QualityAlert(
-                issue: .kepekatan,
-                message: MeasurementWarningTracker.concentrationMessage(limit: measurements.colorConcentrationLimit)
-            )
-        case (false, true):
-            QualityAlert(
-                issue: .phAir,
-                message: MeasurementWarningTracker.waterPHMessage(limit: measurements.waterPHLimit)
-            )
-        case (false, false):
-            nil
+    private func makeQualityAlert(for issue: QualityIssue) -> QualityAlert {
+        let message = switch issue {
+        case .keduanya:
+            MeasurementWarningTracker.bothMessage
+        case .kepekatan:
+            MeasurementWarningTracker.concentrationMessage(limit: measurements.colorConcentrationLimit)
+        case .phAir:
+            MeasurementWarningTracker.waterPHMessage(limit: measurements.waterPHLimit)
         }
+        return QualityAlert(issue: issue, message: message)
     }
 
     /// Finishes the scanned project: stores the final readings and moves it to the inactive list.
@@ -264,7 +265,8 @@ final class ProyekDetailViewModel: ObservableObject {
 
     /// Shows the alert again for whatever is below its limit right now (the user dismissed it earlier).
     func tampilkanQualityAlert() {
-        qualityAlert = makeQualityAlert()
+        guard let currentIssue else { return }
+        qualityAlert = makeQualityAlert(for: currentIssue)
     }
 
     func clearQualityAlert() {

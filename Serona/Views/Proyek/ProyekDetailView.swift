@@ -64,7 +64,7 @@ struct ProyekDetailView: View {
                 }
             }
             .onChange(of: viewModel.qualityAlert) { _, alert in
-                if alert != nil {
+                if alert != nil, perbaikiIssue == nil, !isShowingQualityAlert {
                     tampilkanQualityAlert()
                 }
             }
@@ -118,14 +118,17 @@ struct ProyekDetailView: View {
                     JudulBagian(teks: "Warna")
                     Spacer()
                     if isLarutanMenurun {
-                        Button {
-                            viewModel.tampilkanQualityAlert()
-                        } label: {
-                            Image(systemName: "exclamationmark.circle.fill")
-                                .foregroundStyle(Color.peringatan)
-                        }
-                        .accessibilityLabel("Kualitas larutan menurun")
-                        .accessibilityHint("Menampilkan peringatan")
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .foregroundStyle(Color.peringatan)
+                            .accessibilityLabel("Kualitas larutan menurun")
+//                        Button {
+//                            viewModel.tampilkanQualityAlert()
+//                        } label: {
+//                            Image(systemName: "exclamationmark.circle.fill")
+//                                .foregroundStyle(Color.peringatan)
+//                        }
+//                        .accessibilityLabel("Kualitas larutan menurun")
+//                        .accessibilityHint("Menampilkan peringatan")
                     }
                 }
                 WarnaSwatchView(namaWarna: proyek.namaWarna, warnaHex: proyek.warnaHex)
@@ -134,7 +137,7 @@ struct ProyekDetailView: View {
             if proyek.status == .nonaktif {
                 hasilAkhir
             } else if viewModel.isDataScanned, !isMemulai {
-                PengukuranSectionView(viewModel: viewModel)
+                PengukuranSectionView(viewModel: viewModel) { perbaikiIssue = $0 }
             }
 
             ResepWarnaView(
