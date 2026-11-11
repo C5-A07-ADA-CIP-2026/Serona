@@ -12,22 +12,16 @@ struct ProyekListView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = ProyekListViewModel()
     @State private var isShowingTambah = false
-    @State private var selectedTab: HeaderTab = .proyek
     @State private var searchText: String = ""
     @State private var isSearching: Bool = false
-    
-    enum HeaderTab: String, CaseIterable {
-        case proyek = "Bak"
-        case resep = "Resep"
-    }
     
     private var daftar: ProyekDaftar {
         ProyekDaftar(semuaProyek)
     }
     
     // Colors matching
-    private let backgroundColor = Color(red: 0.98, green: 0.97, blue: 0.93)
-    private let titleColor = Color(red: 0.38, green: 0.15, blue: 0.15)
+    private let backgroundColor = Color("backgroundColor")
+    private let titleColor = Color("titleColor")
     private let oliveGreen = Color(red: 0.35, green: 0.42, blue: 0.25)
     
     var body: some View {
@@ -41,8 +35,6 @@ struct ProyekListView: View {
                 let gridColumns = Array(repeating: GridItem(.flexible(), spacing: 20), count: columnsCount)
                 
                 VStack(alignment: .leading, spacing: 20) {
-                    // Top Custom Header
-                    topHeaderBar
                     
                     // Section Title
                     Text("Bak")
@@ -103,65 +95,65 @@ struct ProyekListView: View {
     }
     
     // MARK: - Header Bar Component
-    private var topHeaderBar: some View {
-        HStack {
-            Spacer()
-            
-            // Center Segmented Control Pill
-            HStack(spacing: 4) {
-                ForEach(HeaderTab.allCases, id: \.self) { tab in
-                    Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            selectedTab = tab
-                        }
-                    } label: {
-                        Text(tab.rawValue)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(selectedTab == tab ? oliveGreen : titleColor.opacity(0.8))
-                            .frame(width: 130, height: 36)
-                            .background {
-                                if selectedTab == tab {
-                                    RoundedRectangle(cornerRadius: 18)
-                                        .fill(Color.white)
-                                        .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
-                                }
-                            }
-                    }
-                }
-                
-                // Search Icon Button
-                Button {
-                    isSearching.toggle()
-                } label: {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(titleColor.opacity(0.8))
-                        .frame(width: 36, height: 36)
-                }
-                .padding(.trailing, 4)
-            }
-            .padding(4)
-            .background(Color(red: 0.94, green: 0.93, blue: 0.88))
-            .clipShape(Capsule())
-            
-            Spacer()
-            
-            // Top Right Add ("+") Button
-            Button {
-                isShowingTambah = true
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(oliveGreen)
-                    .clipShape(Circle())
-                    .shadow(color: oliveGreen.opacity(0.3), radius: 4, x: 0, y: 2)
-            }
-        }
-        .padding(.horizontal, 24)
-        .padding(.top, 12)
-    }
+//    private var topHeaderBar: some View {
+//        HStack {
+//            Spacer()
+//            
+//            // Center Segmented Control Pill
+//            HStack(spacing: 4) {
+//                ForEach(HeaderTab.allCases, id: \.self) { tab in
+//                    Button {
+//                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+//                            selectedTab = tab
+//                        }
+//                    } label: {
+//                        Text(tab.rawValue)
+//                            .font(.system(size: 15, weight: .semibold))
+//                            .foregroundStyle(selectedTab == tab ? oliveGreen : titleColor.opacity(0.8))
+//                            .frame(width: 130, height: 36)
+//                            .background {
+//                                if selectedTab == tab {
+//                                    RoundedRectangle(cornerRadius: 18)
+//                                        .fill(Color.white)
+//                                        .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
+//                                }
+//                            }
+//                    }
+//                }
+//                
+//                // Search Icon Button
+//                Button {
+//                    isSearching.toggle()
+//                } label: {
+//                    Image(systemName: "magnifyingglass")
+//                        .font(.system(size: 16, weight: .semibold))
+//                        .foregroundStyle(titleColor.opacity(0.8))
+//                        .frame(width: 36, height: 36)
+//                }
+//                .padding(.trailing, 4)
+//            }
+//            .padding(4)
+//            .background(Color(red: 0.94, green: 0.93, blue: 0.88))
+//            .clipShape(Capsule())
+//            
+//            Spacer()
+//            
+//            // Top Right Add ("+") Button
+//            Button {
+//                isShowingTambah = true
+//            } label: {
+//                Image(systemName: "plus")
+//                    .font(.system(size: 20, weight: .bold))
+//                    .foregroundStyle(.white)
+//                    .frame(width: 44, height: 44)
+//                    .background(oliveGreen)
+//                    .clipShape(Circle())
+//                    .shadow(color: oliveGreen.opacity(0.3), radius: 4, x: 0, y: 2)
+//            }
+//        }
+//        .padding(.horizontal, 24)
+//        .padding(.top, 12)
+//    }
     
     private func isPresented(_ value: (some Any)?, clear: @escaping () -> Void) -> Binding<Bool> {
         Binding(

@@ -16,13 +16,26 @@ struct ResepView: View {
     private var hasilCari: [Resep] {
         daftar.cari(teksCari)
     }
+    
+    private let backgroundColor = Color("backgroundColor")
+    private let titleColor = Color("titleColor")
 
     var body: some View {
-        content
-            // .background(Color(hex: "#F2E8DC").ignoresSafeArea())
-            .navigationTitle("Warna Saya")
+        ZStack {
+            backgroundColor
+                .ignoresSafeArea()
+            
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Warna")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundStyle(titleColor)
+                    .padding(.horizontal, 24)
+                content
+            }
+        }
+            .background(backgroundColor.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $teksCari, placement: .navigationBarDrawer(displayMode: .always), prompt: "Cari Warna")
+//            .searchable(text: $teksCari, placement: .navigationBarDrawer(displayMode: .always), prompt: "Cari Warna")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -35,7 +48,7 @@ struct ResepView: View {
             }
             .sheet(isPresented: $showModal) {
                 NavigationStack {
-                    HalamanTambahResep(tampilSebagaiSheet: true)
+                    HalamanTambahResep()
                 }
             }
             .navigationDestination(for: Resep.self) { resep in
@@ -57,8 +70,8 @@ struct ResepView: View {
     private var daftarWarna: some View {
         ScrollView {
             LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 150), spacing: 12)],
-                spacing: 12
+                columns: [GridItem(.adaptive(minimum: 235), spacing: 30)],
+                spacing: 20
             ) {
                 ForEach(hasilCari) { resep in
                     NavigationLink(value: resep) {
@@ -134,6 +147,18 @@ private let previewContainer: ModelContainer = {
     ))
     container.mainContext.insert(Resep(
         namaWarna: "Biru Laut", warnaHex: "#0044AA",
+        air: 1000, kepekatan: 80, batasPH: 7
+    ))
+    container.mainContext.insert(Resep(
+        namaWarna: "Biru 2", warnaHex: "#0043AA",
+        air: 1000, kepekatan: 80, batasPH: 7
+    ))
+    container.mainContext.insert(Resep(
+        namaWarna: "Biru 3", warnaHex: "#0046AA",
+        air: 1000, kepekatan: 80, batasPH: 7
+    ))
+    container.mainContext.insert(Resep(
+        namaWarna: "Biru 3", warnaHex: "#0046AA",
         air: 1000, kepekatan: 80, batasPH: 7
     ))
     return container

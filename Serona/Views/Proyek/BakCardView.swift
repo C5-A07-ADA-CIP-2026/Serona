@@ -16,7 +16,7 @@ struct BakCardView: View {
     }
 
     // Colors matching
-    private let titleColor = Color(red: 0.38, green: 0.15, blue: 0.15)
+    private let titleColor = Color("titleColor")
     private let alertRed = Color(red: 0.98, green: 0.28, blue: 0.28)
     private let tileBackground = Color(red: 0.95, green: 0.96, blue: 0.93)
     private let oliveGreen = Color(red: 0.35, green: 0.42, blue: 0.25)
