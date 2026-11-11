@@ -9,103 +9,111 @@ import SwiftUI
 struct PilihResepSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Resep.dibuat, order: .reverse) private var daftar: [Resep]
+    @State private var teksCari: String = ""
 
     let onSelect: (Resep) -> Void
 
-    var body: some View {
-        NavigationStack {
-            content
-                .navigationTitle("Pilih Warna")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            dismiss()
-                        } label: {
-                            Label("Tutup", systemImage: "xmark")
-                        }
-                    }
-                }
-        }
+    private let titleColor = Color(red: 0.38, green: 0.15, blue: 0.15)
+    private let sheetBg = Color(red: 0.98, green: 0.97, blue: 0.93)
+
+    private var hasilCari: [Resep] {
+        daftar.cari(teksCari)
     }
 
-    @ViewBuilder
-    private var content: some View {
-        if daftar.isEmpty {
-            ContentUnavailableView(
-                "Belum ada warna",
-                systemImage: "book",
-                description: Text("Tambahkan warna di tab Resep dulu.")
-            )
-        } else {
-            ScrollView {
-                LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 150), spacing: 12)],
-                    spacing: 12
-                ) {
-                    ForEach(daftar) { resep in
-                        Button {
-                            onSelect(resep)
-                            dismiss()
-                        } label: {
-                            ResepRowView(resep: resep)
-                                .contentShape(Rectangle())
+    var body: some View {
+        VStack(spacing: 0) {
+            // Modal Header Bar (Title center, X right)
+            modalHeaderBar
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+
+            VStack(spacing: 16) {
+                // Search Input Bar
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(titleColor.opacity(0.6))
+
+                    TextField("Cari Warna", text: $teksCari)
+                        .autocorrectionDisabled()
+
+                    Spacer()
+
+                    Image(systemName: "mic.fill")
+                        .foregroundStyle(titleColor.opacity(0.6))
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color.white)
+                .clipShape(Capsule())
+                .padding(.horizontal, 20)
+
+                // Recipe Color Cards 3-Column Grid
+                ScrollView {
+                    if daftar.isEmpty {
+                        ContentUnavailableView(
+                            "Belum ada warna",
+                            systemImage: "book",
+                            description: Text("Tambahkan warna di tab Warna dulu.")
+                        )
+                        .padding(.top, 40)
+                    } else {
+                        LazyVGrid(
+                            columns: [
+                                GridItem(.flexible(), spacing: 16),
+                                GridItem(.flexible(), spacing: 16),
+                                GridItem(.flexible(), spacing: 16)
+                            ],
+                            spacing: 16
+                        ) {
+                            ForEach(hasilCari) { resep in
+                                Button {
+                                    onSelect(resep)
+                                    dismiss()
+                                } label: {
+                                    WarnaCardView(resep: resep)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
                     }
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
+            }
+            .padding(.top, 10)
+        }
+        .background(sheetBg.ignoresSafeArea())
+    }
+
+    // MARK: - Header Bar
+
+    private var modalHeaderBar: some View {
+        HStack {
+            Spacer()
+
+            Text("Pilih Warna")
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(titleColor)
+
+            Spacer()
+
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Color.black.opacity(0.7))
+                    .frame(width: 36, height: 36)
+                    .background(Color.black.opacity(0.08))
+                    .clipShape(Circle())
             }
         }
     }
 }
 
-#Preview("Berisi") {
-    Color.clear
-        .sheet(isPresented: .constant(true)) {
-            PilihResepSheetView { _ in }
-        }
-        .modelContainer(previewContainer)
-}
+// MARK: - Previews
 
-#Preview("Kosong") {
-    Color.clear
-        .sheet(isPresented: .constant(true)) {
-            PilihResepSheetView { _ in }
-        }
+#Preview("Pilih Warna Sheet", traits: .landscapeLeft) {
+    PilihResepSheetView { _ in }
         .modelContainer(for: SeronaSchema.models, inMemory: true)
 }
-
-#Preview("Accessibility 5") {
-    Color.clear
-        .sheet(isPresented: .constant(true)) {
-            PilihResepSheetView { _ in }
-        }
-        .modelContainer(previewContainer)
-        .dynamicTypeSize(.accessibility5)
-}
-
-#Preview("Kosong Accessibility 5") {
-    Color.clear
-        .sheet(isPresented: .constant(true)) {
-            PilihResepSheetView { _ in }
-        }
-        .modelContainer(for: SeronaSchema.models, inMemory: true)
-        .dynamicTypeSize(.accessibility5)
-}
-
-@MainActor
-private let previewContainer: ModelContainer = {
-    // swiftlint:disable:next force_try
-    let container = try! SeronaSchema.makeContainer(inMemory: true)
-    container.mainContext.insert(Resep(
-        namaWarna: "Merah Marun", warnaHex: "#B50202",
-        air: 1000, kepekatan: 80, batasPH: 7
-    ))
-    container.mainContext.insert(Resep(
-        namaWarna: "Biru Laut", warnaHex: "#0044AA",
-        air: 1000, kepekatan: 80, batasPH: 7
-    ))
-    return container
-}()
