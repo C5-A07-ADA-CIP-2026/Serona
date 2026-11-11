@@ -32,7 +32,6 @@ struct TambahProyekView: View {
                 .padding(.vertical, 8)
             }
             .scrollDismissesKeyboard(.interactively)
-            .task { isNamaFocused = true }
             .navigationTitle("Tambahkan Proyek")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
