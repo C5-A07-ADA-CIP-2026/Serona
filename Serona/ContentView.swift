@@ -8,24 +8,127 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    enum HeaderTab: String, CaseIterable {
+        case proyek = "Proyek"
+        case resep = "Resep"
+    }
+    
+    @State private var selectedTab: HeaderTab = .proyek
+    @State private var isSearching = false
+    @State private var isShowingTambah = false
+    
+    // Ganti dengan warna kamu (atau dari asset)
+    private let oliveGreen = Color("oliveGreen")
+    private let titleColor = Color("titleColor")
+    private let backgroundColor = Color("backgroundColor")
+    
     var body: some View {
-        TabView {
-            ForEach(AppTab.allCases, id: \.self) { tab in
-                Tab(tab.title, systemImage: tab.systemImage) {
-                    NavigationStack {
-                        view(for: tab)
-                    }
-                }
+        NavigationStack {
+            VStack(spacing: 0) {
+                topHeaderBar
+                
+                content
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .background(backgroundColor.ignoresSafeArea())
+            .toolbar(.hidden, for: .navigationBar)
+        }
+        .sheet(isPresented: $isShowingTambah) {
+            switch selectedTab {
+            case .proyek:
+                TambahProyekView()
+            case .resep:
+                HalamanTambahResep()
+                
             }
         }
     }
-
+    
     @ViewBuilder
-    private func view(for tab: AppTab) -> some View {
-        switch tab {
-        case .resep: ResepView()
-        case .proyek: ProyekListView()
+    private var content: some View {
+        switch selectedTab {
+        case .proyek:
+            ProyekListView()
+        case .resep:
+            ResepView()
         }
+    }
+    
+    private var topHeaderBar: some View {
+        HStack {
+            Spacer()
+            segmentedPill
+            Spacer()
+            addButton
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 12)
+    }
+
+    private var segmentedPill: some View {
+        HStack(spacing: 4) {
+            ForEach(HeaderTab.allCases, id: \.self) { tab in
+                tabButton(for: tab)
+            }
+            searchButton
+        }
+        .padding(4)
+        .background(pillBackground)
+        .clipShape(Capsule())
+    }
+
+    private func tabButton(for tab: HeaderTab) -> some View {
+        let isSelected = selectedTab == tab
+        let textColor: Color = isSelected ? oliveGreen : titleColor.opacity(0.8)
+
+        return Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                selectedTab = tab
+            }
+        } label: {
+            Text(tab.rawValue)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(textColor)
+                .frame(width: 130, height: 36)
+                .background {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 18)
+                            .fill(Color.white)
+                            .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
+                    }
+                }
+        }
+    }
+
+    private var searchButton: some View {
+        Button {
+            isSearching.toggle()
+        } label: {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(titleColor.opacity(0.8))
+                .frame(width: 36, height: 36)
+        }
+        .padding(.trailing, 4)
+    }
+
+    private var addButton: some View {
+        Button {
+            isShowingTambah = true
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(oliveGreen)
+                .clipShape(Circle())
+                .shadow(color: oliveGreen.opacity(0.3), radius: 4, x: 0, y: 2)
+        }
+    }
+
+    private var pillBackground: Color {
+        Color(red: 0.94, green: 0.93, blue: 0.88)
     }
 }
 
