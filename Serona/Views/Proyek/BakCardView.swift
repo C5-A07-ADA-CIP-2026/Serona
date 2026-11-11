@@ -5,30 +5,47 @@
 //  Created by Steffany Florence on 10/11/26.
 //
 
+
 import SwiftUI
 
 struct BakCardView: View {
     let proyek: Proyek
+    var viewModel: ProyekDetailViewModel?
 
-    // Sample data check: determine if the quality alert should be shown
+    // Checks live sensor issues OR the sample name condition
     var hasQualityAlert: Bool {
-        proyek.status == .aktif && proyek.nama.contains("Merah Ungu")
+        let isLiveAlert = (viewModel?.qualityAlert != nil || viewModel?.currentIssue != nil)
+        let isSampleAlert = (proyek.status == .aktif && proyek.nama.contains("Merah Ungu"))
+        return isLiveAlert || isSampleAlert
+    }
+
+    var kepekatanDisplay: String {
+        if let viewModel, let c = viewModel.latestConcentration {
+            return String(format: "%.0f%%", c)
+        }
+        return "94%"
+    }
+
+    var phDisplay: String {
+        if let viewModel, let ph = viewModel.latestWaterPH {
+            return String(format: "%.0f", ph)
+        }
+        return "12"
     }
 
     // Colors matching
     private let titleColor = Color("titleColor")
+    // private let titleColor = Color(red: 0.38, green: 0.15, blue: 0.15)
     private let alertRed = Color(red: 0.98, green: 0.28, blue: 0.28)
     private let tileBackground = Color(red: 0.95, green: 0.96, blue: 0.93)
     private let oliveGreen = Color(red: 0.35, green: 0.42, blue: 0.25)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Card Title
             Text(proyek.nama)
                 .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(titleColor)
 
-            // Quality Alert Banner (Red Capsule)
             if hasQualityAlert {
                 HStack {
                     Text("Kualitas Larutan Menurun")
@@ -47,20 +64,17 @@ struct BakCardView: View {
                 .clipShape(Capsule())
             }
 
-            // Stat Boxes Grid
             HStack(spacing: 12) {
-                // Kepekatan Box
                 statTile(
-                    icon: "allergens", // Bottle/flask icon representation
+                    icon: "allergens",
                     title: "Kepekatan",
-                    value: "94%"
+                    value: kepekatanDisplay
                 )
 
-                // pH Air Box
                 statTile(
                     icon: "drop",
                     title: "pH Air",
-                    value: "12"
+                    value: phDisplay
                 )
             }
         }
@@ -74,7 +88,6 @@ struct BakCardView: View {
         .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
     }
 
-    // Metric Tile View
     private func statTile(icon: String, title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 4) {
