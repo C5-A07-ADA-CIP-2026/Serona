@@ -14,7 +14,7 @@ struct PilihResepSheetView: View {
     let onSelect: (Resep) -> Void
 
     private let titleColor = Color(red: 0.38, green: 0.15, blue: 0.15)
-    private let sheetBg = Color(red: 0.98, green: 0.97, blue: 0.93)
+    private let sheetBg = Color(.white)
 
     private var hasilCari: [Resep] {
         daftar.cari(teksCari)
@@ -45,6 +45,7 @@ struct PilihResepSheetView: View {
                 .padding(.vertical, 12)
                 .background(Color.white)
                 .clipShape(Capsule())
+                .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
                 .padding(.horizontal, 20)
 
                 // Recipe Color Cards 3-Column Grid

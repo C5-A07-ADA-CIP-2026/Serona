@@ -92,8 +92,11 @@ struct ContentView: View {
                 .background {
                     if isSelected {
                         RoundedRectangle(cornerRadius: 18)
-                            .fill(Color.white)
-                            .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
+                            .fill(.clear)
+                            .glassEffect(
+                                .regular,
+                                in: RoundedRectangle(cornerRadius: 18)
+                            )
                     }
                 }
         }

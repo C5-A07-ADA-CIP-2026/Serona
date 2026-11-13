@@ -33,7 +33,7 @@ struct HalamanTambahResep: View {
             ScrollView {
                 VStack(spacing: 16) {
                     namaWarnaCard
-                    warnaSelectionCard
+//                    warnaSelectionCard
                     resepWarnaCard
                     batasCard
                 }
@@ -90,7 +90,7 @@ struct HalamanTambahResep: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(titleColor)
 
-                TextField("Proyek SDK Cendrawasih", text: $viewModel.namaWarna)
+                TextField("Cth: Merah Marun", text: $viewModel.namaWarna)
                     .padding(12)
                     .background(
                         RoundedRectangle(cornerRadius: 10)
@@ -100,53 +100,53 @@ struct HalamanTambahResep: View {
         }
     }
 
-    private var warnaSelectionCard: some View {
-        cardSection {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Warna")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(titleColor)
-
-                if let warna = viewModel.warnaDipilih {
-                    VStack(alignment: .leading, spacing: 6) {
-                        if !viewModel.namaWarna.isEmpty {
-                            Text(viewModel.namaWarna)
-                                .font(.system(size: 14, weight: .semibold))
-                                .italic()
-                                .foregroundStyle(Color.gray)
-                        }
-
-                        ZStack(alignment: .trailing) {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(warna)
-                                .frame(height: 50)
-
-                            Button {
-                                withAnimation {
-                                    viewModel.warnaDipilih = nil
-                                }
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 18))
-                                    .foregroundStyle(.white)
-                            }
-                            .padding(.trailing, 12)
-                        }
-                    }
-                } else {
-                    HStack(spacing: 12) {
-                        OliveCapsuleButton(title: "Scan Warna") {
-                            withAnimation {
-                                viewModel.warnaDipilih = Color(hex: "#C0533E")
-                            }
-                        }
-
-                        PilihWarnaButton(selectedColor: $viewModel.warnaDipilih)
-                    }
-                }
-            }
-        }
-    }
+//    private var warnaSelectionCard: some View {
+//        cardSection {
+//            VStack(alignment: .leading, spacing: 10) {
+//                Text("Warna")
+//                    .font(.system(size: 16, weight: .bold))
+//                    .foregroundStyle(titleColor)
+//
+//                if let warna = viewModel.warnaDipilih {
+//                    VStack(alignment: .leading, spacing: 6) {
+//                        if !viewModel.namaWarna.isEmpty {
+//                            Text(viewModel.namaWarna)
+//                                .font(.system(size: 14, weight: .semibold))
+//                                .italic()
+//                                .foregroundStyle(Color.gray)
+//                        }
+//
+//                        ZStack(alignment: .trailing) {
+//                            RoundedRectangle(cornerRadius: 12)
+//                                .fill(warna)
+//                                .frame(height: 50)
+//
+//                            Button {
+//                                withAnimation {
+//                                    viewModel.warnaDipilih = nil
+//                                }
+//                            } label: {
+//                                Image(systemName: "xmark.circle.fill")
+//                                    .font(.system(size: 18))
+//                                    .foregroundStyle(.white)
+//                            }
+//                            .padding(.trailing, 12)
+//                        }
+//                    }
+//                } else {
+//                    HStack(spacing: 12) {
+//                        OliveCapsuleButton(title: "Scan Warna") {
+//                            withAnimation {
+//                                viewModel.warnaDipilih = Color(hex: "#C0533E")
+//                            }
+//                        }
+//
+//                        PilihWarnaButton(selectedColor: $viewModel.warnaDipilih)
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     private var resepWarnaCard: some View {
         cardSection {

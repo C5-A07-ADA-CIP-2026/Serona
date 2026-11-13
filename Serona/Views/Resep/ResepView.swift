@@ -66,17 +66,14 @@ struct ResepView: View {
     private var emptyState: some View {
         VStack(spacing: 8) {
             Image(systemName: "book")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 80, height: 80)
+                .font(.title)
                 .foregroundStyle(.secondary)
 
             Text("Belum ada warna")
-                .font(.title2)
-                .foregroundStyle(titleColor)
+                .font(.title)
 
             Text("Tekan + untuk menambah warna")
-                .font(.subheadline)
+                .font(.body)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -90,14 +87,22 @@ struct ResepView: View {
     NavigationStack {
         ResepView()
     }
-    .modelContainer(previewResepContainer)
+    .modelContainer(previewResepContainer(isi: true))
+}
+
+#Preview("Empty State", traits: .landscapeLeft) {
+    NavigationStack {
+        ResepView()
+    }
+    .modelContainer(previewResepContainer(isi: false))
 }
 
 // MARK: - Preview Data Container
 
 @MainActor
-private let previewResepContainer: ModelContainer = {
+private func previewResepContainer(isi: Bool) -> ModelContainer {
     let container = try! SeronaSchema.makeContainer(inMemory: true)
+    guard isi else { return container }
     let context = container.mainContext
 
     context.insert(Resep(namaWarna: "Cokelat Bata", warnaHex: "#C0533E", air: 1000, kepekatan: 80, batasPH: 7))
@@ -111,4 +116,4 @@ private let previewResepContainer: ModelContainer = {
     context.insert(Resep(namaWarna: "Merah Ungu", warnaHex: "#B50202", air: 1000, kepekatan: 80, batasPH: 7))
 
     return container
-}()
+}
