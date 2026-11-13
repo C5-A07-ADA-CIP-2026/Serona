@@ -86,7 +86,7 @@ struct ContentView: View {
             }
         } label: {
             Text(tab.rawValue)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(textColor)
                 .frame(width: 130, height: 36)
                 .background {
@@ -119,7 +119,7 @@ struct ContentView: View {
             isShowingTambah = true
         } label: {
             Image(systemName: "plus")
-                .font(.system(size: 20, weight: .bold))
+                .font(.title3.bold())
                 .foregroundStyle(.white)
                 .frame(width: 44, height: 44)
                 .background(oliveGreen)

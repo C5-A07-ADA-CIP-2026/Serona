@@ -13,13 +13,13 @@ struct HalamanTambahResep: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @State private var gagalMenyimpan = false
+    @State private var pesanGagalSimpan = ""
     @State private var gagalMenghapus = false
     @State private var konfirmasiHapus = false
 
     private let tampilSebagaiSheet: Bool
     private let titleColor = Color("titleColor")
     private let oliveGreen = Color("oliveGreen")
-    private let backgroundColor = Color("backgroundColor")
 
     init(resep: Resep? = nil, tampilSebagaiSheet: Bool = false) {
         self.tampilSebagaiSheet = tampilSebagaiSheet
@@ -87,7 +87,7 @@ struct HalamanTambahResep: View {
         cardSection {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Nama Warna")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.headline)
                     .foregroundStyle(titleColor)
 
                 TextField("Cth: Merah Marun", text: $viewModel.namaWarna)
@@ -152,7 +152,7 @@ struct HalamanTambahResep: View {
         cardSection {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Resep Warna")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.headline)
                     .foregroundStyle(titleColor)
 
                 // Pewarna Subsection
@@ -161,7 +161,7 @@ struct HalamanTambahResep: View {
                         Image(systemName: "cylinder.split.1x2")
                             .foregroundStyle(titleColor)
                         Text("Kode Pewarna Naphtol")
-                            .font(.system(size: 15, weight: .bold))
+                            .font(.subheadline.bold())
                             .foregroundStyle(titleColor)
                     }
 
@@ -191,7 +191,7 @@ struct HalamanTambahResep: View {
                         .foregroundStyle(titleColor)
 
                     Text("Air")
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.subheadline.bold())
                         .foregroundStyle(titleColor)
 
                     Spacer()
@@ -208,7 +208,7 @@ struct HalamanTambahResep: View {
                             )
 
                         Text("L")
-                            .font(.system(size: 14))
+                            .font(.subheadline)
                             .foregroundStyle(titleColor)
                     }
                 }
@@ -221,7 +221,7 @@ struct HalamanTambahResep: View {
                         Image(systemName: "cylinder.split.1x2")
                             .foregroundStyle(titleColor)
                         Text("Zat Pembantu")
-                            .font(.system(size: 15, weight: .bold))
+                            .font(.subheadline.bold())
                             .foregroundStyle(titleColor)
                     }
 
@@ -250,7 +250,7 @@ struct HalamanTambahResep: View {
         cardSection {
             VStack(alignment: .leading, spacing: 15) {
                 Text("Batas")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.headline)
                     .foregroundStyle(titleColor)
 
                 BarisBatas(
@@ -335,7 +335,7 @@ private struct OliveCapsuleButton: View {
                 }
                 Text(title)
             }
-            .font(.system(size: 15, weight: .semibold))
+            .font(.subheadline.weight(.semibold))
             .foregroundStyle(.white)
             .frame(height: 44)
             .frame(maxWidth: .infinity)
@@ -353,7 +353,7 @@ private struct PilihWarnaButton: View {
     var body: some View {
         ZStack {
             Text("Pilih Warna")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(oliveGreen)
                 .frame(height: 44)
                 .frame(maxWidth: .infinity)
@@ -394,11 +394,11 @@ private struct BahanRowView: View {
             } label: {
                 HStack {
                     Text(item.kode.isEmpty ? "Pilih Kode" : item.kode)
-                        .font(.system(size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(item.kode.isEmpty ? Color.gray : titleColor)
                     Spacer()
                     Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 12))
+                        .font(.caption)
                         .foregroundStyle(.gray)
                 }
                 .padding(.horizontal, 12)
@@ -424,7 +424,7 @@ private struct BahanRowView: View {
                     )
 
                 Text("gr")
-                    .font(.system(size: 14))
+                    .font(.subheadline)
                     .foregroundStyle(titleColor)
             }
         }

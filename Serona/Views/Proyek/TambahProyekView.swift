@@ -96,7 +96,7 @@ struct TambahProyekView: View {
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Nama Bak")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.headline)
                         .foregroundStyle(titleColor)
 
                     TextField("Proyek SDK Cendrawasih", text: $viewModel.nama)
@@ -110,14 +110,14 @@ struct TambahProyekView: View {
 
                 HStack {
                     Text("Air")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.headline)
                         .foregroundStyle(titleColor)
 
                     Spacer()
 
                     HStack(spacing: 8) {
                         Text("\(viewModel.jumlahKain)")
-                            .font(.system(size: 15, weight: .medium))
+                            .font(.subheadline.weight(.medium))
                             .frame(width: 44, height: 36)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
@@ -125,7 +125,7 @@ struct TambahProyekView: View {
                             )
 
                         Text("L")
-                            .font(.system(size: 14))
+                            .font(.subheadline)
                             .foregroundStyle(titleColor)
 
                         HStack(spacing: 0) {
@@ -133,7 +133,7 @@ struct TambahProyekView: View {
                                 if viewModel.jumlahKain > 0 { viewModel.jumlahKain -= 1 }
                             } label: {
                                 Image(systemName: "minus")
-                                    .font(.system(size: 14, weight: .bold))
+                                    .font(.subheadline.bold())
                                     .foregroundStyle(titleColor)
                                     .frame(width: 36, height: 36)
                             }
@@ -145,7 +145,7 @@ struct TambahProyekView: View {
                                 viewModel.jumlahKain += 1
                             } label: {
                                 Image(systemName: "plus")
-                                    .font(.system(size: 14, weight: .bold))
+                                    .font(.subheadline.bold())
                                     .foregroundStyle(titleColor)
                                     .frame(width: 36, height: 36)
                             }
@@ -162,7 +162,7 @@ struct TambahProyekView: View {
         cardSection {
             HStack {
                 Text("Perangkat")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.headline)
                     .foregroundStyle(titleColor)
 
                 Spacer()
@@ -173,14 +173,14 @@ struct TambahProyekView: View {
                             .foregroundStyle(.gray)
 
                         Text(perangkat.nama)
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.subheadline.weight(.medium))
                             .foregroundStyle(Color.gray)
 
                         Button {
                             Task { await viewModel.hapusPerangkat() }
                         } label: {
                             Image(systemName: "minus.circle.fill")
-                                .font(.system(size: 18))
+                                .font(.title3)
                                 .foregroundStyle(.red)
                         }
                     }
@@ -192,7 +192,7 @@ struct TambahProyekView: View {
                             Image(systemName: "plus")
                             Text("Hubungkan")
                         }
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.footnote.weight(.semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
@@ -208,13 +208,13 @@ struct TambahProyekView: View {
         cardSection {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Warna")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.headline)
                     .foregroundStyle(titleColor)
 
                 if let resep = viewModel.resep {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(resep.namaWarna)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.subheadline.weight(.semibold))
                             .italic()
                             .foregroundStyle(Color.gray)
 
@@ -227,7 +227,7 @@ struct TambahProyekView: View {
                                 viewModel.hapusResep()
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 18))
+                                    .font(.title3)
                                     .foregroundStyle(.white)
                             }
                             .padding(.trailing, 12)
@@ -238,7 +238,7 @@ struct TambahProyekView: View {
                         isShowingPilihResep = true
                     } label: {
                         Text("Pilih Warna")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.white)
                             .frame(height: 44)
                             .frame(maxWidth: .infinity)
@@ -254,7 +254,7 @@ struct TambahProyekView: View {
         cardSection {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Resep Warna")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.headline)
                     .foregroundStyle(titleColor)
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -262,7 +262,7 @@ struct TambahProyekView: View {
                         Image(systemName: "cylinder.split.1x2")
                             .foregroundStyle(titleColor)
                         Text("Kode Pewarna Naphtol")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.subheadline.bold())
                             .foregroundStyle(titleColor)
                     }
 
@@ -278,17 +278,18 @@ struct TambahProyekView: View {
                         .foregroundStyle(titleColor)
 
                     Text("Air")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.subheadline.bold())
                         .foregroundStyle(titleColor)
 
                     Spacer()
 
                     Text("\(resep.air)")
+                        .font(.subheadline)
                         .frame(width: 50, height: 32)
                         .background(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3), lineWidth: 1))
 
                     Text("L")
-                        .font(.system(size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(titleColor)
                 }
 
@@ -299,7 +300,7 @@ struct TambahProyekView: View {
                         Image(systemName: "cylinder.split.1x2")
                             .foregroundStyle(titleColor)
                         Text("Zat Pembantu")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.subheadline.bold())
                             .foregroundStyle(titleColor)
                     }
 
@@ -324,7 +325,7 @@ struct TambahProyekView: View {
     private func readOnlyIngredientRow(name: String, amount: String, unit: String) -> some View {
         HStack {
             Text(name)
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -334,11 +335,12 @@ struct TambahProyekView: View {
 
             HStack(spacing: 6) {
                 Text(amount)
+                    .font(.subheadline)
                     .frame(width: 50, height: 32)
                     .background(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.3), lineWidth: 1))
 
                 Text(unit)
-                    .font(.system(size: 14))
+                    .font(.subheadline)
                     .foregroundStyle(titleColor)
             }
         }

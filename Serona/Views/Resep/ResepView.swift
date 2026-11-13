@@ -31,7 +31,7 @@ struct ResepView: View {
 
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Resep Warna")
-                        .font(.system(size: 32, weight: .bold))
+                        .font(.largeTitle.bold())
                         .foregroundStyle(titleColor)
                         .padding(.horizontal, 24)
                         .padding(.top, 12)

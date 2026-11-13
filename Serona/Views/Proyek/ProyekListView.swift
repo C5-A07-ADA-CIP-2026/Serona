@@ -49,7 +49,7 @@ struct ProyekListView: View {
 
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Bak Warna")
-                        .font(.system(size: 32, weight: .bold))
+                        .font(.largeTitle.bold())
                         .foregroundStyle(titleColor)
                         .padding(.horizontal, 24)
                         .padding(.top, 12)
