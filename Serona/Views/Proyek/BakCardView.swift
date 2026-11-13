@@ -39,19 +39,19 @@ struct BakCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(proyek.nama)
-                .font(.system(size: 22, weight: .bold))
+                .font(.title2.bold())
                 .foregroundStyle(titleColor)
 
             if hasQualityAlert {
                 HStack {
                     Text("Kualitas Larutan Menurun")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.subheadline.weight(.medium))
                         .foregroundStyle(.white)
 
                     Spacer()
 
                     Image(systemName: "exclamationmark.circle.fill")
-                        .font(.system(size: 16))
+                        .font(.callout)
                         .foregroundStyle(.white)
                 }
                 .padding(.horizontal, 14)
@@ -88,14 +88,14 @@ struct BakCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 14))
+                    .font(.subheadline)
                 Text(title)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.subheadline.weight(.medium))
             }
             .foregroundStyle(oliveGreen)
 
             Text(value)
-                .font(.system(size: 36, weight: .bold))
+                .font(.largeTitle.bold())
                 .foregroundStyle(hasQualityAlert ? alertRed : titleColor)
         }
         .frame(maxWidth: .infinity, alignment: .center)
