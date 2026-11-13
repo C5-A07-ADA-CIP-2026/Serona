@@ -5,7 +5,6 @@
 //  Created by Dina on 21/10/26.
 //
 
-
 import SwiftData
 import SwiftUI
 
@@ -16,117 +15,22 @@ struct HalamanTambahResep: View {
     @State private var gagalMenyimpan = false
     @State private var gagalMenghapus = false
     @State private var konfirmasiHapus = false
-    
-    // init(resep: Resep? = nil) {
-    @State private var colorPickerSelection: Color = .red
-    
+
     private let tampilSebagaiSheet: Bool
-    private let titleColor = Color(red: 0.38, green: 0.15, blue: 0.15)
-    private let oliveGreen = Color(red: 0.35, green: 0.42, blue: 0.25)
-    private let sheetBg = Color(red: 0.98, green: 0.97, blue: 0.93)
-    
+    private let titleColor = Color("titleColor")
+    private let oliveGreen = Color("oliveGreen")
+    private let backgroundColor = Color("backgroundColor")
+
     init(resep: Resep? = nil, tampilSebagaiSheet: Bool = false) {
         self.tampilSebagaiSheet = tampilSebagaiSheet
         _viewModel = State(
             initialValue: resep.map { FormResepViewModel(resep: $0) } ?? FormResepViewModel()
         )
     }
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
-    //             VStack(alignment: .leading, spacing: 20) {
-    //                 KolomTeks(
-    //                     judul: "Nama Warna",
-    //                     placeholder: "Cth: Merah Marun",
-    //                     teks: $viewModel.namaWarna
-    //                 )
-    //                 PemilihWarna(warna: $viewModel.warnaDipilih)
-    //                 bagianBahan
-    //                 bagianBatas
-    //             }
-    //             .padding(24)
-    //         }
-    //         .navigationTitle(viewModel.sedangMengedit ? viewModel.namaWarna : "Tambah Warna")
-    //         .navigationBarTitleDisplayMode(.inline)
-    //         .toolbar { toolbarForm }
-    //         .alert("Gagal menyimpan", isPresented: $gagalMenyimpan) {
-    //             Button("Tutup", role: .cancel) {}
-    //         }
-    //         .alert("Gagal menghapus", isPresented: $gagalMenghapus) {
-    //             Button("Tutup", role: .cancel) {}
-    //         }
-    //         .alert("Hapus Warna?", isPresented: $konfirmasiHapus) {
-    //             Button("Batal", role: .cancel) {}
-    //             Button("Hapus", role: .destructive) { hapus() }
-    //         } message: {
-    //             Text("Warna ini akan dihapus dari daftar. Proyek yang sudah dibuat dengan warna ini tidak terpengaruh.")
-    //         }
-    //     }
-    // }
-    
-    // private var bagianBahan: some View {
-    //     VStack(alignment: .leading, spacing: 20) {
-    //         Text("Bahan")
-    //             .font(.judulBold)
-            
-    //         DaftarBahan(
-    //             judul: "Kode Pewarna Naphtol",
-    //             labelTambah: "Tambah Pewarna",
-    //             bahan: $viewModel.pewarna,
-    //             pilihanTersedia: viewModel.daftarPilihanPewarna
-    //         )
-            
-    //         BarisIsian(label: "Air", satuan: "L", labelTebal: true) {
-    //             TextField("0", value: $viewModel.ukuranAir, format: .number)
-    //                 .textFieldStyle(.roundedBorder)
-    //                 .keyboardType(.numberPad)
-    //                 .multilineTextAlignment(.center)
-    //                 .frame(width: UkuranKolom.lebarAngka)
-    //         }
-            
-    //         DaftarBahan(
-    //             judul: "Zat Pembantu",
-    //             labelTambah: "Tambah Zat Pembantu",
-    //             bahan: $viewModel.zatPembantu,
-    //             pilihanTersedia: viewModel.daftarPilihanZatPembantu
-    //         )
-    //     }
-    // }
-    
-    // private var bagianBatas: some View {
-    //     VStack(alignment: .leading, spacing: 15) {
-    //         Text("Batas")
-    //             .font(.judulBold)
-            
-    //         BarisBatas(
-    //             label: "Kepekatan Warna (%)",
-    //             nilai: $viewModel.kepekatan,
-    //             rentang: 0 ... 100
-    //         )
-    //         BarisBatas(
-    //             label: "Batas pH",
-    //             nilai: $viewModel.batasPH,
-    //             rentang: 0 ... 14
-    //         )
-            
-    //         Text("""
-    //         Nilai ini adalah batas minimum rekomendasi dan dapat Anda ubah kapan saja. \
-    //         Notifikasi akan dikirim jika nilai turun di bawah batas ini
-    //         """)
-    //         .font(.caption)
-    //         .italic()
-    //         .foregroundStyle(.secondary)
-    //         .multilineTextAlignment(.leading)
-    //         .frame(maxWidth: .infinity, alignment: .leading)
-    //         .fixedSize(horizontal: false, vertical: true)
-            
-    //         if viewModel.sedangMengedit {
-    //             Button(role: .destructive) {
-    //                 konfirmasiHapus = true
-    //             } label: {
-    //                 Label("Hapus Warna", systemImage: "trash")
-    //                     .frame(maxWidth: .infinity)
                 VStack(spacing: 16) {
                     namaWarnaCard
                     warnaSelectionCard
@@ -135,9 +39,10 @@ struct HalamanTambahResep: View {
                 }
                 .padding(20)
             }
-            .background(sheetBg.ignoresSafeArea())
+            .background(backgroundColor.ignoresSafeArea())
             .navigationTitle(viewModel.sedangMengedit ? viewModel.namaWarna : "Tambah Warna")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .close) {
@@ -156,7 +61,6 @@ struct HalamanTambahResep: View {
                 }
             }
             .onAppear {
-                // Populate default recommended baseline values if creating a new color
                 if !viewModel.sedangMengedit {
                     if viewModel.kepekatan == nil { viewModel.kepekatan = 80 }
                     if viewModel.batasPH == nil { viewModel.batasPH = 7 }
@@ -176,16 +80,16 @@ struct HalamanTambahResep: View {
             }
         }
     }
-    
+
     // MARK: - Section Cards
-    
+
     private var namaWarnaCard: some View {
         cardSection {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Nama Warna")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(titleColor)
-                
+
                 TextField("Proyek SDK Cendrawasih", text: $viewModel.namaWarna)
                     .padding(12)
                     .background(
@@ -195,14 +99,14 @@ struct HalamanTambahResep: View {
             }
         }
     }
-    
+
     private var warnaSelectionCard: some View {
         cardSection {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Warna")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(titleColor)
-                
+
                 if let warna = viewModel.warnaDipilih {
                     VStack(alignment: .leading, spacing: 6) {
                         if !viewModel.namaWarna.isEmpty {
@@ -211,12 +115,12 @@ struct HalamanTambahResep: View {
                                 .italic()
                                 .foregroundStyle(Color.gray)
                         }
-                        
+
                         ZStack(alignment: .trailing) {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(warna)
                                 .frame(height: 50)
-                            
+
                             Button {
                                 withAnimation {
                                     viewModel.warnaDipilih = nil
@@ -236,21 +140,21 @@ struct HalamanTambahResep: View {
                                 viewModel.warnaDipilih = Color(hex: "#C0533E")
                             }
                         }
-                        
+
                         PilihWarnaButton(selectedColor: $viewModel.warnaDipilih)
                     }
                 }
             }
         }
     }
-    
+
     private var resepWarnaCard: some View {
         cardSection {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Resep Warna")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(titleColor)
-                
+
                 // Pewarna Subsection
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 6) {
@@ -260,7 +164,7 @@ struct HalamanTambahResep: View {
                             .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(titleColor)
                     }
-                    
+
                     ForEach($viewModel.pewarna) { $item in
                         BahanRowView(
                             item: $item,
@@ -271,27 +175,27 @@ struct HalamanTambahResep: View {
                             }
                         )
                     }
-                    
+
                     OliveCapsuleButton(title: "Tambah Pewarna", systemImage: "plus") {
                         withAnimation {
                             viewModel.pewarna.append(BahanInput())
                         }
                     }
                 }
-                
+
                 Divider()
-                
+
                 // Air Subsection
                 HStack {
                     Image(systemName: "drop.fill")
                         .foregroundStyle(titleColor)
-                    
+
                     Text("Air")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(titleColor)
-                    
+
                     Spacer()
-                    
+
                     HStack(spacing: 6) {
                         TextField("0", value: $viewModel.ukuranAir, format: .number)
                             .keyboardType(.numberPad)
@@ -302,15 +206,15 @@ struct HalamanTambahResep: View {
                                 RoundedRectangle(cornerRadius: 8)
                                     .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                             )
-                        
+
                         Text("L")
                             .font(.system(size: 14))
                             .foregroundStyle(titleColor)
                     }
                 }
-                
+
                 Divider()
-                
+
                 // Zat Pembantu Subsection
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(spacing: 6) {
@@ -320,7 +224,7 @@ struct HalamanTambahResep: View {
                             .font(.system(size: 15, weight: .bold))
                             .foregroundStyle(titleColor)
                     }
-                    
+
                     ForEach($viewModel.zatPembantu) { $item in
                         BahanRowView(
                             item: $item,
@@ -331,7 +235,7 @@ struct HalamanTambahResep: View {
                             }
                         )
                     }
-                    
+
                     OliveCapsuleButton(title: "Tambah Zat Pembantu", systemImage: "plus") {
                         withAnimation {
                             viewModel.zatPembantu.append(BahanInput())
@@ -341,26 +245,26 @@ struct HalamanTambahResep: View {
             }
         }
     }
-    
+
     private var batasCard: some View {
         cardSection {
             VStack(alignment: .leading, spacing: 15) {
                 Text("Batas")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(titleColor)
-                
+
                 BarisBatas(
                     label: "Kepekatan Warna (%)",
                     nilai: $viewModel.kepekatan,
                     rentang: 0 ... 100
                 )
-                
+
                 BarisBatas(
                     label: "Batas pH",
                     nilai: $viewModel.batasPH,
                     rentang: 0 ... 14
                 )
-                
+
                 Text("""
                 Nilai ini adalah batas minimum rekomendasi dan dapat Anda ubah kapan saja. \
                 Notifikasi akan dikirim jika nilai turun di bawah batas ini
@@ -368,7 +272,7 @@ struct HalamanTambahResep: View {
                 .font(.caption)
                 .italic()
                 .foregroundStyle(.secondary)
-                
+
                 if viewModel.sedangMengedit {
                     Button(role: .destructive) {
                         konfirmasiHapus = true
@@ -384,7 +288,7 @@ struct HalamanTambahResep: View {
             }
         }
     }
-    
+
     private func cardSection<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading) {
             content()
@@ -394,7 +298,7 @@ struct HalamanTambahResep: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
     }
-    
+
     private func simpan() {
         do {
             try viewModel.simpan(context: modelContext)
@@ -403,7 +307,7 @@ struct HalamanTambahResep: View {
             gagalMenyimpan = true
         }
     }
-    
+
     private func hapus() {
         do {
             try viewModel.hapus(context: modelContext)
@@ -412,11 +316,6 @@ struct HalamanTambahResep: View {
             gagalMenghapus = true
         }
     }
-    
-    // @ToolbarContentBuilder
-    // private var toolbarForm: some ToolbarContent {
-    //     ToolbarItem(placement: .cancellationAction) {
-    //         Button(role: .close) { dismiss() }
 }
 
 // MARK: - Helper Subviews
@@ -425,9 +324,9 @@ private struct OliveCapsuleButton: View {
     let title: String
     var systemImage: String? = nil
     let action: () -> Void
-    
-    private let oliveGreen = Color(red: 0.35, green: 0.42, blue: 0.25)
-    
+
+    private let oliveGreen = Color("oliveGreen")
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
@@ -449,8 +348,8 @@ private struct OliveCapsuleButton: View {
 private struct PilihWarnaButton: View {
     @Binding var selectedColor: Color?
     @State private var pickerColor: Color = .blue
-    private let oliveGreen = Color(red: 0.35, green: 0.42, blue: 0.25)
-    
+    private let oliveGreen = Color("oliveGreen")
+
     var body: some View {
         ZStack {
             Text("Pilih Warna")
@@ -461,7 +360,7 @@ private struct PilihWarnaButton: View {
                 .background(
                     Capsule().stroke(oliveGreen, lineWidth: 1.5)
                 )
-            
+
             ColorPicker("", selection: $pickerColor, supportsOpacity: false)
                 .labelsHidden()
                 .scaleEffect(x: 15, y: 2)
@@ -483,7 +382,7 @@ private struct BahanRowView: View {
     let pilihan: [String]
     let titleColor: Color
     let onHapus: () -> Void
-    
+
     var body: some View {
         HStack {
             Menu {
@@ -510,9 +409,9 @@ private struct BahanRowView: View {
                         .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                 )
             }
-            
+
             Spacer()
-            
+
             HStack(spacing: 6) {
                 TextField("0", value: $item.gram, format: .number)
                     .keyboardType(.numberPad)
@@ -523,20 +422,21 @@ private struct BahanRowView: View {
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                     )
-                
+
                 Text("gr")
                     .font(.system(size: 14))
                     .foregroundStyle(titleColor)
+
+                Button(action: onHapus) {
+                    Image(systemName: "minus.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.red.opacity(0.7))
+                }
+                .padding(.leading, 4)
             }
         }
     }
 }
-
-// #Preview {
-//     Color.clear
-//         .sheet(isPresented: .constant(true)) {
-//             HalamanTambahResep()
-//         }
 
 // MARK: - Previews
 

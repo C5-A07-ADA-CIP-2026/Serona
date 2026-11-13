@@ -5,14 +5,12 @@
 //  Created by Steffany Florence on 10/11/26.
 //
 
-
 import SwiftUI
 
 struct BakCardView: View {
     let proyek: Proyek
     var viewModel: ProyekDetailViewModel?
 
-    // Checks live sensor issues OR the sample name condition
     var hasQualityAlert: Bool {
         let isLiveAlert = (viewModel?.qualityAlert != nil || viewModel?.currentIssue != nil)
         let isSampleAlert = (proyek.status == .aktif && proyek.nama.contains("Merah Ungu"))
@@ -33,12 +31,10 @@ struct BakCardView: View {
         return "12"
     }
 
-    // Colors matching
     private let titleColor = Color("titleColor")
-    // private let titleColor = Color(red: 0.38, green: 0.15, blue: 0.15)
+    private let oliveGreen = Color("oliveGreen")
     private let alertRed = Color(red: 0.98, green: 0.28, blue: 0.28)
     private let tileBackground = Color(red: 0.95, green: 0.96, blue: 0.93)
-    private let oliveGreen = Color(red: 0.35, green: 0.42, blue: 0.25)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -113,15 +109,13 @@ struct BakCardView: View {
 
 #Preview("Bak Card - Single States", traits: .landscapeLeft) {
     ZStack {
-        Color(red: 0.98, green: 0.97, blue: 0.93)
+        Color("backgroundColor")
             .ignoresSafeArea()
 
         HStack(alignment: .top, spacing: 20) {
-            // Alert State Card
             BakCardView(proyek: .previewAlertSample)
                 .frame(width: 320)
 
-            // Normal State Card
             BakCardView(proyek: .previewNormalSample)
                 .frame(width: 320)
         }
@@ -131,7 +125,7 @@ struct BakCardView: View {
 
 #Preview("Bak Cards Grid (iPad Layout)", traits: .landscapeLeft) {
     ZStack {
-        Color(red: 0.98, green: 0.97, blue: 0.93)
+        Color("backgroundColor")
             .ignoresSafeArea()
 
         LazyVGrid(

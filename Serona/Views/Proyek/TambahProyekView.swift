@@ -14,13 +14,11 @@ struct TambahProyekView: View {
     @State private var isShowingPilihResep = false
     @FocusState private var isNamaFocused: Bool
 
-    // Callback triggered when a new project is saved to immediately start scanning
     var onProyekCreated: ((Proyek) -> Void)?
 
-    // Color Palette
-    private let titleColor = Color(red: 0.38, green: 0.15, blue: 0.15)
-    private let oliveGreen = Color(red: 0.35, green: 0.42, blue: 0.25)
-    private let sheetBg = Color(red: 0.98, green: 0.97, blue: 0.93)
+    private let titleColor = Color("titleColor")
+    private let oliveGreen = Color("oliveGreen")
+    private let backgroundColor = Color("backgroundColor")
     private let tileBackground = Color(red: 0.95, green: 0.96, blue: 0.93)
 
     init(
@@ -32,12 +30,7 @@ struct TambahProyekView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Modal Header Bar (X left, Title center, ✓ right)
-            modalHeaderBar
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
-
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
                     namaAndAirCard
@@ -51,87 +44,48 @@ struct TambahProyekView: View {
                 .padding(20)
             }
             .scrollDismissesKeyboard(.interactively)
-            // .navigationTitle("Tambahkan Proyek")
-            // .navigationBarTitleDisplayMode(.inline)
-            // .toolbar {
-            //     ToolbarItem(placement: .cancellationAction) {
-            //         Button(role: .close) {
-            //             dismiss()
-            //         }
-            //     }
-            //     ToolbarItem(placement: .confirmationAction) {
-            //         Button {
-            //             if viewModel.simpan(in: modelContext) != nil {
-            //                 dismiss()
-            //             }
-            //         } label: {
-            //             Label("Simpan Proyek", systemImage: "arrow.up")
-            //         }
-            //         .buttonStyle(.borderedProminent)
-            //         .disabled(!viewModel.canSubmit)
-            //     }
-            // }
-        }
-        .background(sheetBg.ignoresSafeArea())
-        .task { isNamaFocused = true }
-        .sheet(isPresented: $isShowingDeviceList) {
-            DeviceListSheetView(
-                onConnected: { viewModel.pilihPerangkat($0) },
-                onDisconnected: { _ in Task { await viewModel.hapusPerangkat() } }
-            )
-        }
-        .sheet(isPresented: $isShowingPilihResep) {
-            PilihResepSheetView { viewModel.pilihResep($0) }
-        }
-        .alert(
-            "Gagal menyimpan proyek",
-            isPresented: saveErrorIsPresented,
-            presenting: viewModel.saveError
-        ) { _ in
-            Button("Tutup", role: .cancel) {}
-        } message: { error in
-            Text(error)
-        }
-    }
-
-    // MARK: - Header Bar
-
-    private var modalHeaderBar: some View {
-        HStack {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color.black.opacity(0.7))
-                    .frame(width: 36, height: 36)
-                    .background(Color.black.opacity(0.08))
-                    .clipShape(Circle())
-            }
-
-            Spacer()
-
-            Text("Tambah Proyek")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(titleColor)
-
-            Spacer()
-
-            Button {
-                // Save project and trigger automatic scan via callback
-                if let newProyek = viewModel.simpan(in: modelContext) {
-                    onProyekCreated?(newProyek)
-                    dismiss()
+            .background(backgroundColor.ignoresSafeArea())
+            .navigationTitle("Tambah Proyek")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .close) {
+                        dismiss()
+                    }
                 }
-            } label: {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(viewModel.canSubmit ? oliveGreen : Color.gray.opacity(0.5))
-                    .clipShape(Circle())
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        if let newProyek = viewModel.simpan(in: modelContext) {
+                            onProyekCreated?(newProyek)
+                            dismiss()
+                        }
+                    } label: {
+                        Label("Simpan Proyek", systemImage: "checkmark")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(oliveGreen)
+                    .disabled(!viewModel.canSubmit)
+                }
             }
-            .disabled(!viewModel.canSubmit)
+            .task { isNamaFocused = true }
+            .sheet(isPresented: $isShowingDeviceList) {
+                DeviceListSheetView(
+                    onConnected: { viewModel.pilihPerangkat($0) },
+                    onDisconnected: { _ in Task { await viewModel.hapusPerangkat() } }
+                )
+            }
+            .sheet(isPresented: $isShowingPilihResep) {
+                PilihResepSheetView { viewModel.pilihResep($0) }
+            }
+            .alert(
+                "Gagal menyimpan proyek",
+                isPresented: saveErrorIsPresented,
+                presenting: viewModel.saveError
+            ) { _ in
+                Button("Tutup", role: .cancel) {}
+            } message: { error in
+                Text(error)
+            }
         }
     }
 

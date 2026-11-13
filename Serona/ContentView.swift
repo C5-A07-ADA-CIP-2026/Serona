@@ -10,8 +10,8 @@ import SwiftUI
 struct ContentView: View {
     
     enum HeaderTab: String, CaseIterable {
-        case proyek = "Proyek"
-        case resep = "Resep"
+        case proyek = "Bak Warna"
+        case resep = "Resep Warna"
     }
     
     @State private var selectedTab: HeaderTab = .proyek
@@ -71,7 +71,7 @@ struct ContentView: View {
             ForEach(HeaderTab.allCases, id: \.self) { tab in
                 tabButton(for: tab)
             }
-            searchButton
+//            searchButton
         }
         .padding(4)
         .background(pillBackground)
@@ -101,17 +101,17 @@ struct ContentView: View {
         }
     }
 
-    private var searchButton: some View {
-        Button {
-            isSearching.toggle()
-        } label: {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(titleColor.opacity(0.8))
-                .frame(width: 36, height: 36)
-        }
-        .padding(.trailing, 4)
-    }
+//    private var searchButton: some View {
+//        Button {
+//            isSearching.toggle()
+//        } label: {
+//            Image(systemName: "magnifyingglass")
+//                .font(.system(size: 16, weight: .semibold))
+//                .foregroundStyle(titleColor.opacity(0.8))
+//                .frame(width: 36, height: 36)
+//        }
+//        .padding(.trailing, 4)
+//    }
 
     private var addButton: some View {
         Button {
@@ -132,6 +132,6 @@ struct ContentView: View {
     }
 }
 
-#Preview {
+#Preview(traits: .landscapeLeft) {
     ContentView()
 }
