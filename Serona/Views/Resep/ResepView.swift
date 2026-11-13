@@ -22,9 +22,8 @@ struct ResepView: View {
 
     var body: some View {
         ZStack {
-            backgroundColor
-                .ignoresSafeArea()
-
+            BackgroundGradient()
+            
             GeometryReader { geometry in
                 let isLandscape = geometry.size.width > geometry.size.height
                 let columnsCount = isLandscape ? 5 : 3

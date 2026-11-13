@@ -109,8 +109,7 @@ struct BakCardView: View {
 
 #Preview("Bak Card - Single States", traits: .landscapeLeft) {
     ZStack {
-        Color("backgroundColor")
-            .ignoresSafeArea()
+        BackgroundGradient()
 
         HStack(alignment: .top, spacing: 20) {
             BakCardView(proyek: .previewAlertSample)

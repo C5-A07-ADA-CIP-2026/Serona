@@ -39,7 +39,7 @@ struct HalamanTambahResep: View {
                 }
                 .padding(20)
             }
-            .background(backgroundColor.ignoresSafeArea())
+            .background(Color.white)
             .navigationTitle(viewModel.sedangMengedit ? viewModel.namaWarna : "Tambah Warna")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.visible, for: .navigationBar)

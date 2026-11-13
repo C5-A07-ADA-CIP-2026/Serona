@@ -44,7 +44,7 @@ struct TambahProyekView: View {
                 .padding(20)
             }
             .scrollDismissesKeyboard(.interactively)
-            .background(backgroundColor.ignoresSafeArea())
+            .background(Color.white)
             .navigationTitle("Tambah Proyek")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

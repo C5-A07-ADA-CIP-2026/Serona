@@ -31,7 +31,7 @@ struct ContentView: View {
                 content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .background(backgroundColor.ignoresSafeArea())
+            .background(BackgroundGradient())
             .toolbar(.hidden, for: .navigationBar)
         }
         .sheet(isPresented: $isShowingTambah) {
