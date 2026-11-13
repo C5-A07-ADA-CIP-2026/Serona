@@ -426,13 +426,6 @@ private struct BahanRowView: View {
                 Text("gr")
                     .font(.system(size: 14))
                     .foregroundStyle(titleColor)
-
-                Button(action: onHapus) {
-                    Image(systemName: "minus.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundStyle(.red.opacity(0.7))
-                }
-                .padding(.leading, 4)
             }
         }
     }
