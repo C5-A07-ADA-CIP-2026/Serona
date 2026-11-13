@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
     
@@ -15,13 +16,11 @@ struct ContentView: View {
     }
     
     @State private var selectedTab: HeaderTab = .proyek
-    @State private var isSearching = false
+//    @State private var isSearching = false
     @State private var isShowingTambah = false
     
-    // Ganti dengan warna kamu (atau dari asset)
     private let oliveGreen = Color("oliveGreen")
     private let titleColor = Color("titleColor")
-    private let backgroundColor = Color("backgroundColor")
     
     var body: some View {
         NavigationStack {
@@ -39,8 +38,7 @@ struct ContentView: View {
             case .proyek:
                 TambahProyekView()
             case .resep:
-                HalamanTambahResep()
-                
+                HalamanTambahResep(tampilSebagaiSheet: true)
             }
         }
     }
@@ -134,4 +132,5 @@ struct ContentView: View {
 
 #Preview(traits: .landscapeLeft) {
     ContentView()
+        .modelContainer(for: SeronaSchema.models, inMemory: true)
 }

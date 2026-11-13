@@ -62,8 +62,8 @@ struct HalamanTambahResep: View {
             }
             .onAppear {
                 if !viewModel.sedangMengedit {
-                    if viewModel.kepekatan == nil { viewModel.kepekatan = 80 }
-                    if viewModel.batasPH == nil { viewModel.batasPH = 7 }
+                    if viewModel.kepekatan == nil { viewModel.kepekatan = 90 }
+                    if viewModel.batasPH == nil { viewModel.batasPH = 11 }
                 }
             }
             .alert("Gagal menyimpan", isPresented: $gagalMenyimpan) {
