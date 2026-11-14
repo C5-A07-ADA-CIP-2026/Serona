@@ -14,6 +14,7 @@ struct PengukuranSectionView: View {
     /// Opens the repair guide for what is below its limit; the banner calls it.
     var onPerbaiki: (QualityIssue) -> Void = { _ in }
     @Environment(\.modelContext) private var modelContext
+    @State private var successFeedbackTrigger = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -35,8 +36,7 @@ struct PengukuranSectionView: View {
                 LarutanMenurunBanner { onPerbaiki(issue) }
             }
         }
-        .sensoryFeedback(.success, trigger: viewModel.isInitialColorSet) { _, isSet in isSet }
-        .sensoryFeedback(.success, trigger: viewModel.isInitialPHSet) { _, isSet in isSet }
+        .sensoryFeedback(.success, trigger: successFeedbackTrigger)
     }
 
     @ViewBuilder
@@ -48,7 +48,11 @@ struct PengukuranSectionView: View {
                 nilai: measurement.value,
                 isSet: viewModel.isInitialColorSet,
                 canSet: viewModel.canSetInitialColor,
-                onSet: { umumkan("Warna awal ditetapkan", jika: viewModel.tetapkanWarnaAwal(in: modelContext)) },
+                onSet: {
+                    let berhasil = viewModel.tetapkanWarnaAwal(in: modelContext)
+                    if berhasil { successFeedbackTrigger += 1 }
+                    umumkan("Warna awal ditetapkan", jika: berhasil)
+                },
                 onReset: { viewModel.ukurUlangWarnaAwal(in: modelContext) }
             )
         case "initial-water-ph":

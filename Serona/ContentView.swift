@@ -58,7 +58,7 @@ struct ContentView: View {
             Spacer()
             segmentedPill
             Spacer()
-            addButton
+//            addButton
         }
         .padding(.horizontal, 24)
         .padding(.top, 12)
@@ -114,19 +114,19 @@ struct ContentView: View {
 //        .padding(.trailing, 4)
 //    }
 
-    private var addButton: some View {
-        Button {
-            isShowingTambah = true
-        } label: {
-            Image(systemName: "plus")
-                .font(.title3.bold())
-                .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
-                .background(oliveGreen)
-                .clipShape(Circle())
-                .shadow(color: oliveGreen.opacity(0.3), radius: 4, x: 0, y: 2)
-        }
-    }
+//    private var addButton: some View {
+//        Button {
+//            isShowingTambah = true
+//        } label: {
+//            Image(systemName: "plus")
+//                .font(.title3.bold())
+//                .foregroundStyle(.white)
+//                .frame(width: 44, height: 44)
+//                .background(oliveGreen)
+//                .clipShape(Circle())
+//                .shadow(color: oliveGreen.opacity(0.3), radius: 4, x: 0, y: 2)
+//        }
+//    }
 
     private var pillBackground: Color {
         Color(red: 0.94, green: 0.93, blue: 0.88)

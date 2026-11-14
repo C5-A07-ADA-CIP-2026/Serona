@@ -206,12 +206,12 @@ struct SimulatedDeviceConnectionService: DeviceConnectionService {
     }
 
     func readInitialColorMeasurement() async throws -> ColorMeasurement {
-        ColorMeasurement(visibleAverage: 1000, clear: 1000, nir: 100)
+        ColorMeasurement(visibleAverage: 100, clear: 100, nir: 100)
     }
 
     func measurementUpdates() -> AsyncStream<ColorMeasurement> {
         AsyncStream { continuation in
-            continuation.yield(ColorMeasurement(visibleAverage: 1000, clear: 1000, nir: 100))
+            continuation.yield(ColorMeasurement(visibleAverage: 100, clear: 100, nir: 100))
         }
     }
 }

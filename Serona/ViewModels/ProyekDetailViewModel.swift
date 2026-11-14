@@ -9,6 +9,9 @@ import Foundation
 /// Scans the color of one project and finishes it. The limits come from the project, not from the recipe it copied.
 @MainActor
 final class ProyekDetailViewModel: ObservableObject {
+    static let defaultConcentrationLimit: Double = 90
+    static let defaultWaterPHLimit: Double = 11
+    
     let proyek: Proyek
 
     @Published private(set) var measurements: ProyekColorMeasurements
@@ -21,8 +24,8 @@ final class ProyekDetailViewModel: ObservableObject {
     @Published private(set) var saveError: String?
 
     /// Latest streamed readings (concentration in percent of the baseline), kept for finishing the project.
-    private(set) var latestConcentration: Double?
-    private(set) var latestWaterPH: Double?
+    @Published private(set) var latestConcentration: Double?
+    @Published private(set) var latestWaterPH: Double?
 
     private let service: any ColorMeasurementSource
     private var measurementTask: Task<Void, Never>?
@@ -37,8 +40,8 @@ final class ProyekDetailViewModel: ObservableObject {
         self.proyek = proyek
         self.service = service ?? DeviceConnectionServices.default
         measurements = ProyekColorMeasurements(
-            colorConcentrationLimit: proyek.batasKepekatan,
-            waterPHLimit: proyek.batasPH
+            colorConcentrationLimit: Self.defaultConcentrationLimit,
+            waterPHLimit: Self.defaultWaterPHLimit
         )
         // A project whose initial color was already set is picked up where it was left.
         if proyek.status == .aktif, let baseline = proyek.visibleAverageAwal {
@@ -119,6 +122,7 @@ final class ProyekDetailViewModel: ObservableObject {
         warningTracker.reset()
         measurements = makeMeasurements()
         isDataScanned = true
+        updateCurrentColorMeasurement(initial)
         startStreaming()
     }
 
@@ -152,6 +156,9 @@ final class ProyekDetailViewModel: ObservableObject {
         } else if let baseline = initialVisibleAverage, baseline > 0 {
             updated = updated.withCurrentConcentration(measurement, relativeTo: baseline)
             concentration = measurement.concentration(relativeTo: baseline)
+        } else if measurement.visibleAverage > 0 {
+            updated = updated.withCurrentConcentration(percent: measurement.visibleAverage)
+            concentration = measurement.visibleAverage
         }
         measurements = updated
 
@@ -278,6 +285,15 @@ final class ProyekDetailViewModel: ObservableObject {
         guard waterPHWarning != nil else { return }
         waterPHWarning = nil
     }
+    
+    private func makeMeasurements() -> ProyekColorMeasurements {
+        ProyekColorMeasurements(
+            colorConcentrationLimit: Self.defaultConcentrationLimit,
+            waterPHLimit: Self.defaultWaterPHLimit,
+            initialWaterPH: proyek.phAwal
+        )
+        .withInitialConcentration(isSet: proyek.visibleAverageAwal != nil)
+    }
 }
 
 // MARK: Initial color and pH
@@ -389,12 +405,12 @@ extension ProyekDetailViewModel {
     }
 
     /// The rows for the project's saved initial values; those not set yet show as unknown.
-    private func makeMeasurements() -> ProyekColorMeasurements {
-        ProyekColorMeasurements(
-            colorConcentrationLimit: proyek.batasKepekatan,
-            waterPHLimit: proyek.batasPH,
-            initialWaterPH: proyek.phAwal
-        )
-        .withInitialConcentration(isSet: proyek.visibleAverageAwal != nil)
-    }
+//    private func makeMeasurements() -> ProyekColorMeasurements {
+//        ProyekColorMeasurements(
+//            colorConcentrationLimit: proyek.batasKepekatan,
+//            waterPHLimit: proyek.batasPH,
+//            initialWaterPH: proyek.phAwal
+//        )
+//        .withInitialConcentration(isSet: proyek.visibleAverageAwal != nil)
+//    }
 }
