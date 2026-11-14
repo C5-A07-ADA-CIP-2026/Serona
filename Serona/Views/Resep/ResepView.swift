@@ -15,6 +15,7 @@ struct ResepView: View {
     private var hasilCari: [Resep] {
         daftar.cari(teksCari)
     }
+    @State private var resepDipilih: Resep?
 
     private let backgroundColor = Color("backgroundColor")
     private let titleColor = Color("titleColor")
@@ -45,7 +46,9 @@ struct ResepView: View {
                         } else {
                             LazyVGrid(columns: gridColumns, spacing: 16) {
                                 ForEach(hasilCari) { resep in
-                                    NavigationLink(value: resep) {
+                                    Button {
+                                        resepDipilih = resep
+                                    } label: {
                                         WarnaCardView(resep: resep)
                                     }
                                     .buttonStyle(.plain)
@@ -58,26 +61,18 @@ struct ResepView: View {
                 }
             }
         }
-        .navigationDestination(for: Resep.self) { resep in
-            HalamanTambahResep(resep: resep)
+        .sheet(item: $resepDipilih) { resep in
+            HalamanTambahResep(resep: resep, tampilSebagaiSheet: true)
         }
     }
 
     private var emptyState: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "book")
-                .font(.title)
-                .foregroundStyle(.secondary)
-
-            Text("Belum ada warna")
-                .font(.title)
-
-            Text("Tekan + untuk menambah warna")
-                .font(.body)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.top, 60)
+        ContentUnavailableView(
+            "Belum ada warna",
+            systemImage: "book",
+            description: Text("Tekan + untuk menambah warna.")
+        )
+        .padding(.top, 40)
     }
 }
 
