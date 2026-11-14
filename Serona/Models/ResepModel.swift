@@ -11,7 +11,7 @@ import SwiftData
 @Model
 class Resep {
     var namaWarna: String
-    var warnaHex: String
+    var warnaHex: String?
     var air: Int
     var kepekatan: Double
     var batasPH: Double
@@ -21,7 +21,7 @@ class Resep {
     @Relationship(deleteRule: .nullify, inverse: \Proyek.resep) var proyekTersimpan: [Proyek] = []
 
     // swiftlint:disable opening_brace
-    init(namaWarna: String, warnaHex: String,
+    init(namaWarna: String, warnaHex: String? = nil,
          air: Int, kepekatan: Double, batasPH: Double,
          pewarna: [Bahan] = [], zatPembantu: [Bahan] = [], dibuat: Date = .now)
     {

@@ -219,8 +219,7 @@ struct TambahProyekView: View {
                             .foregroundStyle(Color.gray)
 
                         ZStack(alignment: .trailing) {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(hex: resep.warnaHex))
+                            WarnaKotak(hex: resep.warnaHex, cornerRadius: 12, iconSize: 22)
                                 .frame(height: 50)
 
                             Button {

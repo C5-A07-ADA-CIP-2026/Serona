@@ -29,6 +29,11 @@ extension Color {
 
         self.init(red: red, green: green, blue: blue)
     }
+    
+    init?(hex: String?) {
+           guard let hex, !hex.isEmpty else { return nil }
+           self.init(hex: hex)
+       }
 
     /// `#RRGGBB` (huruf besar) dari warna ini di color space sRGB.
     ///

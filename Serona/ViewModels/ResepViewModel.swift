@@ -35,7 +35,7 @@ final class FormResepViewModel {
 
     var formLengkap: Bool {
         namaWarna.tidakKosong
-            && warnaDipilih != nil
+//            && warnaDipilih != nil
             && (ukuranAir ?? 0) > 0
             && (kepekatan ?? 0) > 0
             && (batasPH ?? 0) > 0
@@ -47,7 +47,7 @@ final class FormResepViewModel {
     var adaPerubahan: Bool {
         guard let asli = resepAsli, !asli.isDeleted else { return false }
         return namaWarna != asli.namaWarna
-            || warnaDipilih?.hexString != asli.warnaHex
+//            || warnaDipilih?.hexString != asli.warnaHex
             || ukuranAir != asli.air
             || kepekatan != asli.kepekatan
             || batasPH != asli.batasPH
@@ -66,7 +66,7 @@ final class FormResepViewModel {
     init(resep: Resep) {
         resepAsli = resep
         namaWarna = resep.namaWarna
-        warnaDipilih = Color(hex: resep.warnaHex)
+//        warnaDipilih = Color(hex: resep.warnaHex)
         ukuranAir = resep.air
         kepekatan = resep.kepekatan
         batasPH = resep.batasPH
@@ -77,7 +77,7 @@ final class FormResepViewModel {
     /// Menyimpan form sebagai `Resep` baru. Tidak melakukan apa pun bila form belum lengkap.
     func simpan(context: some ModelPersisting) throws {
         guard formLengkap,
-              let warna = warnaDipilih,
+//              let warna = warnaDipilih,
               let air = ukuranAir,
               let kepekatan,
               let batasPH
@@ -85,7 +85,7 @@ final class FormResepViewModel {
 
         if let resep = resepAsli {
             resep.namaWarna = namaWarna
-            resep.warnaHex = warna.hexString
+//            resep.warnaHex = warna.hexString
             resep.air = air
             resep.kepekatan = kepekatan
             resep.batasPH = batasPH
@@ -95,7 +95,7 @@ final class FormResepViewModel {
         } else {
             let resep = Resep(
                 namaWarna: namaWarna,
-                warnaHex: warna.hexString,
+                warnaHex: nil,
                 air: air,
                 kepekatan: kepekatan,
                 batasPH: batasPH,

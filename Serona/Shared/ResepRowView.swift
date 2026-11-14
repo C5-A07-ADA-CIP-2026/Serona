@@ -10,8 +10,7 @@ struct ResepRowView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(hex: resep.warnaHex))
+            WarnaKotak(hex: resep.warnaHex, cornerRadius: 12, iconSize: 44)
                 .aspectRatio(1, contentMode: .fit)
 
             Text(resep.namaWarna)

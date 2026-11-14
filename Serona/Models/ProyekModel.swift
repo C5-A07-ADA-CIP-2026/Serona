@@ -23,7 +23,7 @@ final class Proyek {
     var airTersimpan: Int?
     var tanggal: Date
     var namaWarna: String
-    var warnaHex: String
+    var warnaHex: String?
     var batasKepekatan: Double
     var batasPH: Double
     var jumlahKain: Int

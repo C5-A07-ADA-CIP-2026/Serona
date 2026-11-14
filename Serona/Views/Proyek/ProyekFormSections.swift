@@ -61,7 +61,7 @@ struct PerangkatBaris: View {
 /// The color of a recipe as a swatch with its name, and an optional button to remove it.
 struct WarnaSwatchView: View {
     let namaWarna: String
-    let warnaHex: String
+    let warnaHex: String?
     var onHapus: (() -> Void)?
 
     var body: some View {
@@ -69,8 +69,7 @@ struct WarnaSwatchView: View {
             Text(namaWarna)
                 .font(.headline)
 
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(hex: warnaHex))
+            WarnaKotak(hex: warnaHex, cornerRadius: 10, iconSize: 28)
                 .frame(maxWidth: .infinity)
                 .frame(height: 80)
                 .overlay(alignment: .topTrailing) {

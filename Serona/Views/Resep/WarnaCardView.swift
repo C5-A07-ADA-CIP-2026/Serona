@@ -22,36 +22,17 @@ struct WarnaCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if isUsedInBak {
-                // Color Swatch Block
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color(hex: resep.warnaHex))
-                    .frame(height: 160)
-            } else {
-                // Placeholder Image Block for Unused Colors
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(tileBackground)
-                        .frame(height: 160)
-
-                    Image(systemName: "photo.badge.exclamationmark")
-                        .font(.system(size: 44))
-                        .foregroundStyle(Color.gray.opacity(0.5))
-                }
-            }
+            WarnaKotak(
+                hex: isUsedInBak ? resep.warnaHex : nil,
+                cornerRadius: 14,
+                iconSize: 44
+            )
+            .aspectRatio(1, contentMode: .fit)
 
             // Recipe Color Name
             Text(resep.namaWarna)
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(titleColor)
-
-            // Subtitle Note for Unused Colors
-            if !isUsedInBak {
-                Text("*warna akan muncul ketika sudah dipakai pada bak warna")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Color.gray.opacity(0.8))
-                    .lineLimit(2)
-            }
         }
         .padding(14)
         .background(Color.white)
