@@ -33,12 +33,12 @@ struct HalamanTambahResep: View {
             ScrollView {
                 VStack(spacing: 16) {
                     namaWarnaCard
-//                    warnaSelectionCard
                     resepWarnaCard
                     batasCard
                 }
-                .padding(20)
+                .padding()
             }
+            .scrollDismissesKeyboard(.interactively)
             .background(Color.white)
             .navigationTitle(viewModel.sedangMengedit ? viewModel.namaWarna : "Tambah Warna")
             .navigationBarTitleDisplayMode(.inline)
@@ -91,62 +91,11 @@ struct HalamanTambahResep: View {
                     .foregroundStyle(titleColor)
 
                 TextField("Cth: Merah Marun", text: $viewModel.namaWarna)
-                    .padding(12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                    )
+                    .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled()
             }
         }
     }
-
-//    private var warnaSelectionCard: some View {
-//        cardSection {
-//            VStack(alignment: .leading, spacing: 10) {
-//                Text("Warna")
-//                    .font(.system(size: 16, weight: .bold))
-//                    .foregroundStyle(titleColor)
-//
-//                if let warna = viewModel.warnaDipilih {
-//                    VStack(alignment: .leading, spacing: 6) {
-//                        if !viewModel.namaWarna.isEmpty {
-//                            Text(viewModel.namaWarna)
-//                                .font(.system(size: 14, weight: .semibold))
-//                                .italic()
-//                                .foregroundStyle(Color.gray)
-//                        }
-//
-//                        ZStack(alignment: .trailing) {
-//                            RoundedRectangle(cornerRadius: 12)
-//                                .fill(warna)
-//                                .frame(height: 50)
-//
-//                            Button {
-//                                withAnimation {
-//                                    viewModel.warnaDipilih = nil
-//                                }
-//                            } label: {
-//                                Image(systemName: "xmark.circle.fill")
-//                                    .font(.system(size: 18))
-//                                    .foregroundStyle(.white)
-//                            }
-//                            .padding(.trailing, 12)
-//                        }
-//                    }
-//                } else {
-//                    HStack(spacing: 12) {
-//                        OliveCapsuleButton(title: "Scan Warna") {
-//                            withAnimation {
-//                                viewModel.warnaDipilih = Color(hex: "#C0533E")
-//                            }
-//                        }
-//
-//                        PilihWarnaButton(selectedColor: $viewModel.warnaDipilih)
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     private var resepWarnaCard: some View {
         cardSection {
@@ -157,13 +106,9 @@ struct HalamanTambahResep: View {
 
                 // Pewarna Subsection
                 VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "cylinder.split.1x2")
-                            .foregroundStyle(titleColor)
-                        Text("Kode Pewarna Naphtol")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(titleColor)
-                    }
+                    Label("Kode Pewarna Naphtol", systemImage: "cylinder.split.1x2")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(titleColor)
 
                     ForEach($viewModel.pewarna) { $item in
                         BahanRowView(
@@ -188,25 +133,18 @@ struct HalamanTambahResep: View {
 
                 // Air Subsection
                 HStack {
-                    Image(systemName: "drop.fill")
-                        .foregroundStyle(titleColor)
-
-                    Text("Air")
+                    Label("Air", systemImage: "drop.fill")
                         .font(.subheadline.bold())
                         .foregroundStyle(titleColor)
 
                     Spacer()
 
-                    HStack(spacing: 15) {
+                    HStack(spacing: 12) {
                         TextField("0", value: $viewModel.ukuranAir, format: .number)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.center)
-                            .frame(width: 80)
-                            .padding(.vertical, 6)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 88)
 
                         Text("L")
                             .font(.subheadline)
@@ -218,13 +156,9 @@ struct HalamanTambahResep: View {
 
                 // Zat Pembantu Subsection
                 VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "cylinder.split.1x2")
-                            .foregroundStyle(titleColor)
-                        Text("Zat Pembantu")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(titleColor)
-                    }
+                    Label("Zat Pembantu", systemImage: "cylinder.split.1x2")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(titleColor)
 
                     ForEach($viewModel.zatPembantu) { $item in
                         BahanRowView(
@@ -280,7 +214,6 @@ struct HalamanTambahResep: View {
                         konfirmasiHapus = true
                     } label: {
                         Label("Hapus Warna", systemImage: "trash")
-                            .frame(height: 44)
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
@@ -295,9 +228,8 @@ struct HalamanTambahResep: View {
         VStack(alignment: .leading) {
             content()
         }
-        .padding(16)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding()
+        .background(Color.white, in: .rect(cornerRadius: 16, style: .continuous))
         .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
     }
 
@@ -318,7 +250,7 @@ struct HalamanTambahResep: View {
             gagalMenghapus = true
         }
     }
-    
+
     private func barisLengkap(_ daftar: [BahanInput]) -> Bool {
         daftar.allSatisfy { !$0.kode.isEmpty && ($0.gram ?? 0) > 0 }
     }
@@ -336,51 +268,20 @@ private struct OliveCapsuleButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            Group {
                 if let systemImage {
-                    Image(systemName: systemImage)
+                    Label(title, systemImage: systemImage)
+                } else {
+                    Text(title)
                 }
-                Text(title)
             }
             .font(.subheadline.weight(.semibold))
-            .foregroundStyle(.white)
-            .frame(height: 44)
             .frame(maxWidth: .infinity)
-            .background(isEnabled ? oliveGreen : Color.gray.opacity(0.4))
-            .clipShape(Capsule())
         }
-    }
-}
-
-private struct PilihWarnaButton: View {
-    @Binding var selectedColor: Color?
-    @State private var pickerColor: Color = .blue
-    private let oliveGreen = Color("oliveGreen")
-
-    var body: some View {
-        ZStack {
-            Text("Pilih Warna")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(oliveGreen)
-                .frame(height: 44)
-                .frame(maxWidth: .infinity)
-                .background(
-                    Capsule().stroke(oliveGreen, lineWidth: 1.5)
-                )
-
-            ColorPicker("", selection: $pickerColor, supportsOpacity: false)
-                .labelsHidden()
-                .scaleEffect(x: 15, y: 2)
-                .opacity(0.02)
-        }
-        .frame(height: 44)
-        .frame(maxWidth: .infinity)
-        .contentShape(Capsule())
-        .onChange(of: pickerColor) { _, newColor in
-            withAnimation {
-                selectedColor = newColor
-            }
-        }
+        .buttonStyle(.borderedProminent)
+        .buttonBorderShape(.capsule)
+        .controlSize(.large)
+        .tint(isEnabled ? oliveGreen : Color.gray.opacity(0.4))
     }
 }
 
@@ -410,9 +311,9 @@ private struct BahanRowView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .frame(width: 250)
+                .frame(maxWidth: 260)
                 .background(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                 )
             }
@@ -421,14 +322,10 @@ private struct BahanRowView: View {
 
             HStack(spacing: 10) {
                 TextField("0", value: $item.gram, format: .number)
-                    .keyboardType(.numberPad)
+                    .keyboardType(.decimalPad)
                     .multilineTextAlignment(.center)
-                    .frame(width: 80)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                    )
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 88)
 
                 Text("gr")
                     .font(.subheadline)

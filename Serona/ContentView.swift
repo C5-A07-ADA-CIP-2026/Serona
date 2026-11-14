@@ -34,12 +34,7 @@ struct ContentView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
         .sheet(isPresented: $isShowingTambah) {
-            switch selectedTab {
-            case .proyek:
-                TambahProyekView()
-            case .resep:
-                HalamanTambahResep(tampilSebagaiSheet: true)
-            }
+            HalamanTambahResep(tampilSebagaiSheet: true)
         }
     }
     
@@ -54,26 +49,28 @@ struct ContentView: View {
     }
     
     private var topHeaderBar: some View {
-        HStack {
-            Spacer()
+        ZStack {
             segmentedPill
-            Spacer()
-//            addButton
+            
+            if selectedTab == .resep {
+                HStack {
+                    Spacer()
+                    addButton
+                }
+            }
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 12)
+        .padding(.horizontal)
+        .padding(.top)
     }
-
+    
     private var segmentedPill: some View {
         HStack(spacing: 4) {
             ForEach(HeaderTab.allCases, id: \.self) { tab in
                 tabButton(for: tab)
             }
-//            searchButton
         }
         .padding(4)
-        .background(pillBackground)
-        .clipShape(Capsule())
+        .background(pillBackground, in: Capsule())
     }
 
     private func tabButton(for tab: HeaderTab) -> some View {
@@ -114,19 +111,18 @@ struct ContentView: View {
 //        .padding(.trailing, 4)
 //    }
 
-//    private var addButton: some View {
-//        Button {
-//            isShowingTambah = true
-//        } label: {
-//            Image(systemName: "plus")
-//                .font(.title3.bold())
-//                .foregroundStyle(.white)
-//                .frame(width: 44, height: 44)
-//                .background(oliveGreen)
-//                .clipShape(Circle())
-//                .shadow(color: oliveGreen.opacity(0.3), radius: 4, x: 0, y: 2)
-//        }
-//    }
+    private var addButton: some View {
+        Button("Tambah Warna", systemImage: "plus") {
+            isShowingTambah = true
+        }
+        .labelStyle(.iconOnly)
+        .font(.title3.bold())
+        .buttonStyle(.borderedProminent)
+        .buttonBorderShape(.circle)
+        .controlSize(.large)
+        .tint(oliveGreen)
+        .shadow(color: oliveGreen.opacity(0.3), radius: 4, x: 0, y: 2)
+    }
 
     private var pillBackground: Color {
         Color(red: 0.94, green: 0.93, blue: 0.88)
