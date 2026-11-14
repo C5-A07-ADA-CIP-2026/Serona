@@ -181,6 +181,7 @@ struct HalamanTambahResep: View {
                             viewModel.pewarna.append(BahanInput())
                         }
                     }
+                    .disabled(!barisLengkap(viewModel.pewarna))
                 }
 
                 Divider()
@@ -196,11 +197,11 @@ struct HalamanTambahResep: View {
 
                     Spacer()
 
-                    HStack(spacing: 6) {
+                    HStack(spacing: 15) {
                         TextField("0", value: $viewModel.ukuranAir, format: .number)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.center)
-                            .frame(width: 60)
+                            .frame(width: 80)
                             .padding(.vertical, 6)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
@@ -241,6 +242,7 @@ struct HalamanTambahResep: View {
                             viewModel.zatPembantu.append(BahanInput())
                         }
                     }
+                    .disabled(!barisLengkap(viewModel.zatPembantu))
                 }
             }
         }
@@ -316,11 +318,16 @@ struct HalamanTambahResep: View {
             gagalMenghapus = true
         }
     }
+    
+    private func barisLengkap(_ daftar: [BahanInput]) -> Bool {
+        daftar.allSatisfy { !$0.kode.isEmpty && ($0.gram ?? 0) > 0 }
+    }
 }
 
 // MARK: - Helper Subviews
 
 private struct OliveCapsuleButton: View {
+    @Environment(\.isEnabled) private var isEnabled
     let title: String
     var systemImage: String? = nil
     let action: () -> Void
@@ -339,7 +346,7 @@ private struct OliveCapsuleButton: View {
             .foregroundStyle(.white)
             .frame(height: 44)
             .frame(maxWidth: .infinity)
-            .background(oliveGreen)
+            .background(isEnabled ? oliveGreen : Color.gray.opacity(0.4))
             .clipShape(Capsule())
         }
     }
@@ -403,7 +410,7 @@ private struct BahanRowView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .frame(width: 150)
+                .frame(width: 250)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(Color.gray.opacity(0.3), lineWidth: 1)
@@ -412,11 +419,11 @@ private struct BahanRowView: View {
 
             Spacer()
 
-            HStack(spacing: 6) {
+            HStack(spacing: 10) {
                 TextField("0", value: $item.gram, format: .number)
                     .keyboardType(.numberPad)
                     .multilineTextAlignment(.center)
-                    .frame(width: 55)
+                    .frame(width: 80)
                     .padding(.vertical, 6)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
