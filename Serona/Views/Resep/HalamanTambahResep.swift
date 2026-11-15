@@ -13,9 +13,10 @@ struct HalamanTambahResep: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @State private var gagalMenyimpan = false
-    @State private var pesanGagalSimpan = ""
     @State private var gagalMenghapus = false
     @State private var konfirmasiHapus = false
+
+    @ScaledMetric(relativeTo: .body) private var sheetWidth: CGFloat = 450
 
     private let tampilSebagaiSheet: Bool
     private let titleColor = Color("titleColor")
@@ -23,215 +24,251 @@ struct HalamanTambahResep: View {
 
     init(resep: Resep? = nil, tampilSebagaiSheet: Bool = false) {
         self.tampilSebagaiSheet = tampilSebagaiSheet
-        _viewModel = State(
-            initialValue: resep.map { FormResepViewModel(resep: $0) } ?? FormResepViewModel()
-        )
+        if let resep {
+            _viewModel = State(initialValue: FormResepViewModel(resep: resep))
+        } else {
+            let vm = FormResepViewModel()
+            vm.pewarna = []
+            vm.zatPembantu = []
+            vm.kepekatan = 90
+            vm.batasPH = 11
+            _viewModel = State(initialValue: vm)
+        }
     }
 
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            headerBar
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+                .padding(.bottom, 16)
+
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 22) {
                     namaWarnaCard
-                    resepWarnaCard
-                    batasCard
+                    pewarnaSection
+                    airSection
+                    zatPembantuSection
+
+                    if viewModel.sedangMengedit {
+                        hapusButton
+                    }
                 }
-                .padding()
+                .padding(.horizontal, 24)
+                .padding(.top, 4)
+                .padding(.bottom, 28)
             }
             .scrollDismissesKeyboard(.interactively)
-            .background(Color.white)
-            .navigationTitle(viewModel.sedangMengedit ? viewModel.namaWarna : "Tambah Warna")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.visible, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .close) {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        simpan()
-                    } label: {
-                        Label("Simpan", systemImage: "checkmark")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(oliveGreen)
-                    .disabled(!viewModel.bisaSimpan)
-                }
+        }
+        .frame(width: sheetWidth)
+        .frame(minHeight: 490, maxHeight: 620)
+        .background(Color.white)
+        .presentationSizing(.fitted)
+        .presentationBackground(Color.white)
+        .presentationDragIndicator(.visible)
+        .onAppear {
+            if !viewModel.sedangMengedit {
+                if viewModel.kepekatan == nil { viewModel.kepekatan = 90 }
+                if viewModel.batasPH == nil { viewModel.batasPH = 11 }
             }
-            .onAppear {
-                if !viewModel.sedangMengedit {
-                    if viewModel.kepekatan == nil { viewModel.kepekatan = 90 }
-                    if viewModel.batasPH == nil { viewModel.batasPH = 11 }
-                }
-            }
-            .alert("Gagal menyimpan", isPresented: $gagalMenyimpan) {
-                Button("Tutup", role: .cancel) {}
-            }
-            .alert("Gagal menghapus", isPresented: $gagalMenghapus) {
-                Button("Tutup", role: .cancel) {}
-            }
-            .alert("Hapus Warna?", isPresented: $konfirmasiHapus) {
-                Button("Batal", role: .cancel) {}
-                Button("Hapus", role: .destructive) { hapus() }
-            } message: {
-                Text("Warna ini akan dihapus dari daftar. Proyek yang sudah dibuat dengan warna ini tidak terpengaruh.")
-            }
+        }
+        .alert("Gagal menyimpan", isPresented: $gagalMenyimpan) {
+            Button("Tutup", role: .cancel) {}
+        }
+        .alert("Gagal menghapus", isPresented: $gagalMenghapus) {
+            Button("Tutup", role: .cancel) {}
+        }
+        .alert("Hapus Warna?", isPresented: $konfirmasiHapus) {
+            Button("Batal", role: .cancel) {}
+            Button("Hapus", role: .destructive) { hapus() }
+        } message: {
+            Text("Warna ini akan dihapus dari daftar. Proyek yang sudah dibuat dengan warna ini tidak terpengaruh.")
         }
     }
 
-    // MARK: - Section Cards
+    // MARK: - Top Header Bar
+
+    private var headerBar: some View {
+        HStack {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+                    .frame(width: 40, height: 40)
+                    .background(Color(UIColor.systemGray5))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Tutup")
+
+            Spacer()
+
+            Text(viewModel.sedangMengedit ? viewModel.namaWarna : "Tambah Warna")
+                .font(.headline.bold())
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+
+            Spacer()
+
+            Button {
+                simpan()
+            } label: {
+                Image(systemName: "checkmark")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(viewModel.bisaSimpan ? oliveGreen : Color.gray.opacity(0.65))
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!viewModel.bisaSimpan)
+            .accessibilityLabel("Simpan Warna")
+        }
+    }
+
+    // MARK: - Sections
 
     private var namaWarnaCard: some View {
-        cardSection {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Nama Warna")
-                    .font(.headline)
-                    .foregroundStyle(titleColor)
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Nama Warna")
+                .font(.headline)
+                .foregroundStyle(.black)
 
-                TextField("Cth: Merah Marun", text: $viewModel.namaWarna)
-                    .textFieldStyle(.roundedBorder)
-                    .autocorrectionDisabled()
-            }
-        }
-    }
-
-    private var resepWarnaCard: some View {
-        cardSection {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Resep Warna")
-                    .font(.headline)
-                    .foregroundStyle(titleColor)
-
-                // Pewarna Subsection
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("Kode Pewarna Naphtol", systemImage: "cylinder.split.1x2")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(titleColor)
-
-                    ForEach($viewModel.pewarna) { $item in
-                        BahanRowView(
-                            item: $item,
-                            pilihan: viewModel.daftarPilihanPewarna,
-                            titleColor: titleColor,
-                            onHapus: {
-                                viewModel.pewarna.removeAll { $0.id == item.id }
-                            }
-                        )
-                    }
-
-                    OliveCapsuleButton(title: "Tambah Pewarna", systemImage: "plus") {
-                        withAnimation {
-                            viewModel.pewarna.append(BahanInput())
-                        }
-                    }
-                    .disabled(!barisLengkap(viewModel.pewarna))
-                }
-
-                Divider()
-
-                // Air Subsection
-                HStack {
-                    Label("Air", systemImage: "drop.fill")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(titleColor)
-
-                    Spacer()
-
-                    HStack(spacing: 12) {
-                        TextField("0", value: $viewModel.ukuranAir, format: .number)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.center)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 88)
-
-                        Text("L")
-                            .font(.subheadline)
-                            .foregroundStyle(titleColor)
-                    }
-                }
-
-                Divider()
-
-                // Zat Pembantu Subsection
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("Zat Pembantu", systemImage: "cylinder.split.1x2")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(titleColor)
-
-                    ForEach($viewModel.zatPembantu) { $item in
-                        BahanRowView(
-                            item: $item,
-                            pilihan: viewModel.daftarPilihanZatPembantu,
-                            titleColor: titleColor,
-                            onHapus: {
-                                viewModel.zatPembantu.removeAll { $0.id == item.id }
-                            }
-                        )
-                    }
-
-                    OliveCapsuleButton(title: "Tambah Zat Pembantu", systemImage: "plus") {
-                        withAnimation {
-                            viewModel.zatPembantu.append(BahanInput())
-                        }
-                    }
-                    .disabled(!barisLengkap(viewModel.zatPembantu))
-                }
-            }
-        }
-    }
-
-    private var batasCard: some View {
-        cardSection {
-            VStack(alignment: .leading, spacing: 15) {
-                Text("Batas")
-                    .font(.headline)
-                    .foregroundStyle(titleColor)
-
-                BarisBatas(
-                    label: "Kepekatan Warna (%)",
-                    nilai: $viewModel.kepekatan,
-                    rentang: 0 ... 100
+            TextField("", text: $viewModel.namaWarna)
+                .font(.subheadline)
+                .autocorrectionDisabled()
+                .padding(.horizontal, 12)
+                .frame(height: 40)
+                .background(Color.white)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Color.gray.opacity(0.25), lineWidth: 1)
                 )
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+    }
 
-                BarisBatas(
-                    label: "Batas pH",
-                    nilai: $viewModel.batasPH,
-                    rentang: 0 ... 14
+    private var pewarnaSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "cylinder.split.1x2")
+                    .font(.title3)
+                    .foregroundStyle(.primary)
+                    .frame(width: 24)
+
+                Text("Kode Pewarna Naphtol")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+            }
+
+            ForEach($viewModel.pewarna) { $item in
+                BahanRowView(
+                    item: $item,
+                    pilihan: viewModel.daftarPilihanPewarna,
+                    titleColor: titleColor
                 )
+            }
 
-                Text("""
-                Nilai ini adalah batas minimum rekomendasi dan dapat Anda ubah kapan saja. \
-                Notifikasi akan dikirim jika nilai turun di bawah batas ini
-                """)
-                .font(.caption)
-                .italic()
-                .foregroundStyle(.secondary)
-
-                if viewModel.sedangMengedit {
-                    Button(role: .destructive) {
-                        konfirmasiHapus = true
-                    } label: {
-                        Label("Hapus Warna", systemImage: "trash")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    .padding(.top, 8)
+            OliveCapsuleButton(
+                title: "Tambah Pewarna",
+                systemImage: "plus",
+                isEnabled: barisLengkap(viewModel.pewarna)
+            ) {
+                withAnimation(.snappy) {
+                    viewModel.pewarna.append(BahanInput())
                 }
             }
         }
     }
 
-    private func cardSection<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading) {
-            content()
+    private var airSection: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "drop.fill")
+                .font(.title3)
+                .foregroundStyle(.primary)
+                .frame(width: 24)
+
+            Text("Air")
+                .font(.headline)
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            HStack(spacing: 10) {
+                TextField("0", value: $viewModel.ukuranAir, format: .number)
+                    .keyboardType(.numberPad)
+                    .multilineTextAlignment(.center)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(titleColor)
+                    .monospacedDigit()
+                    .frame(width: 64, height: 38)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(Color.gray.opacity(0.25), lineWidth: 1)
+                    )
+
+                Text("L")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(titleColor)
+                    .frame(width: 20, alignment: .leading)
+            }
         }
-        .padding()
-        .background(Color.white, in: .rect(cornerRadius: 16, style: .continuous))
-        .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
     }
+
+    private var zatPembantuSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 10) {
+                Image(systemName: "cylinder.split.1x2")
+                    .font(.title3)
+                    .foregroundStyle(.primary)
+                    .frame(width: 24)
+
+                Text("Zat Pembantu")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+            }
+
+            ForEach($viewModel.zatPembantu) { $item in
+                BahanRowView(
+                    item: $item,
+                    pilihan: viewModel.daftarPilihanZatPembantu,
+                    titleColor: titleColor
+                )
+            }
+
+            OliveCapsuleButton(
+                title: "Tambah Zat Pembantu",
+                systemImage: "plus",
+                isEnabled: barisLengkap(viewModel.zatPembantu)
+            ) {
+                withAnimation(.snappy) {
+                    viewModel.zatPembantu.append(BahanInput())
+                }
+            }
+        }
+    }
+
+    private var hapusButton: some View {
+        Button(role: .destructive) {
+            konfirmasiHapus = true
+        } label: {
+            Label("Hapus Warna", systemImage: "trash")
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .frame(height: 44)
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.capsule)
+        .padding(.top, 4)
+    }
+
+    // MARK: - Actions
 
     private func simpan() {
         do {
@@ -259,29 +296,30 @@ struct HalamanTambahResep: View {
 // MARK: - Helper Subviews
 
 private struct OliveCapsuleButton: View {
-    @Environment(\.isEnabled) private var isEnabled
     let title: String
     var systemImage: String? = nil
+    var isEnabled: Bool = true
     let action: () -> Void
 
     private let oliveGreen = Color("oliveGreen")
 
     var body: some View {
         Button(action: action) {
-            Group {
+            HStack(spacing: 6) {
                 if let systemImage {
-                    Label(title, systemImage: systemImage)
-                } else {
-                    Text(title)
+                    Image(systemName: systemImage)
+                        .font(.subheadline.bold())
                 }
+                Text(title)
+                    .font(.subheadline.bold())
             }
-            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
+            .frame(height: 46)
+            .background(isEnabled ? oliveGreen : Color.gray.opacity(0.45), in: Capsule())
         }
-        .buttonStyle(.borderedProminent)
-        .buttonBorderShape(.capsule)
-        .controlSize(.large)
-        .tint(isEnabled ? oliveGreen : Color.gray.opacity(0.4))
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
     }
 }
 
@@ -289,10 +327,9 @@ private struct BahanRowView: View {
     @Binding var item: BahanInput
     let pilihan: [String]
     let titleColor: Color
-    let onHapus: () -> Void
 
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
             Menu {
                 ForEach(pilihan, id: \.self) { opsi in
                     Button(opsi) {
@@ -303,18 +340,19 @@ private struct BahanRowView: View {
                 HStack {
                     Text(item.kode.isEmpty ? "Pilih Kode" : item.kode)
                         .font(.subheadline)
-                        .foregroundStyle(item.kode.isEmpty ? Color.gray : titleColor)
+                        .foregroundStyle(item.kode.isEmpty ? Color.gray : .primary)
+                        .lineLimit(1)
                     Spacer()
                     Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption)
-                        .foregroundStyle(.gray)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.black)
                 }
                 .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .frame(maxWidth: 260)
-                .background(
+                .frame(width: 195, height: 38)
+                .background(Color.white)
+                .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.gray.opacity(0.25), lineWidth: 1)
                 )
             }
 
@@ -324,20 +362,30 @@ private struct BahanRowView: View {
                 TextField("0", value: $item.gram, format: .number)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.center)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 88)
+                    .font(.subheadline.weight(.medium))
+                    .monospacedDigit()
+                    .frame(width: 64, height: 38)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(Color.gray.opacity(0.25), lineWidth: 1)
+                    )
 
                 Text("gr")
-                    .font(.subheadline)
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(titleColor)
+                    .frame(width: 20, alignment: .leading)
             }
         }
+        .padding(.leading, 34)
     }
 }
 
 // MARK: - Previews
 
 #Preview("Tambah Warna Sheet (iPadOS)", traits: .landscapeLeft) {
-    HalamanTambahResep(tampilSebagaiSheet: true)
+    BackgroundGradient()
+        .sheet(isPresented: .constant(true)) {
+            HalamanTambahResep(tampilSebagaiSheet: true)
+        }
         .modelContainer(for: SeronaSchema.models, inMemory: true)
 }

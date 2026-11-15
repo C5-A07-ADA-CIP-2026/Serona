@@ -18,7 +18,9 @@ struct TambahProyekView: View {
 
     @ScaledMetric(relativeTo: .body) private var sheetWidth: CGFloat = 450
 
+    var existingProyek: Proyek?
     var bakTitleOverride: String?
+    var deviceService: (any DeviceConnecting)?
     var onProyekCreated: ((Proyek) -> Void)?
 
     private let oliveGreen = Color("oliveGreen")
@@ -26,16 +28,23 @@ struct TambahProyekView: View {
     private let maxBakCount = 6
 
     init(
+        existingProyek: Proyek? = nil,
         bakTitle: String? = nil,
+        deviceService: (any DeviceConnecting)? = nil,
         viewModel: TambahProyekViewModel = TambahProyekViewModel(),
         onProyekCreated: ((Proyek) -> Void)? = nil
     ) {
+        self.existingProyek = existingProyek
         self.bakTitleOverride = bakTitle
+        self.deviceService = deviceService
         _viewModel = State(wrappedValue: viewModel)
         self.onProyekCreated = onProyekCreated
     }
 
     private var resolvedBakTitle: String {
+        if let existingProyek {
+            return existingProyek.nama
+        }
         if let bakTitleOverride, !bakTitleOverride.isEmpty {
             return bakTitleOverride
         }
@@ -68,6 +77,7 @@ struct TambahProyekView: View {
         .presentationDragIndicator(.visible)
         .sheet(isPresented: $isShowingDeviceList) {
             DeviceListSheetView(
+                service: deviceService,
                 onConnected: { viewModel.pilihPerangkat($0) },
                 onDisconnected: { _ in Task { await viewModel.hapusPerangkat() } }
             )
@@ -254,10 +264,12 @@ struct TambahProyekView: View {
                     .font(.subheadline)
                     .padding(.horizontal, 12)
                     .frame(height: 40)
+                    .contentShape(Rectangle())
                     .background(Color.white)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(Color.gray.opacity(0.25), lineWidth: 1)
+                            .allowsHitTesting(false)
                     )
             }
         }
@@ -276,9 +288,11 @@ struct TambahProyekView: View {
                     .font(.subheadline.weight(.medium))
                     .monospacedDigit()
                     .frame(width: 64, height: 38)
+                    .contentShape(Rectangle())
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(Color.gray.opacity(0.25), lineWidth: 1)
+                            .allowsHitTesting(false)
                     )
                     .onChange(of: viewModel.jumlahAir) { _, newValue in
                         if newValue < 0 {
@@ -341,10 +355,37 @@ struct TambahProyekView: View {
 
     private func simpanProyek() {
         guard canSubmit, let resep = viewModel.resep else { return }
+        let trimmedPemesan = viewModel.namaPemesan.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let existingProyek {
+            existingProyek.perangkatNama = trimmedPemesan
+            existingProyek.resep = resep
+            existingProyek.jumlahKain = 1
+            existingProyek.tanggal = .now
+            existingProyek.status = .aktif
+//            existingProyek.tanggalSelesai = nil
+            existingProyek.visibleAverageAwal = nil
+            existingProyek.phAwal = nil
+            existingProyek.kepekatanAkhir = nil
+            existingProyek.phAkhir = nil
+            existingProyek.batasKepekatan = ProyekDetailViewModel.defaultConcentrationLimit
+            existingProyek.batasPH = ProyekDetailViewModel.defaultWaterPHLimit
+            existingProyek.air = viewModel.jumlahAir * 1000
+            existingProyek.rasioAirBersih = ProyekDetailViewModel.defaultCleanWaterRatios
+
+            do {
+                try modelContext.save()
+                onProyekCreated?(existingProyek)
+                dismiss()
+            } catch {
+                saveErrorMessage = "Gagal menyimpan proyek: \(error.localizedDescription)"
+            }
+            return
+        }
 
         let newProyek = Proyek(
             nama: resolvedBakTitle,
-            perangkatNama: viewModel.namaPemesan.trimmingCharacters(in: .whitespacesAndNewlines),
+            perangkatNama: trimmedPemesan,
             resep: resep,
             jumlahKain: 1,
             tanggal: .now
@@ -391,9 +432,10 @@ private struct PilihWarnaSheetView: View {
             if daftarResep.isEmpty {
                 ContentUnavailableView(
                     "Belum ada resep warna",
-                    systemImage: "paintpalette",
+                    image: "IconResepWarna",
                     description: Text("Tambahkan resep terlebih dahulu di tab Resep Warna.")
                 )
+                .foregroundColor(Color(hex: "#B89B8D"))
                 .frame(minHeight: 360)
             } else {
                 ScrollView {
