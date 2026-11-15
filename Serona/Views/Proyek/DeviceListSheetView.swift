@@ -11,9 +11,10 @@ struct DeviceListSheetView: View {
     private let onConnected: (DiscoveredDevice) -> Void
     private let onDisconnected: (DiscoveredDevice) -> Void
 
-    private let titleColor = Color(red: 0.38, green: 0.15, blue: 0.15)
-    private let oliveGreen = Color(red: 0.35, green: 0.42, blue: 0.25)
-    private let sheetBg = Color(red: 0.98, green: 0.97, blue: 0.93)
+    @ScaledMetric(relativeTo: .body) private var sheetWidth: CGFloat = 480
+
+    private let oliveGreen = Color("oliveGreen")
+    private let alertRed = Color(hex: "#DE2428")
 
     init(
         service: (any DeviceConnecting)? = nil,
@@ -27,12 +28,12 @@ struct DeviceListSheetView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Modal Header Bar (X left, Title center, Refresh right)
             modalHeaderBar
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+                .padding(.bottom, 12)
 
-            VStack {
+            Group {
                 if viewModel.devices.isEmpty && viewModel.connectedDevice == nil {
                     if viewModel.isScanning {
                         ProgressView("Mencari perangkat…")
@@ -46,25 +47,37 @@ struct DeviceListSheetView: View {
                             Button("Cari Ulang") {
                                 Task { await viewModel.scan() }
                             }
+                            .buttonStyle(.borderedProminent)
+                            .tint(oliveGreen)
                         }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 } else {
                     ScrollView {
-                        VStack(spacing: 12) {
+                        VStack(spacing: 0) {
                             if let connected = viewModel.connectedDevice {
                                 connectedRow(connected)
+                                Divider()
                             }
 
                             ForEach(viewModel.devices.filter { $0.id != viewModel.connectedDevice?.id }) { device in
                                 deviceRow(device)
+                                Divider()
                             }
                         }
-                        .padding(20)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 24)
                     }
                 }
             }
+            .frame(minHeight: 400, maxHeight: 480)
+            .padding(.vertical)
         }
-        .background(sheetBg.ignoresSafeArea())
+        .frame(width: sheetWidth)
+        .background(Color.white)
+        .presentationSizing(.fitted)
+        .presentationBackground(Color.white)
+        .presentationDragIndicator(.visible)
         .task {
             await viewModel.scan()
         }
@@ -100,76 +113,83 @@ struct DeviceListSheetView: View {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color.black.opacity(0.7))
-                    .frame(width: 36, height: 36)
-                    .background(Color.black.opacity(0.08))
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+                    .frame(width: 40, height: 40)
+                    .background(Color(UIColor.systemGray6))
                     .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.06), radius: 3, x: 0, y: 1)
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Tutup")
 
             Spacer()
 
-            Text("Tambahkan Perangkat")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(titleColor)
+            Text("Hubungkan Perangkat")
+                .font(.headline.bold())
+                .foregroundStyle(.primary)
 
             Spacer()
 
             Button {
                 Task { await viewModel.scan() }
             } label: {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(oliveGreen)
+                Image(systemName: "arrow.clockwise")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+                    .frame(width: 40, height: 40)
+                    .background(Color(UIColor.systemGray6))
                     .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.06), radius: 3, x: 0, y: 1)
             }
+            .buttonStyle(.plain)
             .disabled(viewModel.isScanning || viewModel.connectingDevice != nil)
+            .opacity((viewModel.isScanning || viewModel.connectingDevice != nil) ? 0.5 : 1)
+            .accessibilityLabel("Cari Ulang Perangkat")
         }
     }
 
     // MARK: - Device Rows
 
     private func deviceRow(_ device: DiscoveredDevice) -> some View {
-        HStack {
+        HStack(spacing: 12) {
             Image(systemName: "wifi")
-                .foregroundStyle(titleColor)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.primary)
 
             Text(device.nama)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(titleColor)
+                .font(.body)
+                .foregroundStyle(.primary)
 
             Spacer()
 
             Button {
                 Task { await viewModel.connect(device) }
             } label: {
-                HStack(spacing: 4) {
+                HStack(spacing: 6) {
                     Image(systemName: "plus")
+                        .font(.caption.bold())
                     Text("Hubungkan")
+                        .font(.subheadline.weight(.semibold))
                 }
-                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(oliveGreen)
-                .clipShape(Capsule())
+                .background(oliveGreen, in: Capsule())
             }
+            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .padding(.vertical, 14)
     }
 
     private func connectedRow(_ device: DiscoveredDevice) -> some View {
-        HStack {
+        HStack(spacing: 12) {
             Image(systemName: "wifi")
+                .font(.body.weight(.semibold))
                 .foregroundStyle(oliveGreen)
 
             Text(device.nama)
-                .font(.system(size: 15, weight: .bold))
+                .font(.body.weight(.semibold))
                 .foregroundStyle(oliveGreen)
 
             Spacer()
@@ -181,15 +201,16 @@ struct DeviceListSheetView: View {
                 }
             } label: {
                 Image(systemName: "minus.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundStyle(.red)
+                    .font(.title3)
+                    .foregroundStyle(alertRed)
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Putuskan Perangkat")
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .padding(.vertical, 14)
     }
+
+    // MARK: - Alert Bindings
 
     private var connectingIsPresented: Binding<Bool> {
         Binding(
@@ -213,5 +234,8 @@ struct DeviceListSheetView: View {
 // MARK: - Previews
 
 #Preview("Device List Sheet", traits: .landscapeLeft) {
-    DeviceListSheetView(service: SimulatedDeviceConnectionService(discoveryDelay: .milliseconds(200)))
+    BackgroundGradient()
+        .sheet(isPresented: .constant(true)) {
+            DeviceListSheetView(service: SimulatedDeviceConnectionService(discoveryDelay: .milliseconds(200)))
+        }
 }

@@ -5,64 +5,82 @@
 //  Created by Hana Azizah Nurhadi on 21/10/26.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct ContentView: View {
-    
     enum HeaderTab: String, CaseIterable {
         case proyek = "Bak Warna"
         case resep = "Resep Warna"
     }
-    
+
+    @Query(sort: \Proyek.tanggal, order: .forward) private var semuaProyek: [Proyek]
+
     @State private var selectedTab: HeaderTab = .proyek
-//    @State private var isSearching = false
-    @State private var isShowingTambah = false
-    
+    @State private var isSearching = false
+    @State private var teksCari = ""
+    @State private var isShowingTambahProyek = false
+    @State private var isShowingTambahResep = false
+    @State private var newlyCreatedProyek: Proyek?
+    @FocusState private var isSearchFieldFocused: Bool
+
     private let oliveGreen = Color("oliveGreen")
     private let titleColor = Color("titleColor")
-    
+    private let maxBakCount = 6
+
+    private var canAddBak: Bool {
+        semuaProyek.count < maxBakCount
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 topHeaderBar
-                
+
                 content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .background(BackgroundGradient())
             .toolbar(.hidden, for: .navigationBar)
         }
-        .sheet(isPresented: $isShowingTambah) {
+        .sheet(isPresented: $isShowingTambahProyek) {
+            TambahProyekView { newProyek in
+                newlyCreatedProyek = newProyek
+            }
+        }
+        .sheet(isPresented: $isShowingTambahResep) {
             HalamanTambahResep(tampilSebagaiSheet: true)
         }
     }
-    
+
     @ViewBuilder
     private var content: some View {
         switch selectedTab {
         case .proyek:
-            ProyekListView()
+            ProyekListView(newlyCreatedProyek: $newlyCreatedProyek)
         case .resep:
-            ResepView()
+            ResepView(teksCari: $teksCari)
         }
     }
-    
+
     private var topHeaderBar: some View {
         ZStack {
             segmentedPill
-            
-            if selectedTab == .resep {
-                HStack {
-                    Spacer()
-                    addButton
+
+            HStack(spacing: 10) {
+                Spacer()
+
+                if selectedTab == .resep {
+                    searchControl
                 }
+
+                addButton
             }
         }
         .padding(.horizontal)
         .padding(.top)
     }
-    
+
     private var segmentedPill: some View {
         HStack(spacing: 4) {
             ForEach(HeaderTab.allCases, id: \.self) { tab in
@@ -80,6 +98,11 @@ struct ContentView: View {
         return Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 selectedTab = tab
+                if tab != .resep {
+                    isSearching = false
+                    teksCari = ""
+                    isSearchFieldFocused = false
+                }
             }
         } label: {
             Text(tab.rawValue)
@@ -97,23 +120,73 @@ struct ContentView: View {
                     }
                 }
         }
+        .buttonStyle(.plain)
     }
 
-//    private var searchButton: some View {
-//        Button {
-//            isSearching.toggle()
-//        } label: {
-//            Image(systemName: "magnifyingglass")
-//                .font(.system(size: 16, weight: .semibold))
-//                .foregroundStyle(titleColor.opacity(0.8))
-//                .frame(width: 36, height: 36)
-//        }
-//        .padding(.trailing, 4)
-//    }
+    @ViewBuilder
+    private var searchControl: some View {
+        if isSearching {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(titleColor.opacity(0.75))
+
+                TextField("Cari warna...", text: $teksCari)
+                    .font(.subheadline)
+                    .autocorrectionDisabled()
+                    .focused($isSearchFieldFocused)
+
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        teksCari = ""
+                        isSearching = false
+                        isSearchFieldFocused = false
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.bold())
+                        .foregroundStyle(titleColor.opacity(0.75))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Tutup pencarian")
+            }
+            .padding(.horizontal, 14)
+            .frame(width: 240, height: 44)
+            .glassEffect(.regular, in: Capsule())
+            .transition(.scale(scale: 0.9, anchor: .trailing).combined(with: .opacity))
+        } else {
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    isSearching = true
+                    isSearchFieldFocused = true
+                }
+            } label: {
+                Image(systemName: "magnifyingglass")
+                    .font(.title2)
+                    .foregroundStyle(.black)
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
+            .controlSize(.large)
+            .tint(searchButtonBackground)
+            .glassEffect(.regular, in: Circle())
+            .accessibilityLabel("Cari Warna")
+            .transition(.scale(scale: 0.9).combined(with: .opacity))
+        }
+    }
 
     private var addButton: some View {
-        Button("Tambah Warna", systemImage: "plus") {
-            isShowingTambah = true
+        let isDisabled = (selectedTab == .proyek && !canAddBak)
+
+        return Button(
+            selectedTab == .proyek ? "Tambah Bak" : "Tambah Warna",
+            systemImage: "plus"
+        ) {
+            if selectedTab == .proyek {
+                isShowingTambahProyek = true
+            } else {
+                isShowingTambahResep = true
+            }
         }
         .labelStyle(.iconOnly)
         .font(.title3.bold())
@@ -121,11 +194,16 @@ struct ContentView: View {
         .buttonBorderShape(.circle)
         .controlSize(.large)
         .tint(oliveGreen)
-        .shadow(color: oliveGreen.opacity(0.3), radius: 4, x: 0, y: 2)
+        .shadow(color: oliveGreen.opacity(isDisabled ? 0 : 0.3), radius: 4, x: 0, y: 2)
+        .disabled(isDisabled)
     }
 
     private var pillBackground: Color {
         Color(red: 0.94, green: 0.93, blue: 0.88)
+    }
+
+    private var searchButtonBackground: Color {
+        Color(red: 0.96, green: 0.95, blue: 0.91)
     }
 }
 

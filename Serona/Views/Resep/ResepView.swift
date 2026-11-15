@@ -10,12 +10,16 @@ struct ResepView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Resep.dibuat, order: .reverse) private var daftar: [Resep]
 
-    @State private var teksCari = ""
+    @Binding var teksCari: String
+    @State private var resepDipilih: Resep?
+
+    init(teksCari: Binding<String> = .constant("")) {
+        _teksCari = teksCari
+    }
 
     private var hasilCari: [Resep] {
         daftar.cari(teksCari)
     }
-    @State private var resepDipilih: Resep?
 
     private let backgroundColor = Color("backgroundColor")
     private let titleColor = Color("titleColor")
@@ -24,7 +28,7 @@ struct ResepView: View {
     var body: some View {
         ZStack {
             BackgroundGradient()
-            
+
             GeometryReader { geometry in
                 let isLandscape = geometry.size.width > geometry.size.height
                 let columnsCount = isLandscape ? 5 : 3
@@ -37,13 +41,14 @@ struct ResepView: View {
                         .padding(.horizontal, 24)
                         .padding(.top, 12)
 
-                    ScrollView {
-                        if daftar.isEmpty {
-                            emptyState
-                        } else if hasilCari.isEmpty {
-                            ContentUnavailableView.search(text: teksCari)
-                                .padding(.top, 40)
-                        } else {
+                    if daftar.isEmpty {
+                        emptyState
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if hasilCari.isEmpty {
+                        ContentUnavailableView.search(text: teksCari)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        ScrollView {
                             LazyVGrid(columns: gridColumns, spacing: 16) {
                                 ForEach(hasilCari) { resep in
                                     Button {
@@ -67,12 +72,26 @@ struct ResepView: View {
     }
 
     private var emptyState: some View {
-        ContentUnavailableView(
-            "Belum ada warna",
-            systemImage: "book",
-            description: Text("Tekan + untuk menambah warna.")
-        )
-        .padding(.top, 40)
+        VStack(spacing: 12) {
+            Image("IconResepWarna")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 110, height: 110)
+                .accessibilityHidden(true)
+
+            VStack(spacing: 4) {
+                Text("Tidak Ada Resep Warna")
+                    .font(.title3.bold())
+                    .foregroundStyle(Color(hex: "#B89B8D"))
+
+                Text("Tekan tanda + untuk menambahkan resep")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Color(hex: "#B89B8D"))
+            }
+        }
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 24)
+        .padding(.bottom, 48)
     }
 }
 

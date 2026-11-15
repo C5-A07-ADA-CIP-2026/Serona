@@ -21,11 +21,10 @@ struct ProyekQualityAlertTarget: Identifiable {
 }
 
 struct ProyekListView: View {
-    @Query(sort: \Proyek.tanggal, order: .reverse) private var semuaProyek: [Proyek]
+    @Query(sort: \Proyek.tanggal, order: .forward) private var semuaProyek: [Proyek]
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = ProyekListViewModel()
     @State private var searchText: String = ""
-    @State private var hasSeededDefaultBaks = false
 
     @State private var activeViewModels: [UUID: ProyekDetailViewModel] = [:]
     @State private var scanSetupTarget: Proyek?
@@ -35,16 +34,24 @@ struct ProyekListView: View {
     @State private var pendingRepairTarget: ProyekRepairTarget?
     @State private var repairTarget: ProyekRepairTarget?
 
-    /// Optional service override (used in Previews to simulate different live sensor states per card).
+    @Binding var newlyCreatedProyek: Proyek?
+    
     var serviceProvider: (Proyek) -> (any ColorMeasurementSource)? = { _ in nil }
-    /// Optional device connection override (used in Previews for the Mulai Pindai device list).
     var deviceConnectingProvider: () -> (any DeviceConnecting)? = { nil }
 
+    init(
+        newlyCreatedProyek: Binding<Proyek?> = .constant(nil),
+        serviceProvider: @escaping (Proyek) -> (any ColorMeasurementSource)? = { _ in nil },
+        deviceConnectingProvider: @escaping () -> (any DeviceConnecting)? = { nil }
+    ) {
+        _newlyCreatedProyek = newlyCreatedProyek
+        self.serviceProvider = serviceProvider
+        self.deviceConnectingProvider = deviceConnectingProvider
+    }
+    
     private let titleColor = Color("titleColor")
     private let oliveGreen = Color("oliveGreen")
-    private let defaultBakCount = 6
 
-    // Includes both active and finished (.nonaktif) projects so all 6 cards remain visible in Stage 3
     private var displayedProyek: [Proyek] {
         if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return semuaProyek
@@ -68,18 +75,28 @@ struct ProyekListView: View {
                         .padding(.horizontal, 24)
                         .padding(.top, 12)
 
-                    ScrollView {
-                        proyekGridView(columns: gridColumns)
+                    if displayedProyek.isEmpty {
+                        emptyState
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        ScrollView {
+                            proyekGridView(columns: gridColumns)
+                        }
                     }
                 }
             }
         }
         .onAppear {
-            seedDefaultBaksIfNeeded()
             resumeAlreadyScannedProjects()
         }
         .onChange(of: displayedProyek.map(\.id)) { _, _ in
             resumeAlreadyScannedProjects()
+        }
+        .onChange(of: newlyCreatedProyek?.id) { _, _ in
+            if let proyek = newlyCreatedProyek {
+                newlyCreatedProyek = nil
+                startScanAfterSetup(for: proyek)
+            }
         }
         .sheet(item: $scanSetupTarget) { targetProyek in
             MulaiPindaiSheetView(
@@ -125,6 +142,29 @@ struct ProyekListView: View {
     }
 
     // MARK: - Subviews
+
+    private var emptyState: some View {
+        VStack(spacing: 12) {
+            Image("IconBakWarna")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 110, height: 110)
+                .accessibilityHidden(true)
+
+            VStack(spacing: 4) {
+                Text("Tidak Ada Bak Warna")
+                    .font(.title3.bold())
+                    .foregroundStyle(Color(hex: "#B89B8D"))
+
+                Text("Tekan tanda + untuk menambahkan bak")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Color(hex: "#B89B8D"))
+            }
+        }
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 24)
+        .padding(.bottom, 48)
+    }
 
     private func proyekGridView(columns: [GridItem]) -> some View {
         LazyVGrid(columns: columns, spacing: 20) {
@@ -219,39 +259,6 @@ struct ProyekListView: View {
         }
     }
 
-    // MARK: - Initial 6 Cards Seeding
-
-    private func seedDefaultBaksIfNeeded() {
-        guard !hasSeededDefaultBaks else { return }
-        hasSeededDefaultBaks = true
-
-        let existingCount = semuaProyek.count
-        guard existingCount < defaultBakCount else { return }
-
-        let baseDate = Date.now
-        for index in (existingCount + 1)...defaultBakCount {
-            let placeholderResep = Resep(
-                namaWarna: "-",
-                warnaHex: "#8E8E93",
-                air: 1000,
-                kepekatan: ProyekDetailViewModel.defaultConcentrationLimit,
-                batasPH: ProyekDetailViewModel.defaultWaterPHLimit
-            )
-            let bak = Proyek(
-                nama: "Bak \(index)",
-                perangkatNama: "ESP 32",
-                resep: placeholderResep,
-                jumlahKain: 1,
-                tanggal: baseDate.addingTimeInterval(Double(-index))
-            )
-            bak.resep = nil
-            bak.selesaikan(kepekatanAkhir: nil, phAkhir: nil)
-            modelContext.insert(bak)
-        }
-
-        try? modelContext.save()
-    }
-
     // MARK: - Scanning & State Lifecycle
 
     private func getOrMakeViewModel(for proyek: Proyek) -> ProyekDetailViewModel {
@@ -263,7 +270,6 @@ struct ProyekListView: View {
         return vm
     }
 
-    // Resumes live measurements only for active projects that were already scanned previously.
     private func resumeAlreadyScannedProjects() {
         for proyek in displayedProyek where proyek.status == .aktif {
             let vm = getOrMakeViewModel(for: proyek)
@@ -273,7 +279,6 @@ struct ProyekListView: View {
         }
     }
 
-    // Starts scanning once the user submits the Mulai Pindai setup sheet.
     private func startScanAfterSetup(for proyek: Proyek) {
         queuedAlertTargets.removeAll { $0.id == proyek.id }
         activeViewModels.removeValue(forKey: proyek.id)
@@ -284,7 +289,6 @@ struct ProyekListView: View {
         }
     }
 
-    // Immediately finishes the project without showing an alert, transitioning the card to Stage 3 (.inactive).
     private func finishProyek(proyek: Proyek, viewModel: ProyekDetailViewModel) {
         viewModel.clearQualityAlert()
         viewModel.clearColorConcentrationWarning()
@@ -341,7 +345,7 @@ struct ProyekListView: View {
 
 // MARK: - Previews
 
-#Preview("Initial State (All 6 Cards Stage 3)", traits: .landscapeLeft) {
+#Preview("Empty State", traits: .landscapeLeft) {
     NavigationStack {
         ProyekListView()
     }
@@ -415,36 +419,36 @@ private let previewGridContainer: ModelContainer = {
     )
 
     // Bak 1: Stage 1 (Active - Good Quality)
-    let bak1 = Proyek(nama: "Bak 1", perangkatNama: "Bu Fanny", resep: resepMaroon, jumlahKain: 2, tanggal: .now.addingTimeInterval(-1))
+    let bak1 = Proyek(nama: "Bak 1", perangkatNama: "Bu Fanny", resep: resepMaroon, jumlahKain: 2, tanggal: .now.addingTimeInterval(1))
     bak1.visibleAverageAwal = 100
     bak1.phAwal = 12
     context.insert(bak1)
 
     // Bak 2: Stage 3 (Inactive / Unscanned)
-    let bak2 = Proyek(nama: "Bak 2", perangkatNama: "ESP 32", resep: resepMaroon, jumlahKain: 1, tanggal: .now.addingTimeInterval(-2))
+    let bak2 = Proyek(nama: "Bak 2", perangkatNama: "ESP 32", resep: resepMaroon, jumlahKain: 1, tanggal: .now.addingTimeInterval(2))
     bak2.selesaikan(kepekatanAkhir: nil, phAkhir: nil)
     context.insert(bak2)
 
     // Bak 3: Stage 2 (Active Warning)
-    let bak3 = Proyek(nama: "Bak 3", perangkatNama: "Bu Fanny", resep: resepKrem, jumlahKain: 3, tanggal: .now.addingTimeInterval(-3))
+    let bak3 = Proyek(nama: "Bak 3", perangkatNama: "Bu Fanny", resep: resepKrem, jumlahKain: 3, tanggal: .now.addingTimeInterval(3))
     bak3.visibleAverageAwal = 100
     bak3.phAwal = 8
     context.insert(bak3)
 
     // Bak 4: Stage 1 (Active - Good Quality)
-    let bak4 = Proyek(nama: "Bak 4", perangkatNama: "Bu Fanny", resep: resepUnguAbu, jumlahKain: 2, tanggal: .now.addingTimeInterval(-4))
+    let bak4 = Proyek(nama: "Bak 4", perangkatNama: "Bu Fanny", resep: resepUnguAbu, jumlahKain: 2, tanggal: .now.addingTimeInterval(4))
     bak4.visibleAverageAwal = 100
     bak4.phAwal = 12
     context.insert(bak4)
 
     // Bak 5: Stage 2 (Active Warning)
-    let bak5 = Proyek(nama: "Bak 5", perangkatNama: "Bu Fanny", resep: resepKrem, jumlahKain: 2, tanggal: .now.addingTimeInterval(-5))
+    let bak5 = Proyek(nama: "Bak 5", perangkatNama: "Bu Fanny", resep: resepKrem, jumlahKain: 2, tanggal: .now.addingTimeInterval(5))
     bak5.visibleAverageAwal = 100
     bak5.phAwal = 8
     context.insert(bak5)
 
     // Bak 6: Stage 3 (Inactive / Unscanned)
-    let bak6 = Proyek(nama: "Bak 6", perangkatNama: "ESP 32", resep: resepKrem, jumlahKain: 2, tanggal: .now.addingTimeInterval(-6))
+    let bak6 = Proyek(nama: "Bak 6", perangkatNama: "ESP 32", resep: resepKrem, jumlahKain: 2, tanggal: .now.addingTimeInterval(6))
     bak6.selesaikan(kepekatanAkhir: nil, phAkhir: nil)
     context.insert(bak6)
 
