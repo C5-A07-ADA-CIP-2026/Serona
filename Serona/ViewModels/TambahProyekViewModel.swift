@@ -94,7 +94,8 @@ final class TambahProyekViewModel {
         proyek.visibleAverageAwal = nil
         proyek.phAwal = nil
         proyek.rasioAwal = nil
-        proyek.rasioAirBersih = nil
+//        proyek.rasioAirBersih = nil
+        proyek.rasioAirBersih = ProyekDetailViewModel.defaultCleanWaterRatios
 
         do {
             try persistence.save()

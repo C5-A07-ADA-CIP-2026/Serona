@@ -9,66 +9,79 @@ import SwiftUI
 struct QualityAlertSheetView: View {
     @Environment(\.dismiss) private var dismiss
 
-    /// Space the navigation bar and the drag indicator take above the content.
-    private static let barHeight: CGFloat = 64
-
-    @State private var contentHeight: CGFloat = 480
-
     let alert: QualityAlert
+    var bakName: String? = nil
     let onPerbaiki: () -> Void
 
+    @ScaledMetric(relativeTo: .body) private var alertImageSize: CGFloat = 188
+    @ScaledMetric(relativeTo: .body) private var closeButtonSize: CGFloat = 38
+    @ScaledMetric(relativeTo: .body) private var sheetMinWidth: CGFloat = 440
+
+    private var headingText: String {
+        if let bakName, !bakName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return "Kualitas \(bakName) Menurun"
+        }
+        return "Kualitas Larutan Menurun"
+    }
+
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    Text("Kualitas Larutan Menurun")
-                        .font(.title2.bold())
+        ZStack(alignment: .topTrailing) {
+            VStack(spacing: 24) {
+                Image("BakAlert")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: alertImageSize, height: alertImageSize)
+                    .padding(.top, 12)
+                    .accessibilityHidden(true)
+
+                VStack(spacing: 8) {
+                    Text(headingText)
+                        .font(.title.bold())
+                        .foregroundStyle(.primary)
                         .multilineTextAlignment(.center)
 
-                    RoundedRectangle(cornerRadius: 24)
-                        .fill(Color(.systemGray4))
-                        .frame(width: 196, height: 196)
-                        .overlay {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.largeTitle)
-                                .foregroundStyle(Color.peringatan)
-                        }
-                        .accessibilityHidden(true)
+                    Text("Lakukan langkah-langkah berikut untuk perbaiki larutan")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
 
-                    Text(alert.message)
-                        .font(.callout)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                Button {
+                    onPerbaiki()
+                    dismiss()
+                } label: {
+                    Text("Mulai Perbaiki Larutan")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 36)
+                        .padding(.vertical, 14)
+                        .background(Color.oliveGreen, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+            }
+            .padding(.horizontal, 36)
+            .padding(.vertical, 32)
+            .frame(minWidth: sheetMinWidth)
 
-                    Button {
-                        onPerbaiki()
-                        dismiss()
-                    } label: {
-                        Text("Perbaiki Larutan")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 8)
-                .padding(.bottom, 24)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
-                    contentHeight = $0
-                }
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: closeButtonSize, height: closeButtonSize)
+                    .background(Color.white, in: Circle())
+                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
             }
-            .scrollDisabled(true)
-            .navigationTitle("Perhatian")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .close) {
-                        dismiss()
-                    }
-                }
-            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Tutup")
+            .padding(20)
         }
-        .presentationDetents([.height(contentHeight + Self.barHeight)])
-        .presentationDragIndicator(.visible)
+        .background(Color.white)
+        .presentationSizing(.fitted)
+        .presentationBackground(Color.white)
+        .presentationDragIndicator(.hidden)
     }
 }
 
@@ -97,11 +110,12 @@ struct LarutanMenurunBanner: View {
     }
 }
 
-#Preview {
+#Preview(traits: .landscapeLeft) {
     Color.clear
         .sheet(isPresented: .constant(true)) {
             QualityAlertSheetView(
                 alert: QualityAlert(issue: .keduanya, message: MeasurementWarningTracker.bothMessage),
+                bakName: "Bak 5",
                 onPerbaiki: {}
             )
         }

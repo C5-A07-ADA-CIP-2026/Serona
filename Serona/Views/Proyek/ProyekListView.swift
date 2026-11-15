@@ -90,7 +90,7 @@ struct ProyekListView: View {
             }
         }
         .sheet(item: $activeAlertTarget, onDismiss: handleAlertDismissed) { target in
-            QualityAlertSheetView(alert: target.alert) {
+            QualityAlertSheetView(alert: target.alert, bakName: target.proyek.nama) {
                 pendingRepairTarget = ProyekRepairTarget(
                     id: target.id,
                     proyek: target.proyek,
@@ -221,7 +221,6 @@ struct ProyekListView: View {
 
     // MARK: - Initial 6 Cards Seeding
 
-    /// Ensures 6 Bak cards ("Bak 1"..."Bak 6") exist from the start in Stage 3 (.nonaktif).
     private func seedDefaultBaksIfNeeded() {
         guard !hasSeededDefaultBaks else { return }
         hasSeededDefaultBaks = true
@@ -264,7 +263,7 @@ struct ProyekListView: View {
         return vm
     }
 
-    /// Resumes live measurements only for active projects that were already scanned previously.
+    // Resumes live measurements only for active projects that were already scanned previously.
     private func resumeAlreadyScannedProjects() {
         for proyek in displayedProyek where proyek.status == .aktif {
             let vm = getOrMakeViewModel(for: proyek)
@@ -274,7 +273,7 @@ struct ProyekListView: View {
         }
     }
 
-    /// Starts scanning once the user submits the Mulai Pindai setup sheet.
+    // Starts scanning once the user submits the Mulai Pindai setup sheet.
     private func startScanAfterSetup(for proyek: Proyek) {
         queuedAlertTargets.removeAll { $0.id == proyek.id }
         activeViewModels.removeValue(forKey: proyek.id)
@@ -285,7 +284,7 @@ struct ProyekListView: View {
         }
     }
 
-    /// Immediately finishes the project without showing an alert, transitioning the card to Stage 3 (.inactive).
+    // Immediately finishes the project without showing an alert, transitioning the card to Stage 3 (.inactive).
     private func finishProyek(proyek: Proyek, viewModel: ProyekDetailViewModel) {
         viewModel.clearQualityAlert()
         viewModel.clearColorConcentrationWarning()

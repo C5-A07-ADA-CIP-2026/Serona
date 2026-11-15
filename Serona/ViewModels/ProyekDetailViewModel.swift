@@ -191,10 +191,14 @@ final class ProyekDetailViewModel: ObservableObject {
     /// Nil without a channel baseline or channels in the reading.
     private func concentrationPercent(of measurement: ColorMeasurement) -> Double? {
         guard let initialRatios else { return nil }
-        let absorbanceBased = proyek.rasioAirBersih.flatMap {
-            measurement.concentration(relativeToRatios: initialRatios, cleanRatios: $0)
-        }
-        return absorbanceBased ?? measurement.concentration(relativeToRatios: initialRatios)
+//        let absorbanceBased = proyek.rasioAirBersih.flatMap {
+//            measurement.concentration(relativeToRatios: initialRatios, cleanRatios: $0)
+//        }
+//        return absorbanceBased ?? measurement.concentration(relativeToRatios: initialRatios)
+        return measurement.concentration(
+            relativeToRatios: initialRatios,
+            cleanRatios: Self.defaultCleanWaterRatios
+        ) ?? measurement.concentration(relativeToRatios: initialRatios)
     }
 
     private func makeQualityAlert(for issue: QualityIssue) -> QualityAlert {

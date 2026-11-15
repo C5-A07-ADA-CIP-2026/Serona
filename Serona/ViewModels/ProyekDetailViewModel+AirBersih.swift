@@ -7,30 +7,47 @@ import Foundation
 
 /// The clean-water reading the absorbance of the bath is measured against, and the dye amount that follows from it.
 extension ProyekDetailViewModel {
+    static let defaultCleanWaterRatios: [Double] = [
+        0.0314,
+        0.0629,
+        0.1200,
+        0.2229,
+        0.3371,
+        0.4800,
+        0.7714,
+        0.6114,
+    ]
+    
     /// True once the user has set the clean-water reading the absorbance is measured against.
     var isCleanWaterSet: Bool {
-        proyek.rasioAirBersih != nil
+//        proyek.rasioAirBersih != nil
+        true
     }
 
     /// True while a live reading with channels can be set as the clean water of this scanned, active project.
     var canSetCleanWater: Bool {
-        proyek.status == .aktif && isDataScanned && !isCleanWaterSet && latestMeasurement?.channelRatios != nil
+//        proyek.status == .aktif && isDataScanned && !isCleanWaterSet && latestMeasurement?.channelRatios != nil
+        false
     }
 
     /// Sets the channel ratios of the latest live reading (the probe in clean water) and saves them.
     /// Returns `false` and changes nothing when there is nothing to set, it is already set, or the save fails.
     @discardableResult
     func tetapkanAirBersih(in persistence: some ModelPersisting) -> Bool {
-        guard canSetCleanWater, let ratios = latestMeasurement?.channelRatios else { return false }
-        return saveAirBersih(ratios, in: persistence)
+//        guard canSetCleanWater, let ratios = latestMeasurement?.channelRatios else { return false }
+//        return saveAirBersih(ratios, in: persistence)
+        proyek.rasioAirBersih = Self.defaultCleanWaterRatios
+        return save(persistence, undo: {})
     }
 
     /// Clears the clean water so a new one can be set. Until then the concentration uses the baseline-only formula.
     /// Returns `false` and keeps the previous value when it was not set or the save fails.
     @discardableResult
     func ukurUlangAirBersih(in persistence: some ModelPersisting) -> Bool {
-        guard proyek.status == .aktif, isDataScanned, isCleanWaterSet else { return false }
-        return saveAirBersih(nil, in: persistence)
+//        guard proyek.status == .aktif, isDataScanned, isCleanWaterSet else { return false }
+//        return saveAirBersih(nil, in: persistence)
+        proyek.rasioAirBersih = Self.defaultCleanWaterRatios
+        return save(persistence, undo: {})
     }
 
     private func saveAirBersih(_ ratios: [Double]?, in persistence: some ModelPersisting) -> Bool {
@@ -48,7 +65,9 @@ extension ProyekDetailViewModel {
     /// concentration is absorbance-based (baseline and clean water set), since the amount means nothing for the
     /// older formula.
     func penambahanPewarna(volumeLiter: Double?) -> [Bahan]? {
-        guard proyek.rasioAwal != nil, proyek.rasioAirBersih != nil, let latestConcentration else { return nil }
+//        guard proyek.rasioAwal != nil, proyek.rasioAirBersih != nil, let latestConcentration else { return nil }
+//        return proyek.pewarnaYangDitambah(kepekatan: latestConcentration, volumeLiter: volumeLiter)
+        guard proyek.rasioAwal != nil, let latestConcentration else { return nil }
         return proyek.pewarnaYangDitambah(kepekatan: latestConcentration, volumeLiter: volumeLiter)
     }
 }
