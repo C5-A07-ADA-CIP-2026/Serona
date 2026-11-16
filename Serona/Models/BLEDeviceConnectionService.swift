@@ -42,7 +42,8 @@ final class BLEDeviceConnectionService: NSObject, DeviceConnectionService, @unch
     private var connectionContinuation: CheckedContinuation<Void, any Error>?
     var characteristicContinuation: CheckedContinuation<Void, any Error>?
     var measurementContinuation: CheckedContinuation<ColorMeasurement, any Error>?
-    var measurementStreamContinuation: AsyncStream<ColorMeasurement>.Continuation?
+    /// Every project card streams the same device, so a reading goes to all open streams.
+    let measurementBroadcaster = MeasurementBroadcaster()
 
     init(
         discoveryTimeout: TimeInterval = 10,
@@ -214,9 +215,7 @@ final class BLEDeviceConnectionService: NSObject, DeviceConnectionService, @unch
     }
 
     func measurementUpdates() -> AsyncStream<ColorMeasurement> {
-        AsyncStream { continuation in
-            measurementStreamContinuation = continuation
-        }
+        measurementBroadcaster.stream()
     }
 
     private func obtainMeasurementCharacteristic(
@@ -359,7 +358,6 @@ extension BLEDeviceConnectionService: CBCentralManagerDelegate {
         characteristicContinuation = nil
         measurementContinuation?.resume(throwing: disconnectError)
         measurementContinuation = nil
-        measurementStreamContinuation?.finish()
-        measurementStreamContinuation = nil
+        measurementBroadcaster.finishAll()
     }
 }

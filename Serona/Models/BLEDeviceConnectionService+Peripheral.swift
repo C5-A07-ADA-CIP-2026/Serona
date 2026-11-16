@@ -99,39 +99,39 @@ extension BLEDeviceConnectionService: CBPeripheralDelegate {
         error: (any Error)?
     ) {
         guard characteristic.uuid == Self.measurementCharacteristicUUID else { return }
-        
+
         if let error {
             print("[BLE] ❌ Error update value: \(error.localizedDescription)")
             // Jangan resume continuation streaming di sini agar stream tidak putus
             return
         }
-        
+
         guard let data = characteristic.value else {
             print("[BLE] ⚠️ ESP32 mengirim payload kosong")
             return
         }
-        
+
         let rawPayload = String(data: data, encoding: .utf8) ?? "<bukan UTF-8>"
         let hexPayload = data.map { String(format: "%02X", $0) }.joined(separator: " ")
         print("[BLE] 📦 Payload diterima: \(rawPayload)")
         print("[BLE] 🔢 Bytes payload: \(hexPayload)")
-        
+
         do {
             let measurement = try JSONDecoder().decode(ColorMeasurement.self, from: data)
             print(
                 "[BLE] 🎨 AS7341 visibleAverage=\(measurement.visibleAverage), " +
-                "clear=\(measurement.clear), nir=\(measurement.nir)"
+                    "clear=\(measurement.clear), nir=\(measurement.nir)"
             )
-            
+
             // 🔥 KUNCI REAL-TIME: Kirim terus menerus ke AsyncStream
-            measurementStreamContinuation?.yield(measurement)
-            
+            measurementBroadcaster.yield(measurement)
+
             // Hapus atau pisahkan measurementContinuation jika ini dipakai untuk inisialisasi awal saja
             if let continuation = measurementContinuation {
                 continuation.resume(returning: measurement)
                 measurementContinuation = nil
             }
-            
+
         } catch {
             print("[BLE] ❌ Gagal parsing JSON: \(error)")
             if let continuation = measurementContinuation {
