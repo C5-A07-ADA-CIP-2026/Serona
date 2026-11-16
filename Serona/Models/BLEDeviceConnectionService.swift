@@ -342,8 +342,24 @@ extension BLEDeviceConnectionService: CBCentralManagerDelegate {
     func centralManager(_: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error _: (any Error)?) {
         let name = peripheral.name ?? "ESP32"
         print("[BLE] 🔌 Perangkat '\(name)' terputus.")
+        let disconnectError = NSError(
+            domain: "BLEService",
+            code: 499,
+            userInfo: [NSLocalizedDescriptionKey: "Koneksi ke \(name) terputus"]
+        )
+        if peripheral === pendingPeripheral {
+            pendingPeripheral = nil
+            connectionContinuation?.resume(throwing: disconnectError)
+            connectionContinuation = nil
+        }
         guard peripheral === discoveredPeripheral else { return }
         discoveredPeripheral = nil
         measurementCharacteristic = nil
+        characteristicContinuation?.resume(throwing: disconnectError)
+        characteristicContinuation = nil
+        measurementContinuation?.resume(throwing: disconnectError)
+        measurementContinuation = nil
+        measurementStreamContinuation?.finish()
+        measurementStreamContinuation = nil
     }
 }

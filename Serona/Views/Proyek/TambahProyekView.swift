@@ -356,21 +356,28 @@ struct TambahProyekView: View {
     private func simpanProyek() {
         guard canSubmit, let resep = viewModel.resep else { return }
         let trimmedPemesan = viewModel.namaPemesan.trimmingCharacters(in: .whitespacesAndNewlines)
+        let airLiter = viewModel.jumlahAir > 0 ? viewModel.jumlahAir : resep.air
 
         if let existingProyek {
             existingProyek.perangkatNama = trimmedPemesan
             existingProyek.resep = resep
+            existingProyek.namaWarna = resep.namaWarna
+            existingProyek.warnaHex = resep.warnaHex
+            existingProyek.pewarna = resep.pewarna
+            existingProyek.zatPembantu = resep.zatPembantu
+            existingProyek.airResepTersimpan = resep.air
             existingProyek.jumlahKain = 1
             existingProyek.tanggal = .now
             existingProyek.status = .aktif
 //            existingProyek.tanggalSelesai = nil
             existingProyek.visibleAverageAwal = nil
+            existingProyek.rasioAwal = nil
             existingProyek.phAwal = nil
             existingProyek.kepekatanAkhir = nil
             existingProyek.phAkhir = nil
             existingProyek.batasKepekatan = ProyekDetailViewModel.defaultConcentrationLimit
             existingProyek.batasPH = ProyekDetailViewModel.defaultWaterPHLimit
-            existingProyek.air = viewModel.jumlahAir * 1000
+            existingProyek.air = airLiter
             existingProyek.rasioAirBersih = ProyekDetailViewModel.defaultCleanWaterRatios
 
             do {
@@ -392,7 +399,7 @@ struct TambahProyekView: View {
         )
         newProyek.batasKepekatan = ProyekDetailViewModel.defaultConcentrationLimit
         newProyek.batasPH = ProyekDetailViewModel.defaultWaterPHLimit
-        newProyek.air = viewModel.jumlahAir * 1000
+        newProyek.air = airLiter
         newProyek.rasioAirBersih = ProyekDetailViewModel.defaultCleanWaterRatios
 
         modelContext.insert(newProyek)

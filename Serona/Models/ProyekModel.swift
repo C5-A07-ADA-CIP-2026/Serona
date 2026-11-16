@@ -20,7 +20,10 @@ final class Proyek {
     var perangkatNamaTersimpan: String?
     var pewarnaTersimpan: [Bahan]?
     var zatPembantuTersimpan: [Bahan]?
+    /// Bath water volume in Liters (L) entered when starting the project.
     var airTersimpan: Int?
+    /// Recipe reference water volume in Liters (L), copied from `resep.air` so edits/deletes do not alter g/L targets.
+    var airResepTersimpan: Int?
     var tanggal: Date
     var namaWarna: String
     var warnaHex: String?
@@ -68,6 +71,7 @@ final class Proyek {
         set { zatPembantuTersimpan = newValue }
     }
 
+    /// Bath water volume in Liters (L).
     var air: Int {
         get { airTersimpan ?? resep?.air ?? 0 }
         set { airTersimpan = newValue }
@@ -75,7 +79,7 @@ final class Proyek {
 
     /// A new, active project. Name, colour, limits and ingredients are copied from `resep`,
     /// so the project stays correct when the recipe is edited or deleted.
-    init(nama: String, perangkatNama: String, resep: Resep, jumlahKain: Int, tanggal: Date = .now) {
+    init(nama: String, perangkatNama: String, resep: Resep, jumlahKain: Int = 1, tanggal: Date = .now) {
         id = UUID()
         namaTersimpan = nama
         statusTersimpan = .aktif
@@ -88,6 +92,7 @@ final class Proyek {
         pewarnaTersimpan = resep.pewarna
         zatPembantuTersimpan = resep.zatPembantu
         airTersimpan = resep.air
+        airResepTersimpan = resep.air
         self.jumlahKain = jumlahKain
         self.resep = resep
     }
@@ -100,15 +105,20 @@ final class Proyek {
         status = .nonaktif
     }
 
-    /// The recipe's water for all the cloth, in liters (the recipe grams are per cloth).
+    /// The recipe's reference water volume in liters (e.g., 3 L).
     var volumeResepLiter: Double {
-        Double(air * jumlahKain) / 1000
+        Double(airResepTersimpan ?? resep?.air ?? air)
     }
 
-    /// The dye the bath should hold (g/L): the recipe's dye for all the cloth over the recipe water.
+    /// The initial water volume in the bath in liters (e.g., 20 L from Tambah Proyek / Mulai Pindai).
+    var volumeAwalLiter: Double {
+        Double(air > 0 ? air : (airResepTersimpan ?? resep?.air ?? 0))
+    }
+
+    /// The dye the bath should hold (g/L): the recipe's dye over the recipe water (L).
     var targetPewarnaGramPerLiter: Double {
         guard volumeResepLiter > 0 else { return 0 }
-        return pewarna.reduce(0) { $0 + $1.gram } * Double(jumlahKain) / volumeResepLiter
+        return pewarna.reduce(0) { $0 + $1.gram } / volumeResepLiter
     }
 
     /// The dye in the bath now (g/L). The calibration is a = A0 / C_target, so C = A / a is the target times the
@@ -118,10 +128,10 @@ final class Proyek {
     }
 
     /// The dye to add to bring the bath back to its target: (C_target - C_bath) x V, split by ingredient like the
-    /// recipe. `volumeLiter` is the bath after the water was added; without a positive one the bath is taken at the
-    /// recipe volume (no water added).
+    /// recipe. `volumeLiter` is the bath after the water was added; without a positive one the bath is taken at
+    /// `volumeAwalLiter`.
     func pewarnaYangDitambah(kepekatan percent: Double, volumeLiter: Double? = nil) -> [Bahan] {
-        var volume = volumeResepLiter
+        var volume = volumeAwalLiter
         if let volumeLiter, volumeLiter > 0 {
             volume = volumeLiter
         }

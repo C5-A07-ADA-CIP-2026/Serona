@@ -75,9 +75,11 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
             return ratio > 0 ? ratio / clean : nil
         }
         guard let lowest = transmittances.min(), let highest = transmittances.max() else { return nil }
-        let effective = highest - lowest < transmittanceSpreadLimit
+        let rawEffective = highest - lowest < transmittanceSpreadLimit
             ? transmittances.reduce(0, +) / Double(transmittances.count)
             : lowest
+        // Clamp transmittance to <= 1.0 so minor sensor noise above clean water does not yield negative absorbance.
+        let effective = min(1.0, rawEffective)
         return -log10(effective)
     }
 
@@ -89,7 +91,7 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
               let initial = Self.absorbance(ratios: baseline, cleanRatios: cleanRatios),
               initial > 0
         else { return nil }
-        return current / initial * 100
+        return max(0, current / initial * 100)
     }
 
     /// Percentage of `baseline`; nil when there is no positive baseline to compare with.
@@ -120,6 +122,22 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
         case channels
         case clearFirst = "clear1"
     }
+}
+
+extension ColorMeasurement {
+    /// Static clean water ("air bersih") AS7341 calibration reading.
+    /// Update `channels` (F1...F8), `clearFirst` (clear1 for F1–F4), and `clear` (clear for F5–F8)
+    /// with your measured clean-water counts from the ESP32.
+    static let defaultCleanWater = ColorMeasurement(
+        visibleAverage: 100,
+        clear: 1000,
+        nir: 100,
+        channels: [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000],
+        clearFirst: 1000
+    )
+
+    /// Normalized 8-channel ratios (`F1...F4 / clearFirst`, `F5...F8 / clear`) for clean water.
+    static let defaultCleanWaterRatios: [Double] = defaultCleanWater.channelRatios ?? Array(repeating: 1.0, count: 8)
 }
 
 /// A Serona device found while scanning.

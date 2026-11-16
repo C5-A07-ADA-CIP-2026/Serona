@@ -87,7 +87,7 @@ final class TambahProyekViewModel {
         proyek.batasPH = ProyekDetailViewModel.defaultWaterPHLimit
         proyek.pewarna = resep.pewarna
         proyek.zatPembantu = resep.zatPembantu
-        proyek.air = jumlahAir * 1000
+        proyek.air = jumlahAir
         proyek.jumlahKain = max(1, proyek.jumlahKain)
         proyek.resep = resep
         proyek.tanggal = .now

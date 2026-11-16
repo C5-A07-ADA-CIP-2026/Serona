@@ -122,6 +122,9 @@ struct PerbaikiLarutanView: View {
                 guide.updateIssue(alert.issue)
             }
         }
+        .onChange(of: viewModel.latestWaterPH) { _, newPH in
+            guide.syncPHBeforeWater(newPH)
+        }
         .onChange(of: guide.isFinished) { _, isFinished in
             if isFinished {
                 viewModel.clearQualityAlert()
