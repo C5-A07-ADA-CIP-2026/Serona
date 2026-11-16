@@ -280,6 +280,7 @@ struct ProyekListView: View {
     }
 
     private func startScanAfterSetup(for proyek: Proyek) {
+        print("[List] 🚀 startScanAfterSetup \(proyek.nama)")
         queuedAlertTargets.removeAll { $0.id == proyek.id }
         activeViewModels.removeValue(forKey: proyek.id)
 

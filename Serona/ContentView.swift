@@ -44,7 +44,9 @@ struct ContentView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
         .sheet(isPresented: $isShowingTambahProyek) {
-            TambahProyekView { newProyek in
+            TambahProyekView(
+                deviceService: BLEDeviceConnectionService.shared
+            ) { newProyek in
                 newlyCreatedProyek = newProyek
             }
         }
@@ -52,17 +54,21 @@ struct ContentView: View {
             HalamanTambahResep(tampilSebagaiSheet: true)
         }
     }
-
+    
     @ViewBuilder
     private var content: some View {
         switch selectedTab {
         case .proyek:
-            ProyekListView(newlyCreatedProyek: $newlyCreatedProyek)
+            ProyekListView(
+                newlyCreatedProyek: $newlyCreatedProyek,
+                serviceProvider: { _ in BLEDeviceConnectionService.shared },
+                deviceConnectingProvider: { BLEDeviceConnectionService.shared }
+            )
         case .resep:
             ResepView(teksCari: $teksCari)
         }
     }
-
+    
     private var topHeaderBar: some View {
         ZStack {
             segmentedPill

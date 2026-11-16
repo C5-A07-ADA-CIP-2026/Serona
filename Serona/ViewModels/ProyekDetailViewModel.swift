@@ -56,6 +56,11 @@ final class ProyekDetailViewModel: ObservableObject {
     /// this read: the user sets them from the live readings (`tetapkanWarnaAwal`, `tetapkanPHAwal`).
     /// Does nothing for a finished project or while a scan is already reading the device.
     func mulaiPindai() async {
+        print("[Proyek] ▶️ mulaiPindai \(proyek.nama) status=\(proyek.status) isScanning=\(isScanning)")
+        guard proyek.status == .aktif, !isScanning else {
+            print("[Proyek] ⛔️ ditolak guard")
+            return
+        }
         guard proyek.status == .aktif, !isScanning else { return }
         isScanning = true
         defer { isScanning = false }
@@ -116,6 +121,7 @@ final class ProyekDetailViewModel: ObservableObject {
     }
 
     private func beginMeasuring(from initial: ColorMeasurement) {
+        print("[Proyek] ✅ beginMeasuring \(proyek.nama)")
         initialVisibleAverage = proyek.visibleAverageAwal
         initialRatios = proyek.rasioAwal
         latestMeasurement = initial
