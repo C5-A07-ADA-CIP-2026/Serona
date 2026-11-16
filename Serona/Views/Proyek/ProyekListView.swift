@@ -271,9 +271,23 @@ struct ProyekListView: View {
 
     private func getOrMakeViewModel(for proyek: Proyek) -> ProyekDetailViewModel {
         if let existing = activeViewModels[proyek.id] {
+            print("[List] Reusing ViewModel: \(proyek.nama)")
             return existing
         }
-        let vm = ProyekDetailViewModel(proyek: proyek, service: serviceProvider(proyek))
+
+        let service = serviceProvider(proyek)
+
+        print("""
+        [List] Creating ViewModel
+        Project: \(proyek.nama)
+        Service available: \(service != nil)
+        """)
+
+        let vm = ProyekDetailViewModel(
+            proyek: proyek,
+            service: service
+        )
+
         activeViewModels[proyek.id] = vm
         return vm
     }

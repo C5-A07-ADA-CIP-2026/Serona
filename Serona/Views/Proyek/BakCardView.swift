@@ -154,12 +154,12 @@ private struct BakCardContent: View {
     }
 
     private var kepekatanDisplay: String {
-        guard stage != .inactive, let c = viewModel?.latestConcentration else { return "-" }
+        guard let c = viewModel?.latestConcentration else { return "-" }
         return String(format: "%.0f%%", c)
     }
 
     private var phDisplay: String {
-        guard stage != .inactive, let ph = viewModel?.latestWaterPH else { return "-" }
+        guard let ph = viewModel?.latestWaterPH else { return "-" }
         return ProyekColorMeasurements.format(ph)
     }
 
@@ -222,12 +222,12 @@ private struct BakCardContent: View {
                 .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(stage == .inactive ? "-" : proyek.namaWarna)
+                Text(proyek.namaWarna)
                     .font(.headline)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
-                Text(stage == .inactive ? "-" : proyek.perangkatNama)
+                Text(proyek.perangkatNama)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

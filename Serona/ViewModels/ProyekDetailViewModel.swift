@@ -67,6 +67,7 @@ final class ProyekDetailViewModel: ObservableObject {
         colorMeasurementError = nil
         do {
             let initial = try await service.readInitialColorMeasurement()
+            print("[Proyek] ✅ Initial measurement berhasil: \(initial.visibleAverage)")
             beginMeasuring(from: initial)
         } catch is CancellationError {
             // A cancelled read is not a failure.
@@ -134,19 +135,31 @@ final class ProyekDetailViewModel: ObservableObject {
 
     private func startStreaming() {
         measurementTask?.cancel()
+        
+        print("[Proyek] 🔄 Memulai measurement stream...")
+        
         measurementTask = Task { [weak self] in
             guard let self else { return }
+            
+            print("[Proyek] ✅ Stream subscriber dibuat")
+            
             for await measurement in service.measurementUpdates() {
                 // A reading buffered before `berhenti()` must not be applied afterwards.
                 if Task.isCancelled {
                     break
                 }
+                
+                print("[Proyek] 📥 Menerima data stream: \(measurement.visibleAverage)")
+
+                
                 updateCurrentColorMeasurement(measurement)
             }
         }
     }
 
     private func updateCurrentColorMeasurement(_ measurement: ColorMeasurement) {
+        print("[Proyek] 🔄 Update UI: \(measurement.visibleAverage)")
+
         latestMeasurement = measurement
         var updated = measurements
         if let waterPH = measurement.waterPH {
@@ -179,7 +192,10 @@ final class ProyekDetailViewModel: ObservableObject {
         }
 
         if let waterPH = measurement.waterPH {
-            let warning = MeasurementWarningTracker.waterPHWarning(for: waterPH, limit: updated.waterPHLimit)
+            let warning = warningTracker.waterPHWarning(
+                for: waterPH,
+                limit: updated.waterPHLimit
+            )
             startsNewDip = startsNewDip || (warning != nil && waterPHWarning == nil)
             waterPHWarning = warning
         }

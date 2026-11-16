@@ -28,7 +28,7 @@ final class BLEDeviceConnectionService: NSObject, DeviceConnectionService, @unch
     /// The name last reported for each peripheral of the latest scan.
     private var reportedNames: [UUID: String] = [:]
     /// The peripheral the app is (or is becoming) connected to.
-    private var discoveredPeripheral: CBPeripheral?
+    var discoveredPeripheral: CBPeripheral?
     private var pendingPeripheral: CBPeripheral?
     var measurementCharacteristic: CBCharacteristic?
 
@@ -42,6 +42,7 @@ final class BLEDeviceConnectionService: NSObject, DeviceConnectionService, @unch
     private var connectionContinuation: CheckedContinuation<Void, any Error>?
     var characteristicContinuation: CheckedContinuation<Void, any Error>?
     var measurementContinuation: CheckedContinuation<ColorMeasurement, any Error>?
+//    var measurementStreamContinuation: AsyncStream<ColorMeasurement>.Continuation?
     /// Every project card streams the same device, so a reading goes to all open streams.
     let measurementBroadcaster = MeasurementBroadcaster()
 
@@ -61,6 +62,23 @@ final class BLEDeviceConnectionService: NSObject, DeviceConnectionService, @unch
         let manager = CBCentralManager(delegate: self, queue: .main)
         centralManager = manager
         return manager
+    }
+    
+    private func finishPendingOperations(with error: any Error) {
+        if let continuation = characteristicContinuation {
+            characteristicContinuation = nil
+            continuation.resume(throwing: error)
+        }
+
+        if let continuation = measurementContinuation {
+            measurementContinuation = nil
+            continuation.resume(throwing: error)
+        }
+
+//        measurementStreamContinuation?.finish()
+//        measurementStreamContinuation = nil
+        
+        measurementBroadcaster.finishAll()
     }
 
     // MARK: - DeviceConnectionService Conformance
@@ -134,13 +152,28 @@ final class BLEDeviceConnectionService: NSObject, DeviceConnectionService, @unch
     }
 
     func disconnect(from device: DiscoveredDevice) async {
-        guard let peripheral = scannedPeripherals[device.id] else { return }
+        guard let peripheral = scannedPeripherals[device.id] else {
+            return
+        }
+
         print("[BLE] 🔌 Memutus koneksi dari '\(device.nama)'...")
-        centralManager?.cancelPeripheralConnection(peripheral)
+
         if peripheral === discoveredPeripheral {
+            let error = NSError(
+                domain: "BLEService",
+                code: 410,
+                userInfo: [
+                    NSLocalizedDescriptionKey: "Perangkat terputus"
+                ]
+            )
+
+            finishPendingOperations(with: error)
+
             discoveredPeripheral = nil
             measurementCharacteristic = nil
         }
+
+        centralManager?.cancelPeripheralConnection(peripheral)
     }
 
     /// Connects to `pendingPeripheral` and resumes when CoreBluetooth reports the result, or after the timeout.
@@ -174,10 +207,14 @@ final class BLEDeviceConnectionService: NSObject, DeviceConnectionService, @unch
 
     /// Makes `peripheral` the one the app reads from, dropping the previously selected one.
     private func select(_ peripheral: CBPeripheral) {
-        if let previous = discoveredPeripheral, previous !== peripheral {
+        if let previous = discoveredPeripheral,
+           previous !== peripheral {
             centralManager?.cancelPeripheralConnection(previous)
         }
+
         discoveredPeripheral = peripheral
+        peripheral.delegate = self
+
         measurementCharacteristic = nil
         pendingPeripheral = nil
     }
@@ -217,6 +254,28 @@ final class BLEDeviceConnectionService: NSObject, DeviceConnectionService, @unch
     func measurementUpdates() -> AsyncStream<ColorMeasurement> {
         measurementBroadcaster.stream()
     }
+    
+//    func measurementUpdates() -> AsyncStream<ColorMeasurement> {
+//        AsyncStream { continuation in
+//
+//            // Aplikasi menggunakan satu subscriber untuk pembacaan sensor.
+//            measurementStreamContinuation?.finish()
+//
+//            measurementStreamContinuation = continuation
+//
+//            continuation.onTermination = { [weak self] _ in
+//                DispatchQueue.main.async {
+//                    guard let self,
+//                          self.measurementStreamContinuation != nil
+//                    else {
+//                        return
+//                    }
+//
+//                    self.measurementStreamContinuation = nil
+//                }
+//            }
+//        }
+//    }
 
     private func obtainMeasurementCharacteristic(
         from peripheral: CBPeripheral
@@ -316,11 +375,19 @@ extension BLEDeviceConnectionService: CBCentralManagerDelegate {
         report(peripheral, advertisedName: advertisementData[CBAdvertisementDataLocalNameKey] as? String)
     }
 
-    func centralManager(_: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        let name = peripheral.name ?? "ESP32"
-        print("[BLE] ✅ Sukses tersambung ke '\(name)'!")
+    func centralManager(
+        _: CBCentralManager,
+        didConnect peripheral: CBPeripheral
+    ) {
+        guard peripheral === pendingPeripheral else {
+            centralManager?.cancelPeripheralConnection(peripheral)
+            return
+        }
+
+        print("[BLE] ✅ Sukses tersambung ke '\(peripheral.name ?? "ESP32")'!")
+
         peripheral.delegate = self
-        peripheral.discoverServices([Self.serviceUUID])
+
         connectionContinuation?.resume(returning: ())
         connectionContinuation = nil
     }
@@ -338,26 +405,34 @@ extension BLEDeviceConnectionService: CBCentralManagerDelegate {
         connectionContinuation = nil
     }
 
-    func centralManager(_: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error _: (any Error)?) {
+    func centralManager(
+        _: CBCentralManager,
+        didDisconnectPeripheral peripheral: CBPeripheral,
+        error: (any Error)?
+    ) {
         let name = peripheral.name ?? "ESP32"
+
         print("[BLE] 🔌 Perangkat '\(name)' terputus.")
+
+        if let error {
+            print("[BLE] ⚠️ Alasan disconnect: \(error.localizedDescription)")
+        }
+
+        guard peripheral === discoveredPeripheral else {
+            return
+        }
+
         let disconnectError = NSError(
             domain: "BLEService",
-            code: 499,
-            userInfo: [NSLocalizedDescriptionKey: "Koneksi ke \(name) terputus"]
+            code: 410,
+            userInfo: [
+                NSLocalizedDescriptionKey: "Koneksi ke sensor terputus"
+            ]
         )
-        if peripheral === pendingPeripheral {
-            pendingPeripheral = nil
-            connectionContinuation?.resume(throwing: disconnectError)
-            connectionContinuation = nil
-        }
-        guard peripheral === discoveredPeripheral else { return }
+
+        finishPendingOperations(with: disconnectError)
+
         discoveredPeripheral = nil
         measurementCharacteristic = nil
-        characteristicContinuation?.resume(throwing: disconnectError)
-        characteristicContinuation = nil
-        measurementContinuation?.resume(throwing: disconnectError)
-        measurementContinuation = nil
-        measurementBroadcaster.finishAll()
     }
 }

@@ -68,20 +68,73 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
     /// when they differ by less than `transmittanceSpreadLimit`, else the lowest (the dominant color).
     /// A channel with no clean-water signal counts as T = 1; one with no signal in the bath is skipped.
     /// Nil when no channel is left, or the sizes differ.
-    static func absorbance(ratios: [Double], cleanRatios: [Double]) -> Double? {
-        guard ratios.count == cleanRatios.count else { return nil }
-        let transmittances = zip(ratios, cleanRatios).compactMap { ratio, clean -> Double? in
-            guard clean > 0 else { return 1 }
-            return ratio > 0 ? ratio / clean : nil
+    
+    
+    static func absorbance(
+        ratios: [Double],
+        cleanRatios: [Double]
+    ) -> Double? {
+        guard ratios.count == cleanRatios.count,
+              !ratios.isEmpty
+        else {
+            return nil
         }
-        guard let lowest = transmittances.min(), let highest = transmittances.max() else { return nil }
-        let rawEffective = highest - lowest < transmittanceSpreadLimit
+
+        let transmittances = zip(ratios, cleanRatios).compactMap {
+            ratio, clean -> Double? in
+
+            guard ratio.isFinite,
+                  clean.isFinite,
+                  ratio >= 0,
+                  clean >= 0
+            else {
+                return nil
+            }
+
+            guard clean > 0 else {
+                return 1
+            }
+
+            guard ratio > 0 else {
+                return nil
+            }
+
+            let transmittance = ratio / clean
+
+            guard transmittance.isFinite,
+                  transmittance > 0
+            else {
+                return nil
+            }
+
+            return transmittance
+        }
+
+        guard let lowest = transmittances.min(),
+              let highest = transmittances.max()
+        else {
+            return nil
+        }
+
+        let effective = highest - lowest < transmittanceSpreadLimit
             ? transmittances.reduce(0, +) / Double(transmittances.count)
             : lowest
-        // Clamp transmittance to <= 1.0 so minor sensor noise above clean water does not yield negative absorbance.
-        let effective = min(1.0, rawEffective)
-        return -log10(effective)
+
+        guard effective > 0,
+              effective.isFinite
+        else {
+            return nil
+        }
+
+        let result = -log10(effective)
+
+        guard result.isFinite else {
+            return nil
+        }
+
+        return result
     }
+
 
     /// Absorbance as a percentage of the baseline's, both against the same clean water. It follows the dye in
     /// the bath: less dye, less absorbance. Nil without channels, or when the baseline has no absorbance.
