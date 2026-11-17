@@ -135,6 +135,26 @@ struct ProyekDaftarTests {
         #expect(daftar.nonaktif.map(\.nama) == ["Selesai baru", "Selesai lama"])
     }
 
+    @Test("Bak cards are ordered alphabetically, not by creation date, and numbers sort naturally")
+    func ordersAlphabetically() {
+        let bak10 = makeProyek("Bak 10", daysAgo: 9)
+        let bak2 = makeProyek("Bak 2", daysAgo: 1)
+        let bak1 = makeProyek("Bak 1", daysAgo: 5)
+        let alfa = makeProyek("alfa", daysAgo: 3)
+
+        let urut = [bak10, bak2, bak1, alfa].diurutkanAbjad()
+
+        #expect(urut.map(\.nama) == ["alfa", "Bak 1", "Bak 2", "Bak 10"])
+    }
+
+    @Test("Equal names fall back to the older project first")
+    func equalNamesKeepCreationOrder() {
+        let baru = makeProyek("Bak 1", daysAgo: 1)
+        let lama = makeProyek("Bak 1", daysAgo: 5)
+
+        #expect([baru, lama].diurutkanAbjad() == [lama, baru])
+    }
+
     @Test("An empty list is empty")
     func emptyList() {
         let daftar = ProyekDaftar([])

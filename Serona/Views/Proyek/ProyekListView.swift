@@ -54,9 +54,9 @@ struct ProyekListView: View {
 
     private var displayedProyek: [Proyek] {
         if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return semuaProyek
+            return semuaProyek.diurutkanAbjad()
         }
-        return semuaProyek.filter { $0.nama.localizedCaseInsensitiveContains(searchText) }
+        return semuaProyek.filter { $0.nama.localizedCaseInsensitiveContains(searchText) }.diurutkanAbjad()
     }
 
     var body: some View {
