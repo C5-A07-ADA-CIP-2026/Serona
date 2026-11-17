@@ -11,6 +11,8 @@ struct DeviceListSheetView: View {
     private let onConnected: (DiscoveredDevice) -> Void
     private let onDisconnected: (DiscoveredDevice) -> Void
     private let assignedDeviceIDs: Set<UUID>
+    /// True when pushed inside a `NavigationStack`: the system bar replaces the custom header and Back button.
+    private let isPushed: Bool
 
     private let oliveGreen = Color("oliveGreen")
     private let alertRed = Color(hex: "#DE2428")
@@ -18,21 +20,25 @@ struct DeviceListSheetView: View {
     init(
         service: (any DeviceConnecting)? = nil,
         assignedDeviceIDs: Set<UUID> = [],
+        isPushed: Bool = false,
         onConnected: @escaping (DiscoveredDevice) -> Void = { _ in },
         onDisconnected: @escaping (DiscoveredDevice) -> Void = { _ in }
     ) {
         _viewModel = State(wrappedValue: DeviceListViewModel(service: service))
         self.assignedDeviceIDs = assignedDeviceIDs
+        self.isPushed = isPushed
         self.onConnected = onConnected
         self.onDisconnected = onDisconnected
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            modalHeaderBar
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
-                .padding(.bottom, 12)
+            if !isPushed {
+                modalHeaderBar
+                    .padding(.horizontal, 24)
+                    .padding(.top, 24)
+                    .padding(.bottom, 12)
+            }
 
             Group {
                 if viewModel.devices.isEmpty, viewModel.connectedDevice == nil {
@@ -74,9 +80,20 @@ struct DeviceListSheetView: View {
             .padding(.vertical)
         }
         .background(Color.white)
-        .presentationSizing(.form)
-        .presentationBackground(Color.white)
-        .presentationDragIndicator(.hidden)
+        .modalSheetStyle(isEnabled: !isPushed)
+        .navigationTitle("Hubungkan Perangkat")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if isPushed {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Cari Ulang Perangkat", systemImage: "arrow.clockwise") {
+                        Task { await viewModel.scan() }
+                    }
+                    .labelStyle(.iconOnly)
+                    .disabled(viewModel.isScanning || viewModel.connectingDevice != nil)
+                }
+            }
+        }
         .task {
             await viewModel.scan()
         }

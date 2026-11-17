@@ -15,17 +15,22 @@ struct PilihWarnaSheetView: View {
     @State private var chosenResep: Resep?
 
     var onConfirm: (Resep) -> Void
+    /// True when pushed inside a `NavigationStack`: the system bar replaces the custom header and Back button.
+    let isPushed: Bool
 
     private let oliveGreen = Color("oliveGreen")
 
-    init(selectedResep: Resep?, onConfirm: @escaping (Resep) -> Void) {
+    init(selectedResep: Resep?, isPushed: Bool = false, onConfirm: @escaping (Resep) -> Void) {
         _chosenResep = State(initialValue: selectedResep)
+        self.isPushed = isPushed
         self.onConfirm = onConfirm
     }
 
     var body: some View {
         VStack(spacing: 16) {
-            headerBar
+            if !isPushed {
+                headerBar
+            }
 
             if daftarResep.isEmpty {
                 ContentUnavailableView(
@@ -55,9 +60,25 @@ struct PilihWarnaSheetView: View {
             }
         }
         .background(Color.white)
-        .presentationSizing(.form)
-        .presentationBackground(Color.white)
-        .presentationDragIndicator(.hidden)
+        .modalSheetStyle(isEnabled: !isPushed)
+        .navigationTitle("Pilih Warna")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if isPushed {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Konfirmasi Warna", systemImage: "checkmark") {
+                        if let chosenResep {
+                            onConfirm(chosenResep)
+                            dismiss()
+                        }
+                    }
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.borderedProminent)
+                    .tint(oliveGreen)
+                    .disabled(chosenResep == nil)
+                }
+            }
+        }
     }
 
     private var headerBar: some View {

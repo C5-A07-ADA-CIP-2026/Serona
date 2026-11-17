@@ -57,6 +57,53 @@ struct TambahProyekView: View {
     }
 
     var body: some View {
+        NavigationStack {
+            formContent
+                .toolbarVisibility(.hidden, for: .navigationBar)
+                .navigationDestination(isPresented: $isShowingDeviceList) { deviceListScreen }
+                .navigationDestination(isPresented: $isShowingPilihResep) { pilihWarnaScreen }
+        }
+        .modalSheetStyle()
+        .alert(
+            "Gagal menyimpan proyek",
+            isPresented: Binding(
+                get: { saveErrorMessage != nil },
+                set: {
+                    if !$0 {
+                        saveErrorMessage = nil
+                    }
+                }
+            ),
+            presenting: saveErrorMessage
+        ) { _ in
+            Button("Tutup", role: .cancel) {}
+        } message: { error in
+            Text(error)
+        }
+    }
+
+    private var deviceListScreen: some View {
+        DeviceListSheetView(
+            service: deviceService,
+            assignedDeviceIDs: Set(
+                semuaProyek.compactMap { proyek in
+                    guard proyek.status == .aktif, proyek.id != existingProyek?.id else { return nil }
+                    return proyek.perangkatID
+                }
+            ),
+            isPushed: true,
+            onConnected: { viewModel.pilihPerangkat($0) },
+            onDisconnected: { _ in Task { await viewModel.hapusPerangkat() } }
+        )
+    }
+
+    private var pilihWarnaScreen: some View {
+        PilihWarnaSheetView(selectedResep: viewModel.resep, isPushed: true) {
+            viewModel.pilihResep($0)
+        }
+    }
+
+    private var formContent: some View {
         VStack(spacing: 20) {
             headerBar
 
@@ -74,43 +121,6 @@ struct TambahProyekView: View {
             .scrollDismissesKeyboard(.interactively)
         }
         .background(Color.white)
-        .presentationSizing(.form)
-        .presentationBackground(Color.white)
-        .presentationDragIndicator(.hidden)
-        .sheet(isPresented: $isShowingDeviceList) {
-            DeviceListSheetView(
-                service: deviceService,
-                assignedDeviceIDs: Set(
-                    semuaProyek.compactMap { proyek in
-                        guard proyek.status == .aktif, proyek.id != existingProyek?.id else { return nil }
-                        return proyek.perangkatID
-                    }
-                ),
-                onConnected: { viewModel.pilihPerangkat($0) },
-                onDisconnected: { _ in Task { await viewModel.hapusPerangkat() } }
-            )
-        }
-        .sheet(isPresented: $isShowingPilihResep) {
-            PilihWarnaSheetView(selectedResep: viewModel.resep) {
-                viewModel.pilihResep($0)
-            }
-        }
-        .alert(
-            "Gagal menyimpan proyek",
-            isPresented: Binding(
-                get: { saveErrorMessage != nil },
-                set: {
-                    if !$0 {
-                        saveErrorMessage = nil
-                    }
-                }
-            ),
-            presenting: saveErrorMessage
-        ) { _ in
-            Button("Tutup", role: .cancel) {}
-        } message: { error in
-            Text(error)
-        }
     }
 
     // MARK: - Top Header Bar
