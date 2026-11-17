@@ -27,7 +27,8 @@ struct ProyekListView: View {
     @State private var viewModel = ProyekListViewModel()
     @State private var searchText: String = ""
 
-    @State private var activeViewModels: [UUID: ProyekDetailViewModel] = [:]
+    /// Owned by the app root, so measurements keep running while this view is not on screen.
+    let store: ProyekMeasurementStore
     @State private var scanSetupTarget: Proyek?
     @State private var activeAlertTarget: ProyekQualityAlertTarget?
     @State private var lastShownAlertTarget: ProyekQualityAlertTarget?
@@ -41,10 +42,12 @@ struct ProyekListView: View {
     var deviceConnectingProvider: () -> (any DeviceConnecting)? = { nil }
 
     init(
+        store measurementStore: ProyekMeasurementStore = ProyekMeasurementStore(),
         newlyCreatedProyek: Binding<Proyek?> = .constant(nil),
         serviceProvider: @escaping (Proyek) -> (any ColorMeasurementSource)? = { _ in nil },
         deviceConnectingProvider: @escaping () -> (any DeviceConnecting)? = { nil }
     ) {
+        store = measurementStore
         _newlyCreatedProyek = newlyCreatedProyek
         self.serviceProvider = serviceProvider
         self.deviceConnectingProvider = deviceConnectingProvider
@@ -273,12 +276,7 @@ extension ProyekListView {
     // MARK: - Scanning & State Lifecycle
 
     private func getOrMakeViewModel(for proyek: Proyek) -> ProyekDetailViewModel {
-        if let existing = activeViewModels[proyek.id] {
-            return existing
-        }
-        let detailViewModel = ProyekDetailViewModel(proyek: proyek, service: serviceProvider(proyek))
-        activeViewModels[proyek.id] = detailViewModel
-        return detailViewModel
+        store.viewModel(for: proyek, service: serviceProvider(proyek))
     }
 
     private func resumeAlreadyScannedProjects() {
@@ -293,7 +291,7 @@ extension ProyekListView {
     private func startScanAfterSetup(for proyek: Proyek) {
         print("[List] 🚀 startScanAfterSetup \(proyek.nama)")
         queuedAlertTargets.removeAll { $0.id == proyek.id }
-        activeViewModels.removeValue(forKey: proyek.id)
+        store.remove(proyek.id)
 
         let detailViewModel = getOrMakeViewModel(for: proyek)
         Task {
@@ -319,13 +317,13 @@ extension ProyekListView {
             )
             try? modelContext.save()
         }
-        activeViewModels.removeValue(forKey: proyek.id)
+        store.remove(proyek.id)
     }
 
     // MARK: - Alert Bindings
 
     private var activeScanError: String? {
-        activeViewModels.values.compactMap(\.colorMeasurementError).first
+        store.allViewModels.compactMap(\.colorMeasurementError).first
     }
 
     private var scanErrorIsPresented: Binding<Bool> {
@@ -340,7 +338,7 @@ extension ProyekListView {
     }
 
     private func clearAllScanErrors() {
-        for detailViewModel in activeViewModels.values {
+        for detailViewModel in store.allViewModels {
             detailViewModel.clearColorMeasurementError()
         }
     }

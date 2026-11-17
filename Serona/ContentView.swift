@@ -24,6 +24,8 @@ struct ContentView: View {
     @State private var isShowingTambahProyek = false
     @State private var isShowingTambahResep = false
     @State private var newlyCreatedProyek: Proyek?
+    /// Lives as long as the app, so switching to the Resep tab never stops a running bak.
+    @State private var measurementStore = ProyekMeasurementStore()
     @FocusState private var isSearchFieldFocused: Bool
 
     private let oliveGreen = Color("oliveGreen")
@@ -62,6 +64,7 @@ struct ContentView: View {
         switch selectedTab {
         case .proyek:
             ProyekListView(
+                store: measurementStore,
                 newlyCreatedProyek: $newlyCreatedProyek,
                 serviceProvider: { proyek in
                     proyek.perangkatID.map { DeviceConnectionServices.default.measurementSource(for: $0) }
