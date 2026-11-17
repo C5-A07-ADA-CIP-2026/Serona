@@ -98,6 +98,16 @@ struct FormResepViewModelTests {
         #expect(!viewModel.bisaSimpan)
     }
 
+    @Test("The same dye twice blocks saving")
+    func duplicateDyeBlocksSaving() {
+        let viewModel = formLengkap()
+        viewModel.pewarna = [BahanInput(kode: "N-1", gram: 5), BahanInput(kode: "N-1", gram: 3)]
+        #expect(!viewModel.bisaSimpan)
+
+        viewModel.pewarna = [BahanInput(kode: "N-1", gram: 5), BahanInput(kode: "N-2", gram: 3)]
+        #expect(viewModel.bisaSimpan)
+    }
+
     @Test("Rows that are all empty still block saving")
     func onlyEmptyRowsBlockSaving() {
         let viewModel = formLengkap()

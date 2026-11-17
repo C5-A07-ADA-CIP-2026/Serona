@@ -171,7 +171,7 @@ struct HalamanTambahResep: View {
             ForEach($viewModel.pewarna) { $item in
                 BahanRowView(
                     item: $item,
-                    pilihan: viewModel.daftarPilihanPewarna,
+                    pilihan: viewModel.pilihanPewarna(untuk: item),
                     titleColor: titleColor
                 )
             }
@@ -179,7 +179,7 @@ struct HalamanTambahResep: View {
             OliveCapsuleButton(
                 title: "Tambah Pewarna",
                 systemImage: "plus",
-                isEnabled: barisLengkap(viewModel.pewarna)
+                isEnabled: viewModel.bisaTambahPewarna
             ) {
                 withAnimation(.snappy) {
                     viewModel.pewarna.append(BahanInput())
@@ -238,7 +238,7 @@ struct HalamanTambahResep: View {
             ForEach($viewModel.zatPembantu) { $item in
                 BahanRowView(
                     item: $item,
-                    pilihan: viewModel.daftarPilihanZatPembantu,
+                    pilihan: viewModel.pilihanZatPembantu(untuk: item),
                     titleColor: titleColor
                 )
             }
@@ -246,7 +246,7 @@ struct HalamanTambahResep: View {
             OliveCapsuleButton(
                 title: "Tambah Zat Pembantu",
                 systemImage: "plus",
-                isEnabled: barisLengkap(viewModel.zatPembantu)
+                isEnabled: viewModel.bisaTambahZatPembantu
             ) {
                 withAnimation(.snappy) {
                     viewModel.zatPembantu.append(BahanInput())
@@ -287,10 +287,6 @@ struct HalamanTambahResep: View {
         } catch {
             gagalMenghapus = true
         }
-    }
-
-    private func barisLengkap(_ daftar: [BahanInput]) -> Bool {
-        daftar.allSatisfy { !$0.kode.isEmpty && ($0.gram ?? 0) > 0 }
     }
 }
 

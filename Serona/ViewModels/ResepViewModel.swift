@@ -43,6 +43,24 @@ final class FormResepViewModel {
             && zatPembantu.valid
     }
 
+    /// Kode yang sudah dipilih baris lain tidak ditawarkan lagi, supaya pewarna tidak dobel.
+    func pilihanPewarna(untuk baris: BahanInput) -> [String] {
+        pewarna.pilihan(dari: daftarPilihanPewarna, untukBaris: baris.id)
+    }
+
+    func pilihanZatPembantu(untuk baris: BahanInput) -> [String] {
+        zatPembantu.pilihan(dari: daftarPilihanZatPembantu, untukBaris: baris.id)
+    }
+
+    /// Baris baru hanya berguna kalau baris terakhir sudah lengkap dan masih ada kode yang belum dipakai.
+    var bisaTambahPewarna: Bool {
+        pewarna.semuaTerisi && pewarna.masihAdaPilihan(dari: daftarPilihanPewarna)
+    }
+
+    var bisaTambahZatPembantu: Bool {
+        zatPembantu.semuaTerisi && zatPembantu.masihAdaPilihan(dari: daftarPilihanZatPembantu)
+    }
+
     /// `true` kalau ada isian yang berbeda dari resep asli.
     var adaPerubahan: Bool {
         guard let asli = resepAsli, !asli.isDeleted else { return false }
