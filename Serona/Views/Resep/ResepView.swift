@@ -7,6 +7,7 @@ import SwiftData
 import SwiftUI
 
 struct ResepView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Resep.dibuat, order: .reverse) private var daftar: [Resep]
 
@@ -31,7 +32,8 @@ struct ResepView: View {
 
             GeometryReader { geometry in
                 let gridColumns = AdaptiveLayout.gridColumns(
-                    forWidth: geometry.size.width, minimumItemWidth: 170, spacing: 16, limits: 2 ... 5
+                    forWidth: geometry.size.width, minimumItemWidth: 170, spacing: 16,
+                    limits: dynamicTypeSize.isAccessibilitySize ? 1 ... 1 : 2 ... 5
                 )
                 let sidePadding = AdaptiveLayout.sidePadding(forWidth: geometry.size.width)
 

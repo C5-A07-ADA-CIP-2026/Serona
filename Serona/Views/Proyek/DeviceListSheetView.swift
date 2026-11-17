@@ -136,7 +136,7 @@ struct DeviceListSheetView: View {
                 Image(systemName: "arrow.clockwise")
                     .font(.subheadline.bold())
                     .foregroundStyle(.primary)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 44, height: 44)
                     .background(Color(UIColor.systemGray6))
                     .clipShape(Circle())
                     .shadow(color: Color.black.opacity(0.06), radius: 3, x: 0, y: 1)

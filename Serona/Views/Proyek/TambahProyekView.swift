@@ -7,6 +7,7 @@ import SwiftData
 import SwiftUI
 
 struct TambahProyekView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
     @Query(sort: \Proyek.tanggal, order: .forward) private var semuaProyek: [Proyek]
@@ -193,12 +194,17 @@ extension TambahProyekView {
                     }
                 }
             } else {
-                HStack {
+                let layout = dynamicTypeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+                    : AnyLayout(HStackLayout())
+                layout {
                     Text("Perangkat")
                         .font(.headline)
                         .foregroundStyle(.primary)
 
-                    Spacer()
+                    if !dynamicTypeSize.isAccessibilitySize {
+                        Spacer()
+                    }
 
                     Button {
                         isShowingDeviceList = true
@@ -210,7 +216,7 @@ extension TambahProyekView {
                         .font(.caption.bold())
                         .foregroundStyle(.white)
                         .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
+                        .frame(minHeight: 44)
                         .background(oliveGreen)
                         .clipShape(Capsule())
                     }
@@ -255,8 +261,7 @@ extension TambahProyekView {
                         Text("Pilih Warna")
                             .font(.subheadline.bold())
                             .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
+                            .frame(maxWidth: .infinity, minHeight: 44)
                             .background(oliveGreen)
                             .clipShape(Capsule())
                     }

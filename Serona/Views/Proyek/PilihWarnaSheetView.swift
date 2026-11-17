@@ -123,7 +123,7 @@ struct PilihWarnaSheetView: View {
 
                         VStack(spacing: 8) {
                             Image(systemName: "photo")
-                                .font(.system(size: 36))
+                                .font(.largeTitle)
                                 .foregroundStyle(Color.gray.opacity(0.75))
 
                             Text("Warna akan muncul\nsetelah digunakan")
@@ -138,7 +138,7 @@ struct PilihWarnaSheetView: View {
                 Text(resep.namaWarna)
                     .font(.headline.bold())
                     .foregroundStyle(.primary)
-                    .lineLimit(1)
+                    .lineLimit(2)
             }
             .padding(14)
             .background(Color.white)

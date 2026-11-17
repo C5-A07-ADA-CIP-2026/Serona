@@ -71,7 +71,7 @@ struct WarnaSwatchView: View {
 
             WarnaKotak(hex: warnaHex, cornerRadius: 10, iconSize: 28)
                 .frame(maxWidth: .infinity)
-                .frame(height: 80)
+                .frame(minHeight: 80)
                 .overlay(alignment: .topTrailing) {
                     if let onHapus {
                         Button(action: onHapus) {

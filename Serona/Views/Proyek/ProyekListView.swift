@@ -21,6 +21,7 @@ struct ProyekQualityAlertTarget: Identifiable {
 }
 
 struct ProyekListView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Query(sort: \Proyek.tanggal, order: .forward) private var semuaProyek: [Proyek]
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = ProyekListViewModel()
@@ -64,7 +65,9 @@ struct ProyekListView: View {
             BackgroundGradient()
 
             GeometryReader { geometry in
-                let gridColumns = Self.gridColumns(forWidth: geometry.size.width)
+                let gridColumns = Self.gridColumns(
+                    forWidth: geometry.size.width, singleColumn: dynamicTypeSize.isAccessibilitySize
+                )
                 let sidePadding = AdaptiveLayout.sidePadding(forWidth: geometry.size.width)
 
                 VStack(alignment: .leading, spacing: 20) {
@@ -166,8 +169,10 @@ struct ProyekListView: View {
     }
 
     /// One column on a phone, two or three on an iPad, so a card is never narrower than 320 pt.
-    private static func gridColumns(forWidth width: CGFloat) -> [GridItem] {
-        AdaptiveLayout.gridColumns(forWidth: width, minimumItemWidth: 320, spacing: 20, limits: 1 ... 3)
+    private static func gridColumns(forWidth width: CGFloat, singleColumn: Bool) -> [GridItem] {
+        AdaptiveLayout.gridColumns(
+            forWidth: width, minimumItemWidth: 320, spacing: 20, limits: singleColumn ? 1 ... 1 : 1 ... 3
+        )
     }
 
     private func proyekGridView(columns: [GridItem], sidePadding: CGFloat) -> some View {

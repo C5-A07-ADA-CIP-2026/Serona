@@ -96,7 +96,7 @@ struct HalamanTambahResep: View {
                 Image(systemName: "xmark")
                     .font(.subheadline.bold())
                     .foregroundStyle(.primary)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 44, height: 44)
                     .background(Color(UIColor.systemGray5))
                     .clipShape(Circle())
             }
@@ -108,7 +108,8 @@ struct HalamanTambahResep: View {
             Text(viewModel.sedangMengedit ? viewModel.namaWarna : "Tambah Warna")
                 .font(.headline.bold())
                 .foregroundStyle(.primary)
-                .lineLimit(1)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
 
             Spacer()
 
@@ -118,7 +119,7 @@ struct HalamanTambahResep: View {
                 Image(systemName: "checkmark")
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 44, height: 44)
                     .background(viewModel.bisaSimpan ? oliveGreen : Color.gray.opacity(0.65))
                     .clipShape(Circle())
             }

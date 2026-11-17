@@ -10,7 +10,7 @@ import SwiftUI
 struct WarnaKotak: View {
     let hex: String?
     var cornerRadius: CGFloat = 12
-    var iconSize: CGFloat = 32
+    @ScaledMetric(relativeTo: .largeTitle) var iconSize: CGFloat = 32
 
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius)

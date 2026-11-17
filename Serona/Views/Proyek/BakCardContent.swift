@@ -78,6 +78,7 @@ struct BakCardContent: View {
                 onPerbaikiLarutan?()
             }
         }
+        .accessibilityAddTraits(stage == .activeWarning ? .isButton : [])
     }
 }
 
@@ -157,12 +158,12 @@ extension BakCardContent {
                 Text(stage == .inactive ? "-" : proyek.namaWarna)
                     .font(.headline)
                     .foregroundStyle(.primary)
-                    .lineLimit(1)
+                    .lineLimit(2)
 
                 Text(stage == .inactive ? "-" : proyek.perangkatNama)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .lineLimit(2)
             }
 
             Spacer()
@@ -316,9 +317,10 @@ extension BakCardContent {
 
     private var statusForeground: Color {
         switch stage {
-        case .active: Color.oliveGreen
-        case .activeWarning: Color(hex: "#DE2428")
-        case .inactive: .secondary
+        // Darker than the brand tints so small status text keeps 4.5:1 on the tinted pill.
+        case .active: Color.oliveGreen.mix(with: .black, by: 0.3)
+        case .activeWarning: Color(hex: "#C8191C")
+        case .inactive: Color.primary.opacity(0.7)
         }
     }
 

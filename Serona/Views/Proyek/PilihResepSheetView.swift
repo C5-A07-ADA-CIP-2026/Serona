@@ -93,7 +93,7 @@ struct PilihResepSheetView: View {
             Spacer()
 
             Text("Pilih Warna")
-                .font(.system(size: 17, weight: .bold))
+                .font(.headline.bold())
                 .foregroundStyle(titleColor)
 
             Spacer()
@@ -102,12 +102,14 @@ struct PilihResepSheetView: View {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.subheadline.bold())
                     .foregroundStyle(Color.black.opacity(0.7))
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(Color.black.opacity(0.08))
                     .clipShape(Circle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Tutup")
         }
     }
 }

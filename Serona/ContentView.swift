@@ -77,9 +77,14 @@ struct ContentView: View {
         horizontalSizeClass == .compact
     }
 
+    /// Tabs fill the row on a phone and at accessibility text sizes, where their labels need the room.
+    private var tabsFillWidth: Bool {
+        isCompactWidth || dynamicTypeSize.isAccessibilitySize
+    }
+
     @ViewBuilder
     private var topHeaderBar: some View {
-        if isCompactWidth {
+        if isCompactWidth || dynamicTypeSize.isAccessibilitySize {
             compactHeaderBar
         } else {
             regularHeaderBar
@@ -161,7 +166,7 @@ struct ContentView: View {
         }
         .padding(4)
         .background(pillBackground, in: Capsule())
-        .frame(maxWidth: isCompactWidth ? .infinity : nil)
+        .frame(maxWidth: tabsFillWidth ? .infinity : nil)
     }
 
     private func tabButton(for tab: HeaderTab) -> some View {
@@ -180,9 +185,10 @@ struct ContentView: View {
         } label: {
             Text(tab.rawValue)
                 .font(.subheadline.weight(.semibold))
-                .lineLimit(1)
+                .multilineTextAlignment(.center)
                 .foregroundStyle(textColor)
-                .frame(maxWidth: isCompactWidth ? .infinity : 130, minHeight: 36)
+                .frame(maxWidth: tabsFillWidth ? .infinity : 160, minHeight: 44)
+                .padding(.horizontal, 8)
                 .background {
                     if isSelected {
                         RoundedRectangle(cornerRadius: 18)
@@ -195,6 +201,7 @@ struct ContentView: View {
                 }
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     @ViewBuilder
@@ -220,6 +227,8 @@ struct ContentView: View {
                     Image(systemName: "xmark")
                         .font(.caption.bold())
                         .foregroundStyle(titleColor.opacity(0.75))
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Tutup pencarian")
