@@ -13,7 +13,6 @@ struct PilihWarnaSheetView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var chosenResep: Resep?
-    @ScaledMetric(relativeTo: .body) private var sheetWidth: CGFloat = 460
 
     var onConfirm: (Resep) -> Void
 
@@ -53,12 +52,10 @@ struct PilihWarnaSheetView: View {
                     .padding(.top, 4)
                     .padding(.bottom, 24)
                 }
-                .frame(minHeight: 440, maxHeight: 520)
             }
         }
-        .frame(maxWidth: sheetWidth)
         .background(Color.white)
-        .presentationSizing(.fitted)
+        .presentationSizing(.form)
         .presentationBackground(Color.white)
         .presentationDragIndicator(.visible)
     }

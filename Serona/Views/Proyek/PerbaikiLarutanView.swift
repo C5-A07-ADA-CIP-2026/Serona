@@ -114,7 +114,7 @@ struct PerbaikiLarutanView: View {
             .padding(20)
         }
         .background(Color.white)
-        .presentationSizing(.fitted)
+        .presentationSizing(.form)
         .presentationBackground(Color.white)
         .presentationDragIndicator(.hidden)
         .onChange(of: viewModel.qualityAlert) { _, alert in

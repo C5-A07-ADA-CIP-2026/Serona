@@ -16,8 +16,6 @@ struct TambahProyekView: View {
     @State private var isShowingPilihResep = false
     @State var saveErrorMessage: String?
 
-    @ScaledMetric(relativeTo: .body) private var sheetWidth: CGFloat = 450
-
     var existingProyek: Proyek?
     var bakTitleOverride: String?
     var deviceService: (any DeviceConnecting)?
@@ -61,18 +59,21 @@ struct TambahProyekView: View {
         VStack(spacing: 20) {
             headerBar
 
-            VStack(spacing: 16) {
-                perangkatCard
-                warnaCard
-                namaPemesanCard
-                jumlahAirCard
+            ScrollView {
+                VStack(spacing: 16) {
+                    perangkatCard
+                    warnaCard
+                    namaPemesanCard
+                    jumlahAirCard
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
+            .scrollBounceBehavior(.basedOnSize)
+            .scrollDismissesKeyboard(.interactively)
         }
-        .frame(maxWidth: sheetWidth)
         .background(Color.white)
-        .presentationSizing(.fitted)
+        .presentationSizing(.form)
         .presentationBackground(Color.white)
         .presentationDragIndicator(.visible)
         .sheet(isPresented: $isShowingDeviceList) {

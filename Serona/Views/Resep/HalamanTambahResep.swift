@@ -16,8 +16,6 @@ struct HalamanTambahResep: View {
     @State private var gagalMenghapus = false
     @State private var konfirmasiHapus = false
 
-    @ScaledMetric(relativeTo: .body) private var sheetWidth: CGFloat = 450
-
     private let tampilSebagaiSheet: Bool
     private let titleColor = Color("titleColor")
     private let oliveGreen = Color("oliveGreen")
@@ -60,10 +58,8 @@ struct HalamanTambahResep: View {
             }
             .scrollDismissesKeyboard(.interactively)
         }
-        .frame(width: sheetWidth)
-        .frame(minHeight: 490, maxHeight: 620)
         .background(Color.white)
-        .presentationSizing(.fitted)
+        .presentationSizing(.form)
         .presentationBackground(Color.white)
         .presentationDragIndicator(.visible)
         .onAppear {

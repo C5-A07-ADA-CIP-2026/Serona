@@ -12,8 +12,6 @@ struct DeviceListSheetView: View {
     private let onDisconnected: (DiscoveredDevice) -> Void
     private let assignedDeviceIDs: Set<UUID>
 
-    @ScaledMetric(relativeTo: .body) private var sheetWidth: CGFloat = 480
-
     private let oliveGreen = Color("oliveGreen")
     private let alertRed = Color(hex: "#DE2428")
 
@@ -73,12 +71,10 @@ struct DeviceListSheetView: View {
                     }
                 }
             }
-            .frame(minHeight: 400, maxHeight: 480)
             .padding(.vertical)
         }
-        .frame(maxWidth: sheetWidth)
         .background(Color.white)
-        .presentationSizing(.fitted)
+        .presentationSizing(.form)
         .presentationBackground(Color.white)
         .presentationDragIndicator(.visible)
         .task {
