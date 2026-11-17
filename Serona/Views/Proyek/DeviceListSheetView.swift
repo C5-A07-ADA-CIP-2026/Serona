@@ -76,7 +76,7 @@ struct DeviceListSheetView: View {
         .background(Color.white)
         .presentationSizing(.form)
         .presentationBackground(Color.white)
-        .presentationDragIndicator(.visible)
+        .presentationDragIndicator(.hidden)
         .task {
             await viewModel.scan()
         }
@@ -189,11 +189,11 @@ struct DeviceListSheetView: View {
         HStack(spacing: 12) {
             Image(systemName: "wifi")
                 .font(.body.weight(.semibold))
-                .foregroundStyle(oliveGreen)
+                .foregroundStyle(Color.oliveGreenText)
 
             Text(device.nama)
                 .font(.body.weight(.semibold))
-                .foregroundStyle(oliveGreen)
+                .foregroundStyle(Color.oliveGreenText)
 
             Spacer()
 

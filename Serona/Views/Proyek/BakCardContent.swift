@@ -318,7 +318,7 @@ extension BakCardContent {
     private var statusForeground: Color {
         switch stage {
         // Darker than the brand tints so small status text keeps 4.5:1 on the tinted pill.
-        case .active: Color.oliveGreen.mix(with: .black, by: 0.3)
+        case .active: Color.oliveGreenText
         case .activeWarning: Color(hex: "#C8191C")
         case .inactive: Color.primary.opacity(0.7)
         }

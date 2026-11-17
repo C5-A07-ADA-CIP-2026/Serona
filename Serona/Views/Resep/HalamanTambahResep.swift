@@ -61,7 +61,7 @@ struct HalamanTambahResep: View {
         .background(Color.white)
         .presentationSizing(.form)
         .presentationBackground(Color.white)
-        .presentationDragIndicator(.visible)
+        .presentationDragIndicator(.hidden)
         .onAppear {
             if !viewModel.sedangMengedit {
                 if viewModel.kepekatan == nil {

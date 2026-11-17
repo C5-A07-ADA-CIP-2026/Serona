@@ -76,7 +76,7 @@ struct TambahProyekView: View {
         .background(Color.white)
         .presentationSizing(.form)
         .presentationBackground(Color.white)
-        .presentationDragIndicator(.visible)
+        .presentationDragIndicator(.hidden)
         .sheet(isPresented: $isShowingDeviceList) {
             DeviceListSheetView(
                 service: deviceService,
@@ -174,11 +174,11 @@ extension TambahProyekView {
                     HStack(spacing: 8) {
                         Image(systemName: "wifi")
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(oliveGreen)
+                            .foregroundStyle(Color.oliveGreenText)
 
                         Text(perangkat.nama)
                             .font(.subheadline.weight(.medium))
-                            .foregroundStyle(oliveGreen)
+                            .foregroundStyle(Color.oliveGreenText)
 
                         Spacer()
 

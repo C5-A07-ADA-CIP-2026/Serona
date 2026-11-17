@@ -171,7 +171,7 @@ struct ContentView: View {
 
     private func tabButton(for tab: HeaderTab) -> some View {
         let isSelected = selectedTab == tab
-        let textColor: Color = isSelected ? oliveGreen : titleColor.opacity(0.8)
+        let textColor: Color = isSelected ? Color.oliveGreenText : titleColor.opacity(0.8)
 
         return Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {

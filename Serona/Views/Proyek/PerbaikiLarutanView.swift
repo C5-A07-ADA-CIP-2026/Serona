@@ -153,7 +153,7 @@ extension PerbaikiLarutanView {
         VStack(alignment: .leading, spacing: 14) {
             Text("Tahap 1: Penyesuaian Volume Air Larutan")
                 .font(.title2.bold())
-                .foregroundStyle(Color.oliveGreen)
+                .foregroundStyle(Color.oliveGreenText)
                 .fixedSize(horizontal: false, vertical: true)
 
             Text("Tambahkan air ke dalam wadah untuk menyesuaikan volume dasar larutan.")
@@ -198,7 +198,7 @@ extension PerbaikiLarutanView {
         return VStack(alignment: .leading, spacing: 16) {
             Text("Tahap 2: Penyesuaian pH Air Larutan")
                 .font(.title2.bold())
-                .foregroundStyle(Color.oliveGreen)
+                .foregroundStyle(Color.oliveGreenText)
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 6) {
@@ -253,7 +253,7 @@ extension PerbaikiLarutanView {
         return VStack(alignment: .leading, spacing: 16) {
             Text("Tahap 3: Penyesuaian Kepekatan Warna Larutan")
                 .font(.title2.bold())
-                .foregroundStyle(Color.oliveGreen)
+                .foregroundStyle(Color.oliveGreenText)
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 6) {

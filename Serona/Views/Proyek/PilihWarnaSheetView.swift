@@ -57,7 +57,7 @@ struct PilihWarnaSheetView: View {
         .background(Color.white)
         .presentationSizing(.form)
         .presentationBackground(Color.white)
-        .presentationDragIndicator(.visible)
+        .presentationDragIndicator(.hidden)
     }
 
     private var headerBar: some View {
