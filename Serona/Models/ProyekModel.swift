@@ -18,6 +18,9 @@ final class Proyek {
     var namaTersimpan: String?
     var statusTersimpan: ProyekStatus?
     var perangkatNamaTersimpan: String?
+    /// Stable CoreBluetooth identifier for the sensor assigned to this bath.
+    /// Older projects have no identifier and must ask the user to select a sensor again.
+    var perangkatID: UUID?
     var pewarnaTersimpan: [Bahan]?
     var zatPembantuTersimpan: [Bahan]?
     /// Bath water volume in Liters (L) entered when starting the project.
@@ -79,11 +82,19 @@ final class Proyek {
 
     /// A new, active project. Name, colour, limits and ingredients are copied from `resep`,
     /// so the project stays correct when the recipe is edited or deleted.
-    init(nama: String, perangkatNama: String, resep: Resep, jumlahKain: Int = 1, tanggal: Date = .now) {
+    init(
+        nama: String,
+        perangkatNama: String,
+        perangkatID: UUID? = nil,
+        resep: Resep,
+        jumlahKain: Int = 1,
+        tanggal: Date = .now
+    ) {
         id = UUID()
         namaTersimpan = nama
         statusTersimpan = .aktif
         perangkatNamaTersimpan = perangkatNama
+        self.perangkatID = perangkatID
         self.tanggal = tanggal
         namaWarna = resep.namaWarna
         warnaHex = resep.warnaHex

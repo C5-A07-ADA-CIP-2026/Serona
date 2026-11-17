@@ -60,6 +60,7 @@ final class TambahProyekViewModel {
         let proyek = Proyek(
             nama: nama.trimmingCharacters(in: .whitespacesAndNewlines),
             perangkatNama: perangkat.nama,
+            perangkatID: perangkat.id,
             resep: resep,
             jumlahKain: jumlahKain
         )
@@ -77,14 +78,15 @@ final class TambahProyekViewModel {
     /// then marks it active so scanning can start immediately.
     @discardableResult
     func simpanUntukPindai(_ proyek: Proyek, in persistence: some ModelPersisting) -> Bool {
-        guard canSubmitScan, let resep else { return false }
+        guard canSubmitScan, let perangkat, let resep else { return false }
 
         proyek.batalkanSelesai()
-        proyek.perangkatNama = namaPemesan.trimmingCharacters(in: .whitespacesAndNewlines)
+        proyek.perangkatNama = perangkat.nama
+        proyek.perangkatID = perangkat.id
         proyek.namaWarna = resep.namaWarna
         proyek.warnaHex = resep.warnaHex
-        proyek.batasKepekatan = ProyekDetailViewModel.defaultConcentrationLimit
-        proyek.batasPH = ProyekDetailViewModel.defaultWaterPHLimit
+        proyek.batasKepekatan = resep.kepekatan
+        proyek.batasPH = resep.batasPH
         proyek.pewarna = resep.pewarna
         proyek.zatPembantu = resep.zatPembantu
         proyek.air = jumlahAir

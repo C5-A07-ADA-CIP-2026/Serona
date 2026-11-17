@@ -10,6 +10,7 @@ struct DeviceListSheetView: View {
     @State private var viewModel: DeviceListViewModel
     private let onConnected: (DiscoveredDevice) -> Void
     private let onDisconnected: (DiscoveredDevice) -> Void
+    private let assignedDeviceIDs: Set<UUID>
 
     @ScaledMetric(relativeTo: .body) private var sheetWidth: CGFloat = 480
 
@@ -18,10 +19,12 @@ struct DeviceListSheetView: View {
 
     init(
         service: (any DeviceConnecting)? = nil,
+        assignedDeviceIDs: Set<UUID> = [],
         onConnected: @escaping (DiscoveredDevice) -> Void = { _ in },
         onDisconnected: @escaping (DiscoveredDevice) -> Void = { _ in }
     ) {
         _viewModel = State(wrappedValue: DeviceListViewModel(service: service))
+        self.assignedDeviceIDs = assignedDeviceIDs
         self.onConnected = onConnected
         self.onDisconnected = onDisconnected
     }
@@ -73,7 +76,7 @@ struct DeviceListSheetView: View {
             .frame(minHeight: 400, maxHeight: 480)
             .padding(.vertical)
         }
-        .frame(width: sheetWidth)
+        .frame(maxWidth: sheetWidth)
         .background(Color.white)
         .presentationSizing(.fitted)
         .presentationBackground(Color.white)
@@ -115,7 +118,7 @@ struct DeviceListSheetView: View {
                 Image(systemName: "xmark")
                     .font(.subheadline.bold())
                     .foregroundStyle(.primary)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 44, height: 44)
                     .background(Color(UIColor.systemGray6))
                     .clipShape(Circle())
                     .shadow(color: Color.black.opacity(0.06), radius: 3, x: 0, y: 1)
@@ -152,7 +155,8 @@ struct DeviceListSheetView: View {
     // MARK: - Device Rows
 
     private func deviceRow(_ device: DiscoveredDevice) -> some View {
-        HStack(spacing: 12) {
+        let isAssigned = assignedDeviceIDs.contains(device.id)
+        return HStack(spacing: 12) {
             Image(systemName: "wifi")
                 .font(.body.weight(.semibold))
                 .foregroundStyle(.primary)
@@ -167,17 +171,20 @@ struct DeviceListSheetView: View {
                 Task { await viewModel.connect(device) }
             } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "plus")
+                    Image(systemName: isAssigned ? "lock.fill" : "plus")
                         .font(.caption.bold())
-                    Text("Hubungkan")
+                    Text(isAssigned ? "Dipakai bak lain" : "Hubungkan")
                         .font(.subheadline.weight(.semibold))
                 }
                 .foregroundStyle(.white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
+                .frame(minHeight: 44)
                 .background(oliveGreen, in: Capsule())
             }
             .buttonStyle(.plain)
+            .disabled(isAssigned)
+            .accessibilityHint(isAssigned ? "Perangkat sudah digunakan oleh bak aktif lain" : "")
         }
         .padding(.vertical, 14)
     }
@@ -205,6 +212,7 @@ struct DeviceListSheetView: View {
                     .foregroundStyle(alertRed)
             }
             .buttonStyle(.plain)
+            .frame(minWidth: 44, minHeight: 44)
             .accessibilityLabel("Putuskan Perangkat")
         }
         .padding(.vertical, 14)

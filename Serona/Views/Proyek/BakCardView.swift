@@ -59,8 +59,8 @@ private struct ObservedBakCardBody: View {
             return .inactive
         }
 
-        let isLowConcentration = (viewModel.latestConcentration ?? 100) < ProyekDetailViewModel.defaultConcentrationLimit
-        let isLowPH = (viewModel.latestWaterPH ?? 14) < ProyekDetailViewModel.defaultWaterPHLimit
+        let isLowConcentration = (viewModel.latestConcentration ?? 100) < proyek.batasKepekatan
+        let isLowPH = (viewModel.latestWaterPH ?? 14) < proyek.batasPH
         let hasLiveAlert = viewModel.qualityAlert != nil || viewModel.currentIssue != nil || isLowConcentration || isLowPH
         return hasLiveAlert ? .activeWarning : .active
     }
@@ -93,8 +93,8 @@ private struct ObservedBakCardBody: View {
     }
 
     private func makeFallbackAlert() -> QualityAlert {
-        let isLowC = (viewModel.latestConcentration ?? 100) < ProyekDetailViewModel.defaultConcentrationLimit
-        let isLowPH = (viewModel.latestWaterPH ?? 14) < ProyekDetailViewModel.defaultWaterPHLimit
+        let isLowC = (viewModel.latestConcentration ?? 100) < proyek.batasKepekatan
+        let isLowPH = (viewModel.latestWaterPH ?? 14) < proyek.batasPH
 
         let issue: QualityIssue
         let message: String
@@ -104,10 +104,10 @@ private struct ObservedBakCardBody: View {
             message = MeasurementWarningTracker.bothMessage
         case (true, false):
             issue = .kepekatan
-            message = MeasurementWarningTracker.concentrationMessage(limit: ProyekDetailViewModel.defaultConcentrationLimit)
+            message = MeasurementWarningTracker.concentrationMessage(limit: proyek.batasKepekatan)
         case (false, true):
             issue = .phAir
-            message = MeasurementWarningTracker.waterPHMessage(limit: ProyekDetailViewModel.defaultWaterPHLimit)
+            message = MeasurementWarningTracker.waterPHMessage(limit: proyek.batasPH)
         case (false, false):
             issue = viewModel.currentIssue ?? .keduanya
             message = MeasurementWarningTracker.bothMessage
@@ -134,32 +134,32 @@ private struct BakCardContent: View {
             return .inactive
         }
 
-        let isLowConcentration = (viewModel.latestConcentration ?? 100) < ProyekDetailViewModel.defaultConcentrationLimit
-        let isLowPH = (viewModel.latestWaterPH ?? 14) < ProyekDetailViewModel.defaultWaterPHLimit
+        let isLowConcentration = (viewModel.latestConcentration ?? 100) < proyek.batasKepekatan
+        let isLowPH = (viewModel.latestWaterPH ?? 14) < proyek.batasPH
         let hasLiveAlert = viewModel.qualityAlert != nil || viewModel.currentIssue != nil || isLowConcentration || isLowPH
         return hasLiveAlert ? .activeWarning : .active
     }
 
-    private var isConnected: Bool { stage != .inactive }
+    private var isConnected: Bool { viewModel?.connectionState == .ready }
     private var isScanning: Bool { viewModel?.isScanning ?? false }
 
     private var isConcentrationBelowLimit: Bool {
         guard stage != .inactive, let c = viewModel?.latestConcentration else { return false }
-        return c < ProyekDetailViewModel.defaultConcentrationLimit
+        return c < proyek.batasKepekatan
     }
 
     private var isPHBelowLimit: Bool {
         guard stage != .inactive, let ph = viewModel?.latestWaterPH else { return false }
-        return ph < ProyekDetailViewModel.defaultWaterPHLimit
+        return ph < proyek.batasPH
     }
 
     private var kepekatanDisplay: String {
-        guard let c = viewModel?.latestConcentration else { return "-" }
+        guard stage != .inactive, let c = viewModel?.latestConcentration else { return "-" }
         return String(format: "%.0f%%", c)
     }
 
     private var phDisplay: String {
-        guard let ph = viewModel?.latestWaterPH else { return "-" }
+        guard stage != .inactive, let ph = viewModel?.latestWaterPH else { return "-" }
         return ProyekColorMeasurements.format(ph)
     }
 
@@ -188,23 +188,42 @@ private struct BakCardContent: View {
     // MARK: - Card Subviews
 
     private var headerRow: some View {
-        HStack {
-            Text(proyek.nama)
-                .font(.title2.bold())
-                .foregroundStyle(.primary)
-                .lineLimit(1)
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            HStack {
+                Text(proyek.nama)
+                    .font(.title2.bold())
+                    .foregroundStyle(.primary)
 
-            Spacer()
+                Spacer()
 
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(isConnected ? Color.green : Color.gray)
-                    .frame(width: 8, height: 8)
+                let status = connectionStatus(at: context.date)
+                HStack(spacing: 6) {
+                    Image(systemName: status.icon)
+                        .accessibilityHidden(true)
 
-                Text(isConnected ? "Tersambung" : "Tidak Tersambung")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    Text(status.text)
+                        .font(.caption)
+                        .foregroundStyle(.primary)
+                }
             }
+        }
+    }
+
+    private func connectionStatus(at date: Date) -> (text: String, icon: String) {
+        guard let viewModel else { return ("Tidak tersambung", "antenna.radiowaves.left.and.right.slash") }
+        switch viewModel.connectionState {
+        case .ready:
+            return viewModel.isMeasurementStale(at: date)
+                ? ("Data sensor lama", "clock.badge.exclamationmark")
+                : ("Tersambung", "antenna.radiowaves.left.and.right")
+        case .connecting, .discovering:
+            return ("Menyambungkan", "antenna.radiowaves.left.and.right")
+        case .reconnecting:
+            return ("Menyambungkan ulang", "arrow.clockwise")
+        case .failed:
+            return ("Koneksi gagal", "exclamationmark.triangle")
+        case .disconnected:
+            return ("Tidak tersambung", "antenna.radiowaves.left.and.right.slash")
         }
     }
 
@@ -222,12 +241,12 @@ private struct BakCardContent: View {
                 .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(proyek.namaWarna)
+                Text(stage == .inactive ? "-" : proyek.namaWarna)
                     .font(.headline)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
-                Text(proyek.perangkatNama)
+                Text(stage == .inactive ? "-" : proyek.perangkatNama)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -255,21 +274,34 @@ private struct BakCardContent: View {
     }
 
     private var metricsRow: some View {
-        HStack(spacing: 12) {
-            statTile(
-                icon: "allergens",
-                title: "Kepekatan",
-                value: kepekatanDisplay,
-                isWarning: isConcentrationBelowLimit
-            )
-
-            statTile(
-                icon: "drop",
-                title: "pH Air",
-                value: phDisplay,
-                isWarning: isPHBelowLimit
-            )
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                concentrationTile
+                phTile
+            }
+            VStack(spacing: 12) {
+                concentrationTile
+                phTile
+            }
         }
+    }
+
+    private var concentrationTile: some View {
+        statTile(
+            icon: "allergens",
+            title: "Kepekatan",
+            value: kepekatanDisplay,
+            isWarning: isConcentrationBelowLimit
+        )
+    }
+
+    private var phTile: some View {
+        statTile(
+            icon: "drop",
+            title: "pH Air",
+            value: phDisplay,
+            isWarning: isPHBelowLimit
+        )
     }
 
     private func statTile(icon: String, title: String, value: String, isWarning: Bool) -> some View {
@@ -311,7 +343,8 @@ private struct BakCardContent: View {
             }
             .foregroundStyle(buttonForeground)
             .padding(.horizontal, 24)
-            .frame(height: 44)
+            .padding(.vertical, 12)
+            .frame(minHeight: 44)
             .background(buttonBackground)
             .clipShape(Capsule())
             .shadow(color: buttonShadow, radius: 6, x: 0, y: 3)
@@ -396,6 +429,14 @@ private struct BakCardContent: View {
 
 #Preview("3 Stages Grid (iPad Landscape)", traits: .landscapeLeft) {
     BakCardStagesPreview()
+}
+
+#Preview("Connection Status – Accessibility 5") {
+    ScrollView {
+        BakCardView(proyek: .previewActiveSample)
+            .padding()
+    }
+    .environment(\.dynamicTypeSize, .accessibility5)
 }
 
 private struct BakCardStagesPreview: View {

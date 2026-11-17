@@ -35,7 +35,7 @@ struct ProyekListView: View {
     @State private var repairTarget: ProyekRepairTarget?
 
     @Binding var newlyCreatedProyek: Proyek?
-
+    
     var serviceProvider: (Proyek) -> (any ColorMeasurementSource)? = { _ in nil }
     var deviceConnectingProvider: () -> (any DeviceConnecting)? = { nil }
 
@@ -48,7 +48,7 @@ struct ProyekListView: View {
         self.serviceProvider = serviceProvider
         self.deviceConnectingProvider = deviceConnectingProvider
     }
-
+    
     private let titleColor = Color("titleColor")
     private let oliveGreen = Color("oliveGreen")
 
@@ -178,10 +178,7 @@ struct ProyekListView: View {
 
     @ViewBuilder
     private func proyekCardCell(for item: Proyek) -> some View {
-        // The view models are made outside the body (`resumeAlreadyScannedProjects`, `startScanAfterSetup`).
-        // Making one here wrote `@State` while rendering, which could leave a card on a view model that was
-        // replaced right after, so it never showed the readings of the scan that was running.
-        let detailVM = activeViewModels[item.id]
+        let detailVM = getOrMakeViewModel(for: item)
 
         BakCardView(
             proyek: item,
@@ -190,26 +187,21 @@ struct ProyekListView: View {
                 scanSetupTarget = item
             },
             onSelesai: {
-                guard let viewModel = activeViewModels[item.id] else { return }
-                finishProyek(proyek: item, viewModel: viewModel)
+                finishProyek(proyek: item, viewModel: detailVM)
             },
             onPerbaikiLarutan: {
-                guard let viewModel = activeViewModels[item.id] else { return }
-                let issue = viewModel.qualityAlert?.issue ?? viewModel.currentIssue ?? .keduanya
+                let issue = detailVM.qualityAlert?.issue ?? detailVM.currentIssue ?? .keduanya
                 repairTarget = ProyekRepairTarget(
                     id: item.id,
                     proyek: item,
-                    viewModel: viewModel,
+                    viewModel: detailVM,
                     issue: issue
                 )
             },
             onQualityAlert: { alert in
-                guard let viewModel = activeViewModels[item.id] else { return }
-                handleQualityAlert(for: item, viewModel: viewModel, alert: alert)
+                handleQualityAlert(for: item, viewModel: detailVM, alert: alert)
             }
         )
-        // A new view model (a new scan) rebuilds the card instead of keeping the old one's subscription.
-        .id(detailVM.map { ObjectIdentifier($0) })
     }
 
     // MARK: - Auto Alert Presentation & Queue
@@ -234,7 +226,7 @@ struct ProyekListView: View {
             return
         }
 
-        if activeAlertTarget == nil, repairTarget == nil {
+        if activeAlertTarget == nil && repairTarget == nil {
             activeAlertTarget = target
             lastShownAlertTarget = target
         } else if let queuedIndex = queuedAlertTargets.firstIndex(where: { $0.id == proyek.id }) {
@@ -271,23 +263,9 @@ struct ProyekListView: View {
 
     private func getOrMakeViewModel(for proyek: Proyek) -> ProyekDetailViewModel {
         if let existing = activeViewModels[proyek.id] {
-            print("[List] Reusing ViewModel: \(proyek.nama)")
             return existing
         }
-
-        let service = serviceProvider(proyek)
-
-        print("""
-        [List] Creating ViewModel
-        Project: \(proyek.nama)
-        Service available: \(service != nil)
-        """)
-
-        let vm = ProyekDetailViewModel(
-            proyek: proyek,
-            service: service
-        )
-
+        let vm = ProyekDetailViewModel(proyek: proyek, service: serviceProvider(proyek))
         activeViewModels[proyek.id] = vm
         return vm
     }
@@ -308,7 +286,7 @@ struct ProyekListView: View {
 
         let vm = getOrMakeViewModel(for: proyek)
         Task {
-            await vm.mulaiPindai()
+            await vm.mulaiPindaiDenganBaselineAwal(in: modelContext)
         }
     }
 
@@ -343,9 +321,7 @@ struct ProyekListView: View {
         Binding(
             get: { activeScanError != nil },
             set: { isPresented in
-                if !isPresented {
-                    clearAllScanErrors()
-                }
+                if !isPresented { clearAllScanErrors() }
             }
         )
     }

@@ -26,6 +26,7 @@ final class ProyekDetailViewModel: ObservableObject {
     /// Latest streamed readings (concentration in percent of the baseline), kept for finishing the project.
     @Published private(set) var latestConcentration: Double?
     @Published private(set) var latestWaterPH: Double?
+    @Published private(set) var lastMeasurementAt: Date?
 
     private let service: any ColorMeasurementSource
     private var measurementTask: Task<Void, Never>?
@@ -36,12 +37,21 @@ final class ProyekDetailViewModel: ObservableObject {
     private(set) var latestMeasurement: ColorMeasurement?
     private var warningTracker = MeasurementWarningTracker()
 
+    var connectionState: DeviceConnectionState { service.connectionState }
+
+    func isMeasurementStale(at date: Date = .now) -> Bool {
+        guard let lastMeasurementAt else { return true }
+        return date.timeIntervalSince(lastMeasurementAt) > 3
+    }
+
     init(proyek: Proyek, service: (any ColorMeasurementSource)? = nil) {
         self.proyek = proyek
-        self.service = service ?? DeviceConnectionServices.default
+        self.service = service ?? proyek.perangkatID.map {
+            DeviceConnectionServices.default.measurementSource(for: $0)
+        } ?? MissingMeasurementSource()
         measurements = ProyekColorMeasurements(
-            colorConcentrationLimit: Self.defaultConcentrationLimit,
-            waterPHLimit: Self.defaultWaterPHLimit
+            colorConcentrationLimit: proyek.batasKepekatan,
+            waterPHLimit: proyek.batasPH
         )
         // A project whose initial color was already set is picked up where it was left.
         if proyek.status == .aktif, let baseline = proyek.visibleAverageAwal {
@@ -67,7 +77,6 @@ final class ProyekDetailViewModel: ObservableObject {
         colorMeasurementError = nil
         do {
             let initial = try await service.readInitialColorMeasurement()
-            print("[Proyek] ✅ Initial measurement berhasil: \(initial.visibleAverage)")
             beginMeasuring(from: initial)
         } catch is CancellationError {
             // A cancelled read is not a failure.
@@ -77,6 +86,14 @@ final class ProyekDetailViewModel: ObservableObject {
             colorMeasurementError = message
             print("[Proyek] ❌ \(message)")
         }
+    }
+
+    /// Starts a newly configured bath and persists its first successful color reading as the 100% baseline.
+    /// Reconnection must use `lanjutkanPengukuran()` so the saved baseline is never replaced.
+    func mulaiPindaiDenganBaselineAwal(in persistence: some ModelPersisting) async {
+        await mulaiPindai()
+        guard colorMeasurementError == nil, !isInitialColorSet else { return }
+        _ = tetapkanWarnaAwal(in: persistence)
     }
 
     /// True while the latest concentration is below the project limit.
@@ -135,32 +152,21 @@ final class ProyekDetailViewModel: ObservableObject {
 
     private func startStreaming() {
         measurementTask?.cancel()
-        
-        print("[Proyek] 🔄 Memulai measurement stream...")
-        
         measurementTask = Task { [weak self] in
             guard let self else { return }
-            
-            print("[Proyek] ✅ Stream subscriber dibuat")
-            
             for await measurement in service.measurementUpdates() {
                 // A reading buffered before `berhenti()` must not be applied afterwards.
                 if Task.isCancelled {
                     break
                 }
-                
-                print("[Proyek] 📥 Menerima data stream: \(measurement.visibleAverage)")
-
-                
                 updateCurrentColorMeasurement(measurement)
             }
         }
     }
 
     private func updateCurrentColorMeasurement(_ measurement: ColorMeasurement) {
-        print("[Proyek] 🔄 Update UI: \(measurement.visibleAverage)")
-
         latestMeasurement = measurement
+        lastMeasurementAt = .now
         var updated = measurements
         if let waterPH = measurement.waterPH {
             updated = updated.withCurrentWaterPH(waterPH)
@@ -175,9 +181,6 @@ final class ProyekDetailViewModel: ObservableObject {
         } else if let baseline = initialVisibleAverage, baseline > 0 {
             updated = updated.withCurrentConcentration(measurement, relativeTo: baseline)
             concentration = measurement.concentration(relativeTo: baseline)
-        } else if measurement.visibleAverage > 0 {
-            updated = updated.withCurrentConcentration(percent: measurement.visibleAverage)
-            concentration = measurement.visibleAverage
         }
         measurements = updated
 
@@ -192,10 +195,7 @@ final class ProyekDetailViewModel: ObservableObject {
         }
 
         if let waterPH = measurement.waterPH {
-            let warning = warningTracker.waterPHWarning(
-                for: waterPH,
-                limit: updated.waterPHLimit
-            )
+            let warning = MeasurementWarningTracker.waterPHWarning(for: waterPH, limit: updated.waterPHLimit)
             startsNewDip = startsNewDip || (warning != nil && waterPHWarning == nil)
             waterPHWarning = warning
         }
@@ -262,11 +262,14 @@ final class ProyekDetailViewModel: ObservableObject {
         guard proyek.status == .aktif, !isDataScanned else { return false }
 
         let sebelumnya = proyek.perangkatNama
+        let idSebelumnya = proyek.perangkatID
         proyek.perangkatNama = device.nama
+        proyek.perangkatID = device.id
         do {
             try persistence.save()
         } catch {
             proyek.perangkatNama = sebelumnya
+            proyek.perangkatID = idSebelumnya
             saveError = "Gagal menyimpan proyek: \(error.localizedDescription)"
             return false
         }
@@ -314,11 +317,27 @@ final class ProyekDetailViewModel: ObservableObject {
     
     private func makeMeasurements() -> ProyekColorMeasurements {
         ProyekColorMeasurements(
-            colorConcentrationLimit: Self.defaultConcentrationLimit,
-            waterPHLimit: Self.defaultWaterPHLimit,
+            colorConcentrationLimit: proyek.batasKepekatan,
+            waterPHLimit: proyek.batasPH,
             initialWaterPH: proyek.phAwal
         )
         .withInitialConcentration(isSet: proyek.visibleAverageAwal != nil)
+    }
+}
+
+private struct MissingMeasurementSource: ColorMeasurementSource {
+    var connectionState: DeviceConnectionState { .disconnected }
+
+    func readInitialColorMeasurement() async throws -> ColorMeasurement {
+        throw NSError(
+            domain: "BLEService",
+            code: 404,
+            userInfo: [NSLocalizedDescriptionKey: "Pilih kembali perangkat untuk bak ini"]
+        )
+    }
+
+    func measurementUpdates() -> AsyncStream<ColorMeasurement> {
+        AsyncStream { $0.finish() }
     }
 }
 

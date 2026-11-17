@@ -45,7 +45,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $isShowingTambahProyek) {
             TambahProyekView(
-                deviceService: BLEDeviceConnectionService.shared
+                deviceService: DeviceConnectionServices.default
             ) { newProyek in
                 newlyCreatedProyek = newProyek
             }
@@ -61,8 +61,10 @@ struct ContentView: View {
         case .proyek:
             ProyekListView(
                 newlyCreatedProyek: $newlyCreatedProyek,
-                serviceProvider: { _ in BLEDeviceConnectionService.shared },
-                deviceConnectingProvider: { BLEDeviceConnectionService.shared }
+                serviceProvider: { proyek in
+                    proyek.perangkatID.map { DeviceConnectionServices.default.measurementSource(for: $0) }
+                },
+                deviceConnectingProvider: { DeviceConnectionServices.default }
             )
         case .resep:
             ResepView(teksCari: $teksCari)

@@ -70,7 +70,7 @@ struct TambahProyekView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
         }
-        .frame(width: sheetWidth)
+        .frame(maxWidth: sheetWidth)
         .background(Color.white)
         .presentationSizing(.fitted)
         .presentationBackground(Color.white)
@@ -78,6 +78,12 @@ struct TambahProyekView: View {
         .sheet(isPresented: $isShowingDeviceList) {
             DeviceListSheetView(
                 service: deviceService,
+                assignedDeviceIDs: Set(
+                    semuaProyek.compactMap { proyek in
+                        guard proyek.status == .aktif, proyek.id != existingProyek?.id else { return nil }
+                        return proyek.perangkatID
+                    }
+                ),
                 onConnected: { viewModel.pilihPerangkat($0) },
                 onDisconnected: { _ in Task { await viewModel.hapusPerangkat() } }
             )
@@ -114,7 +120,7 @@ struct TambahProyekView: View {
                 Image(systemName: "xmark")
                     .font(.subheadline.bold())
                     .foregroundStyle(.primary)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 44, height: 44)
                     .background(Color(UIColor.systemGray5))
                     .clipShape(Circle())
             }
@@ -135,7 +141,7 @@ struct TambahProyekView: View {
                 Image(systemName: "checkmark")
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 44, height: 44)
                     .background(canSubmit ? oliveGreen : Color.gray.opacity(0.65))
                     .clipShape(Circle())
             }
@@ -263,7 +269,7 @@ struct TambahProyekView: View {
                 TextField("", text: $viewModel.namaPemesan)
                     .font(.subheadline)
                     .padding(.horizontal, 12)
-                    .frame(height: 40)
+                    .frame(minHeight: 44)
                     .contentShape(Rectangle())
                     .background(Color.white)
                     .overlay(
@@ -315,7 +321,7 @@ struct TambahProyekView: View {
                         Image(systemName: "minus")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
-                            .frame(width: 40, height: 34)
+                            .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Kurangi Air")
@@ -329,7 +335,7 @@ struct TambahProyekView: View {
                         Image(systemName: "plus")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.black)
-                            .frame(width: 40, height: 34)
+                            .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Tambah Air")
@@ -354,12 +360,12 @@ struct TambahProyekView: View {
     // MARK: - Save Action
 
     private func simpanProyek() {
-        guard canSubmit, let resep = viewModel.resep else { return }
-        let trimmedPemesan = viewModel.namaPemesan.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard canSubmit, let perangkat = viewModel.perangkat, let resep = viewModel.resep else { return }
         let airLiter = viewModel.jumlahAir > 0 ? viewModel.jumlahAir : resep.air
 
         if let existingProyek {
-            existingProyek.perangkatNama = trimmedPemesan
+            existingProyek.perangkatNama = perangkat.nama
+            existingProyek.perangkatID = perangkat.id
             existingProyek.resep = resep
             existingProyek.namaWarna = resep.namaWarna
             existingProyek.warnaHex = resep.warnaHex
@@ -392,7 +398,8 @@ struct TambahProyekView: View {
 
         let newProyek = Proyek(
             nama: resolvedBakTitle,
-            perangkatNama: trimmedPemesan,
+            perangkatNama: perangkat.nama,
+            perangkatID: perangkat.id,
             resep: resep,
             jumlahKain: 1,
             tanggal: .now
@@ -464,7 +471,7 @@ private struct PilihWarnaSheetView: View {
                 .frame(minHeight: 440, maxHeight: 520)
             }
         }
-        .frame(width: sheetWidth)
+        .frame(maxWidth: sheetWidth)
         .background(Color.white)
         .presentationSizing(.fitted)
         .presentationBackground(Color.white)
@@ -479,7 +486,7 @@ private struct PilihWarnaSheetView: View {
                 Image(systemName: "xmark")
                     .font(.subheadline.bold())
                     .foregroundStyle(.primary)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 44, height: 44)
                     .background(Color(UIColor.systemGray5))
                     .clipShape(Circle())
             }
@@ -503,7 +510,7 @@ private struct PilihWarnaSheetView: View {
                 Image(systemName: "checkmark")
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 44, height: 44)
                     .background(chosenResep != nil ? oliveGreen : Color.gray.opacity(0.6))
                     .clipShape(Circle())
             }
