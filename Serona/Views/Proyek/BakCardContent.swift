@@ -86,23 +86,39 @@ extension BakCardContent {
 
     private var headerRow: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
-            HStack {
-                Text(proyek.nama)
-                    .font(.title2.bold())
-                    .foregroundStyle(.primary)
+            let status = connectionStatus(at: context.date)
+            // The status moves under the name when both do not fit on one line (a narrow card or large text).
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    nameLabel
+                    Spacer()
+                    connectionLabel(status)
+                }
 
-                Spacer()
-
-                let status = connectionStatus(at: context.date)
-                HStack(spacing: 6) {
-                    Image(systemName: status.icon)
-                        .accessibilityHidden(true)
-
-                    Text(status.text)
-                        .font(.caption)
-                        .foregroundStyle(.primary)
+                VStack(alignment: .leading, spacing: 6) {
+                    nameLabel
+                    connectionLabel(status)
                 }
             }
+        }
+    }
+
+    private var nameLabel: some View {
+        Text(proyek.nama)
+            .font(.title2.bold())
+            .foregroundStyle(.primary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func connectionLabel(_ status: (text: String, icon: String)) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: status.icon)
+                .accessibilityHidden(true)
+
+            Text(status.text)
+                .font(.caption)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

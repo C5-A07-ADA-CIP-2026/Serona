@@ -64,15 +64,14 @@ struct ProyekListView: View {
             BackgroundGradient()
 
             GeometryReader { geometry in
-                let isLandscape = geometry.size.width > geometry.size.height
-                let columnsCount = isLandscape ? 3 : 2
-                let gridColumns = Array(repeating: GridItem(.flexible(), spacing: 20), count: columnsCount)
+                let gridColumns = Self.gridColumns(forWidth: geometry.size.width)
+                let sidePadding = AdaptiveLayout.sidePadding(forWidth: geometry.size.width)
 
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Bak Warna")
                         .font(.largeTitle.bold())
                         .foregroundStyle(titleColor)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, sidePadding)
                         .padding(.top, 12)
 
                     if displayedProyek.isEmpty {
@@ -80,7 +79,7 @@ struct ProyekListView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         ScrollView {
-                            proyekGridView(columns: gridColumns)
+                            proyekGridView(columns: gridColumns, sidePadding: sidePadding)
                         }
                     }
                 }
@@ -166,13 +165,18 @@ struct ProyekListView: View {
         .padding(.bottom, 48)
     }
 
-    private func proyekGridView(columns: [GridItem]) -> some View {
+    /// One column on a phone, two or three on an iPad, so a card is never narrower than 320 pt.
+    private static func gridColumns(forWidth width: CGFloat) -> [GridItem] {
+        AdaptiveLayout.gridColumns(forWidth: width, minimumItemWidth: 320, spacing: 20, limits: 1 ... 3)
+    }
+
+    private func proyekGridView(columns: [GridItem], sidePadding: CGFloat) -> some View {
         LazyVGrid(columns: columns, spacing: 20) {
             ForEach(displayedProyek) { item in
                 proyekCardCell(for: item)
             }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, sidePadding)
         .padding(.bottom, 24)
     }
 

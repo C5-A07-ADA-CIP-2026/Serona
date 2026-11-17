@@ -30,15 +30,16 @@ struct ResepView: View {
             BackgroundGradient()
 
             GeometryReader { geometry in
-                let isLandscape = geometry.size.width > geometry.size.height
-                let columnsCount = isLandscape ? 5 : 3
-                let gridColumns = Array(repeating: GridItem(.flexible(), spacing: 16), count: columnsCount)
+                let gridColumns = AdaptiveLayout.gridColumns(
+                    forWidth: geometry.size.width, minimumItemWidth: 170, spacing: 16, limits: 2 ... 5
+                )
+                let sidePadding = AdaptiveLayout.sidePadding(forWidth: geometry.size.width)
 
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Resep Warna")
                         .font(.largeTitle.bold())
                         .foregroundStyle(titleColor)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, sidePadding)
                         .padding(.top, 12)
 
                     if daftar.isEmpty {
@@ -59,7 +60,7 @@ struct ResepView: View {
                                     .buttonStyle(.plain)
                                 }
                             }
-                            .padding(.horizontal, 24)
+                            .padding(.horizontal, sidePadding)
                             .padding(.bottom, 24)
                         }
                     }

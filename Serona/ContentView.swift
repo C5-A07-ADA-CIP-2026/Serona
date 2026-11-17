@@ -16,6 +16,8 @@ struct ContentView: View {
 
     @Query(sort: \Proyek.tanggal, order: .forward) private var semuaProyek: [Proyek]
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var selectedTab: HeaderTab = .proyek
     @State private var isSearching = false
     @State private var teksCari = ""
@@ -71,7 +73,21 @@ struct ContentView: View {
         }
     }
 
+    private var isCompactWidth: Bool {
+        horizontalSizeClass == .compact
+    }
+
+    @ViewBuilder
     private var topHeaderBar: some View {
+        if isCompactWidth {
+            compactHeaderBar
+        } else {
+            regularHeaderBar
+        }
+    }
+
+    /// iPad: the tabs stay centered while the actions sit at the trailing edge.
+    private var regularHeaderBar: some View {
         ZStack {
             segmentedPill
 
@@ -89,14 +105,63 @@ struct ContentView: View {
         .padding(.top)
     }
 
+    /// iPhone: the tabs share the row with the actions, so they must give way. While searching, the field takes
+    /// the room of the tabs. When the text is too large for one row (Dynamic Type), the actions move below the tabs.
+    private var compactHeaderBar: some View {
+        ViewThatFits(in: .horizontal) {
+            compactSingleRow
+            compactStackedRows
+        }
+        .padding(.horizontal)
+        .padding(.top)
+    }
+
+    private var compactSingleRow: some View {
+        HStack(spacing: 10) {
+            if isSearching, selectedTab == .resep {
+                searchControl
+            } else {
+                segmentedPill
+
+                if selectedTab == .resep {
+                    searchControl
+                }
+            }
+
+            addButton
+        }
+    }
+
+    private var compactStackedRows: some View {
+        VStack(alignment: .trailing, spacing: 10) {
+            if !(isSearching && selectedTab == .resep) {
+                segmentedPill
+            }
+
+            HStack(spacing: 10) {
+                if selectedTab == .resep {
+                    searchControl
+                }
+
+                addButton
+            }
+        }
+    }
+
     private var segmentedPill: some View {
-        HStack(spacing: 4) {
+        // At accessibility text sizes the tabs stack, so neither label is cut off.
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 4))
+
+        return layout {
             ForEach(HeaderTab.allCases, id: \.self) { tab in
                 tabButton(for: tab)
             }
         }
         .padding(4)
         .background(pillBackground, in: Capsule())
+        .frame(maxWidth: isCompactWidth ? .infinity : nil)
     }
 
     private func tabButton(for tab: HeaderTab) -> some View {
@@ -115,8 +180,9 @@ struct ContentView: View {
         } label: {
             Text(tab.rawValue)
                 .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
                 .foregroundStyle(textColor)
-                .frame(width: 130, height: 36)
+                .frame(maxWidth: isCompactWidth ? .infinity : 130, minHeight: 36)
                 .background {
                     if isSelected {
                         RoundedRectangle(cornerRadius: 18)
@@ -159,7 +225,8 @@ struct ContentView: View {
                 .accessibilityLabel("Tutup pencarian")
             }
             .padding(.horizontal, 14)
-            .frame(width: 240, height: 44)
+            .frame(maxWidth: isCompactWidth ? .infinity : 240, minHeight: 44)
+            .frame(width: isCompactWidth ? nil : 240)
             .glassEffect(.regular, in: Capsule())
             .transition(.scale(scale: 0.9, anchor: .trailing).combined(with: .opacity))
         } else {

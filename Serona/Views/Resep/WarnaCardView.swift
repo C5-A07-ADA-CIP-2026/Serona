@@ -31,7 +31,7 @@ struct WarnaCardView: View {
 
             // Recipe Color Name
             Text(resep.namaWarna)
-                .font(.system(size: 18, weight: .bold))
+                .font(.title3.bold())
                 .foregroundStyle(titleColor)
         }
         .padding(14)
