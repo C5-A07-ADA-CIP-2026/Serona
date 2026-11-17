@@ -75,7 +75,7 @@ struct ProyekDetailInitialColorTests {
         let persistence = RecordingModelPersistence()
         let (viewModel, liveReadings) = await makeLive(proyek: proyek)
         liveReadings.yield(reading(800))
-        _ = await waitUntil { viewModel.canSetInitialColor && viewModel.latestWaterPH == 11 }
+        _ = await waitUntil { viewModel.latestMeasurement?.visibleAverage == 800 && viewModel.canSetInitialColor }
 
         #expect(viewModel.tetapkanWarnaAwal(in: persistence))
 

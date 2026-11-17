@@ -30,7 +30,8 @@ struct FormResepViewModelTests {
         #expect(hasil.count == 1)
         let resep = try #require(hasil.first)
         #expect(resep.namaWarna == "Merah Marun")
-        #expect(resep.warnaHex == "#B50202")
+        // The color picker is switched off in the form, so no hex is stored for now.
+        #expect(resep.warnaHex == nil)
         #expect(resep.air == 200)
         #expect(resep.kepekatan == 80)
         #expect(resep.batasPH == 7)

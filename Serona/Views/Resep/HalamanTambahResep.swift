@@ -27,12 +27,12 @@ struct HalamanTambahResep: View {
         if let resep {
             _viewModel = State(initialValue: FormResepViewModel(resep: resep))
         } else {
-            let vm = FormResepViewModel()
-            vm.pewarna = []
-            vm.zatPembantu = []
-            vm.kepekatan = 90
-            vm.batasPH = 11
-            _viewModel = State(initialValue: vm)
+            let formViewModel = FormResepViewModel()
+            formViewModel.pewarna = []
+            formViewModel.zatPembantu = []
+            formViewModel.kepekatan = 90
+            formViewModel.batasPH = 11
+            _viewModel = State(initialValue: formViewModel)
         }
     }
 
@@ -68,8 +68,12 @@ struct HalamanTambahResep: View {
         .presentationDragIndicator(.visible)
         .onAppear {
             if !viewModel.sedangMengedit {
-                if viewModel.kepekatan == nil { viewModel.kepekatan = 90 }
-                if viewModel.batasPH == nil { viewModel.batasPH = 11 }
+                if viewModel.kepekatan == nil {
+                    viewModel.kepekatan = 90
+                }
+                if viewModel.batasPH == nil {
+                    viewModel.batasPH = 11
+                }
             }
         }
         .alert("Gagal menyimpan", isPresented: $gagalMenyimpan) {
@@ -297,7 +301,7 @@ struct HalamanTambahResep: View {
 
 private struct OliveCapsuleButton: View {
     let title: String
-    var systemImage: String? = nil
+    var systemImage: String?
     var isEnabled: Bool = true
     let action: () -> Void
 

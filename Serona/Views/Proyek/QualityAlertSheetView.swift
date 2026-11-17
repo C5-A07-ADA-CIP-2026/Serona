@@ -10,7 +10,7 @@ struct QualityAlertSheetView: View {
     @Environment(\.dismiss) private var dismiss
 
     let alert: QualityAlert
-    var bakName: String? = nil
+    var bakName: String?
     let onPerbaiki: () -> Void
 
     @ScaledMetric(relativeTo: .body) private var alertImageSize: CGFloat = 188

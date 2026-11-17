@@ -42,11 +42,11 @@ extension Proyek {
         let sebelum = PenambahanSoda.konsentrasiSoda(nilaiPH: pHSebelum)
         let sesudah = PenambahanSoda.konsentrasiSoda(nilaiPH: pHSesudah)
         guard sebelum > sesudah else { return nil }
-        
+
         let volumeDipakai = sesudah * airDitambahkanLiter / (sebelum - sesudah)
         let volumeSekarang = volumeDipakai + airDitambahkanLiter
         let gram = max(0, (targetSodaGramPerLiter - sesudah) * volumeSekarang)
-        
+
         let totalZat = zatPembantu.reduce(0) { $0 + $1.gram }
         let bahan = zatPembantu.map {
             Bahan(kode: $0.kode, gram: totalZat > 0 ? gram * $0.gram / totalZat : 0)

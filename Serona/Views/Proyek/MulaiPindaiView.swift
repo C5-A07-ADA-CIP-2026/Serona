@@ -10,7 +10,7 @@ import SwiftUI
 
 struct MulaiPindaiSheetView: View {
     let proyek: Proyek
-    var deviceService: (any DeviceConnecting)? = nil
+    var deviceService: (any DeviceConnecting)?
     var onStartScan: (Proyek) -> Void
 
     var body: some View {

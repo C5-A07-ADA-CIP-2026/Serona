@@ -40,10 +40,10 @@ final class PerbaikiLarutanViewModel {
         self.issue = issue
         self.proyek = proyek
         self.pHSebelum = pHSebelum
-        self.jumlahAir = initialJumlahAir
+        jumlahAir = initialJumlahAir
         let resolvedSteps = Self.calculateSteps(for: issue, existingSteps: [])
-        self.steps = resolvedSteps
-        self.activeIndex = resolvedSteps.firstIndex(of: initialStep) ?? 0
+        steps = resolvedSteps
+        activeIndex = resolvedSteps.firstIndex(of: initialStep) ?? 0
     }
 
     /// Keeps `pHSebelum` synced to the live reading right until the user starts adding water in Step 1.
@@ -78,13 +78,12 @@ final class PerbaikiLarutanViewModel {
 
     /// Fallback bath volume only if pH did not drop enough in Step 1 to solve C1 * V1 = C2 * V2.
     var totalVolumeLiter: Double {
-        let baseVolume: Double
-        if let proyek, proyek.volumeAwalLiter > 0 {
-            baseVolume = proyek.volumeAwalLiter
+        let baseVolume: Double = if let proyek, proyek.volumeAwalLiter > 0 {
+            proyek.volumeAwalLiter
         } else if let proyek, proyek.volumeResepLiter > 0 {
-            baseVolume = proyek.volumeResepLiter
+            proyek.volumeResepLiter
         } else {
-            baseVolume = 1.0
+            1.0
         }
         return baseVolume + Double(max(0, jumlahAir))
     }

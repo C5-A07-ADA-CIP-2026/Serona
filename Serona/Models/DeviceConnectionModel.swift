@@ -175,7 +175,9 @@ protocol ColorMeasurementSource: Sendable {
 }
 
 extension ColorMeasurementSource {
-    var connectionState: DeviceConnectionState { .ready }
+    var connectionState: DeviceConnectionState {
+        .ready
+    }
 }
 
 enum DeviceConnectionState: Equatable, Sendable {

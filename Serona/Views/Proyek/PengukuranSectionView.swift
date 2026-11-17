@@ -50,7 +50,9 @@ struct PengukuranSectionView: View {
                 canSet: viewModel.canSetInitialColor,
                 onSet: {
                     let berhasil = viewModel.tetapkanWarnaAwal(in: modelContext)
-                    if berhasil { successFeedbackTrigger += 1 }
+                    if berhasil {
+                        successFeedbackTrigger += 1
+                    }
                     umumkan("Warna awal ditetapkan", jika: berhasil)
                 },
                 onReset: { viewModel.ukurUlangWarnaAwal(in: modelContext) }

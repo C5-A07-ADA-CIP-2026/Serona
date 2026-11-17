@@ -9,9 +9,9 @@ import SwiftUI
 
 struct WarnaCardView: View {
     let resep: Resep
-    
-    // Determines whether the color has been used in a project / has a color swatch preview.
-    // In your logic, set this based on whether `resep.isUsed` or if `warnaHex` is set.
+
+    /// Determines whether the color has been used in a project / has a color swatch preview.
+    /// In your logic, set this based on whether `resep.isUsed` or if `warnaHex` is set.
     var isUsedInBak: Bool {
         // Example check matching Image 1: "Marun" is unused / pending
         !resep.namaWarna.contains("Marun")
@@ -47,12 +47,12 @@ struct WarnaCardView: View {
     ZStack {
         Color(red: 0.98, green: 0.97, blue: 0.93)
             .ignoresSafeArea()
-        
+
         HStack(alignment: .top, spacing: 20) {
             // Used in Bak Card (Color swatch visible)
             WarnaCardView(resep: .previewUsedSample)
                 .frame(width: 220)
-            
+
             // Unused in Bak Card (Placeholder / pending scan state)
             WarnaCardView(resep: .previewUnusedSample)
                 .frame(width: 220)
@@ -71,7 +71,7 @@ private extension Resep {
             air: 1000, kepekatan: 80, batasPH: 7
         )
     }
-    
+
     static var previewUnusedSample: Resep {
         Resep(
             namaWarna: "Marun",

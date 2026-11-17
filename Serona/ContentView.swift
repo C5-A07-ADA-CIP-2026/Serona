@@ -54,7 +54,7 @@ struct ContentView: View {
             HalamanTambahResep(tampilSebagaiSheet: true)
         }
     }
-    
+
     @ViewBuilder
     private var content: some View {
         switch selectedTab {
@@ -70,7 +70,7 @@ struct ContentView: View {
             ResepView(teksCari: $teksCari)
         }
     }
-    
+
     private var topHeaderBar: some View {
         ZStack {
             segmentedPill

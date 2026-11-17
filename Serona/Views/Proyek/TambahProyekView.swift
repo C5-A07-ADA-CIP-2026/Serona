@@ -7,14 +7,14 @@ import SwiftData
 import SwiftUI
 
 struct TambahProyekView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.modelContext) var modelContext
     @Query(sort: \Proyek.tanggal, order: .forward) private var semuaProyek: [Proyek]
 
-    @State private var viewModel: TambahProyekViewModel
+    @State var viewModel: TambahProyekViewModel
     @State private var isShowingDeviceList = false
     @State private var isShowingPilihResep = false
-    @State private var saveErrorMessage: String?
+    @State var saveErrorMessage: String?
 
     @ScaledMetric(relativeTo: .body) private var sheetWidth: CGFloat = 450
 
@@ -35,13 +35,13 @@ struct TambahProyekView: View {
         onProyekCreated: ((Proyek) -> Void)? = nil
     ) {
         self.existingProyek = existingProyek
-        self.bakTitleOverride = bakTitle
+        bakTitleOverride = bakTitle
         self.deviceService = deviceService
         _viewModel = State(wrappedValue: viewModel)
         self.onProyekCreated = onProyekCreated
     }
 
-    private var resolvedBakTitle: String {
+    var resolvedBakTitle: String {
         if let existingProyek {
             return existingProyek.nama
         }
@@ -49,11 +49,11 @@ struct TambahProyekView: View {
             return bakTitleOverride
         }
         let existingNames = Set(semuaProyek.map(\.nama))
-        let nextIndex = (1...maxBakCount).first { !existingNames.contains("Bak \($0)") } ?? (semuaProyek.count + 1)
+        let nextIndex = (1 ... maxBakCount).first { !existingNames.contains("Bak \($0)") } ?? (semuaProyek.count + 1)
         return "Bak \(nextIndex)"
     }
 
-    private var canSubmit: Bool {
+    var canSubmit: Bool {
         viewModel.canSubmitScan
     }
 
@@ -97,7 +97,11 @@ struct TambahProyekView: View {
             "Gagal menyimpan proyek",
             isPresented: Binding(
                 get: { saveErrorMessage != nil },
-                set: { if !$0 { saveErrorMessage = nil } }
+                set: {
+                    if !$0 {
+                        saveErrorMessage = nil
+                    }
+                }
             ),
             presenting: saveErrorMessage
         ) { _ in
@@ -152,7 +156,9 @@ struct TambahProyekView: View {
         .padding(.horizontal, 24)
         .padding(.top, 24)
     }
+}
 
+extension TambahProyekView {
     // MARK: - Section Cards
 
     private var perangkatCard: some View {
@@ -346,7 +352,7 @@ struct TambahProyekView: View {
         }
     }
 
-    private func cardSection<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+    private func cardSection(@ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading) {
             content()
         }
@@ -356,243 +362,4 @@ struct TambahProyekView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
-
-    // MARK: - Save Action
-
-    private func simpanProyek() {
-        guard canSubmit, let perangkat = viewModel.perangkat, let resep = viewModel.resep else { return }
-        let airLiter = viewModel.jumlahAir > 0 ? viewModel.jumlahAir : resep.air
-
-        if let existingProyek {
-            existingProyek.perangkatNama = perangkat.nama
-            existingProyek.perangkatID = perangkat.id
-            existingProyek.resep = resep
-            existingProyek.namaWarna = resep.namaWarna
-            existingProyek.warnaHex = resep.warnaHex
-            existingProyek.pewarna = resep.pewarna
-            existingProyek.zatPembantu = resep.zatPembantu
-            existingProyek.airResepTersimpan = resep.air
-            existingProyek.jumlahKain = 1
-            existingProyek.tanggal = .now
-            existingProyek.status = .aktif
-//            existingProyek.tanggalSelesai = nil
-            existingProyek.visibleAverageAwal = nil
-            existingProyek.rasioAwal = nil
-            existingProyek.phAwal = nil
-            existingProyek.kepekatanAkhir = nil
-            existingProyek.phAkhir = nil
-            existingProyek.batasKepekatan = ProyekDetailViewModel.defaultConcentrationLimit
-            existingProyek.batasPH = ProyekDetailViewModel.defaultWaterPHLimit
-            existingProyek.air = airLiter
-            existingProyek.rasioAirBersih = ProyekDetailViewModel.defaultCleanWaterRatios
-
-            do {
-                try modelContext.save()
-                onProyekCreated?(existingProyek)
-                dismiss()
-            } catch {
-                saveErrorMessage = "Gagal menyimpan proyek: \(error.localizedDescription)"
-            }
-            return
-        }
-
-        let newProyek = Proyek(
-            nama: resolvedBakTitle,
-            perangkatNama: perangkat.nama,
-            perangkatID: perangkat.id,
-            resep: resep,
-            jumlahKain: 1,
-            tanggal: .now
-        )
-        newProyek.batasKepekatan = ProyekDetailViewModel.defaultConcentrationLimit
-        newProyek.batasPH = ProyekDetailViewModel.defaultWaterPHLimit
-        newProyek.air = airLiter
-        newProyek.rasioAirBersih = ProyekDetailViewModel.defaultCleanWaterRatios
-
-        modelContext.insert(newProyek)
-        do {
-            try modelContext.save()
-            onProyekCreated?(newProyek)
-            dismiss()
-        } catch {
-            modelContext.delete(newProyek)
-            saveErrorMessage = "Gagal menyimpan proyek: \(error.localizedDescription)"
-        }
-    }
-}
-
-// MARK: - Pilih Warna Sub-Sheet
-
-private struct PilihWarnaSheetView: View {
-    @Query(sort: \Resep.dibuat, order: .reverse) private var daftarResep: [Resep]
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var chosenResep: Resep?
-    @ScaledMetric(relativeTo: .body) private var sheetWidth: CGFloat = 460
-
-    var onConfirm: (Resep) -> Void
-
-    private let oliveGreen = Color("oliveGreen")
-
-    init(selectedResep: Resep?, onConfirm: @escaping (Resep) -> Void) {
-        _chosenResep = State(initialValue: selectedResep)
-        self.onConfirm = onConfirm
-    }
-
-    var body: some View {
-        VStack(spacing: 16) {
-            headerBar
-
-            if daftarResep.isEmpty {
-                ContentUnavailableView(
-                    "Belum ada resep warna",
-                    image: "IconResepWarna",
-                    description: Text("Tambahkan resep terlebih dahulu di tab Resep Warna.")
-                )
-                .foregroundColor(Color(hex: "#B89B8D"))
-                .frame(minHeight: 360)
-            } else {
-                ScrollView {
-                    LazyVGrid(
-                        columns: [
-                            GridItem(.flexible(), spacing: 20),
-                            GridItem(.flexible(), spacing: 20),
-                        ],
-                        spacing: 20
-                    ) {
-                        ForEach(daftarResep) { resep in
-                            resepCard(for: resep)
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 4)
-                    .padding(.bottom, 24)
-                }
-                .frame(minHeight: 440, maxHeight: 520)
-            }
-        }
-        .frame(maxWidth: sheetWidth)
-        .background(Color.white)
-        .presentationSizing(.fitted)
-        .presentationBackground(Color.white)
-        .presentationDragIndicator(.visible)
-    }
-
-    private var headerBar: some View {
-        HStack {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.primary)
-                    .frame(width: 44, height: 44)
-                    .background(Color(UIColor.systemGray5))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Tutup")
-
-            Spacer()
-
-            Text("Pilih Warna")
-                .font(.headline.bold())
-                .foregroundStyle(.primary)
-
-            Spacer()
-
-            Button {
-                if let chosenResep {
-                    onConfirm(chosenResep)
-                    dismiss()
-                }
-            } label: {
-                Image(systemName: "checkmark")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(chosenResep != nil ? oliveGreen : Color.gray.opacity(0.6))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .disabled(chosenResep == nil)
-            .accessibilityLabel("Konfirmasi Warna")
-        }
-        .padding(.horizontal, 24)
-        .padding(.top, 24)
-    }
-
-    private func resepCard(for resep: Resep) -> some View {
-        let isSelected = chosenResep?.persistentModelID == resep.persistentModelID
-
-        return Button {
-            chosenResep = resep
-        } label: {
-            VStack(alignment: .leading, spacing: 12) {
-                if let hex = resep.warnaHex, !hex.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(hex: hex))
-                        .aspectRatio(1, contentMode: .fit)
-                } else {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(UIColor.systemGray5))
-                            .aspectRatio(1, contentMode: .fit)
-
-                        VStack(spacing: 8) {
-                            Image(systemName: "photo")
-                                .font(.system(size: 36))
-                                .foregroundStyle(Color.gray.opacity(0.75))
-
-                            Text("Warna akan muncul\nsetelah digunakan")
-                                .font(.caption)
-                                .multilineTextAlignment(.center)
-                                .foregroundStyle(Color.gray)
-                        }
-                        .padding(8)
-                    }
-                }
-
-                Text(resep.namaWarna)
-                    .font(.headline.bold())
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-            }
-            .padding(14)
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 18))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18)
-                    .stroke(isSelected ? oliveGreen : Color.clear, lineWidth: 2.5)
-            )
-            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 3)
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Previews
-
-#Preview("Tambah Proyek Sheet", traits: .landscapeLeft) {
-    BackgroundGradient()
-        .sheet(isPresented: .constant(true)) {
-            TambahProyekView(bakTitle: "Bak 1")
-        }
-        .modelContainer(for: SeronaSchema.models, inMemory: true)
-}
-
-#Preview("Pilih Warna Sheet", traits: .landscapeLeft) {
-    let container = try! SeronaSchema.makeContainer(inMemory: true)
-    let context = container.mainContext
-
-    context.insert(Resep(namaWarna: "Ungu Muda", warnaHex: "#AC4574", air: 1000, kepekatan: 90, batasPH: 11, dibuat: .now.addingTimeInterval(1)))
-    context.insert(Resep(namaWarna: "Marun", warnaHex: nil, air: 1000, kepekatan: 90, batasPH: 11, dibuat: .now.addingTimeInterval(2)))
-    context.insert(Resep(namaWarna: "Ungu Tua", warnaHex: "#933C64", air: 1000, kepekatan: 90, batasPH: 11, dibuat: .now.addingTimeInterval(3)))
-    context.insert(Resep(namaWarna: "Merah Bata", warnaHex: "#A63743", air: 1000, kepekatan: 90, batasPH: 11, dibuat: .now.addingTimeInterval(4)))
-
-    return BackgroundGradient()
-        .sheet(isPresented: .constant(true)) {
-            PilihWarnaSheetView(selectedResep: nil) { _ in }
-        }
-        .modelContainer(container)
 }

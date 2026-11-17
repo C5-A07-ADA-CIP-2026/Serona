@@ -37,7 +37,7 @@ struct DeviceListSheetView: View {
                 .padding(.bottom, 12)
 
             Group {
-                if viewModel.devices.isEmpty && viewModel.connectedDevice == nil {
+                if viewModel.devices.isEmpty, viewModel.connectedDevice == nil {
                     if viewModel.isScanning {
                         ProgressView("Mencari perangkat…")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -224,7 +224,9 @@ struct DeviceListSheetView: View {
         Binding(
             get: { viewModel.connectingDevice != nil },
             set: { isPresented in
-                if !isPresented { viewModel.cancelConnecting() }
+                if !isPresented {
+                    viewModel.cancelConnecting()
+                }
             }
         )
     }
@@ -233,7 +235,9 @@ struct DeviceListSheetView: View {
         Binding(
             get: { viewModel.errorMessage != nil },
             set: { isPresented in
-                if !isPresented { viewModel.clearError() }
+                if !isPresented {
+                    viewModel.clearError()
+                }
             }
         )
     }

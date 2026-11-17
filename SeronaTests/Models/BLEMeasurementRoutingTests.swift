@@ -55,7 +55,8 @@ struct MeasurementFrameDecoderTests {
     @Test("Multiple JSON measurements in one BLE callback are separated")
     func separatesFrames() throws {
         var decoder = MeasurementFrameDecoder()
-        let frames = try decoder.append(Data(#"{"visibleAverage":1,"clear":2,"nir":3}{"visibleAverage":4,"clear":5,"nir":6}"#.utf8))
+        let json = #"{"visibleAverage":1,"clear":2,"nir":3}{"visibleAverage":4,"clear":5,"nir":6}"#
+        let frames = try decoder.append(Data(json.utf8))
         #expect(frames.count == 2)
     }
 

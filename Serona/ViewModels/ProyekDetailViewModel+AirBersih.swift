@@ -17,7 +17,7 @@ extension ProyekDetailViewModel {
         0.7714,
         0.6114,
     ]
-    
+
     /// True once the user has set the clean-water reading the absorbance is measured against.
     var isCleanWaterSet: Bool {
 //        proyek.rasioAirBersih != nil

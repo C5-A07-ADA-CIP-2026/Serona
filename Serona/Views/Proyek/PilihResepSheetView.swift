@@ -62,7 +62,7 @@ struct PilihResepSheetView: View {
                             columns: [
                                 GridItem(.flexible(), spacing: 16),
                                 GridItem(.flexible(), spacing: 16),
-                                GridItem(.flexible(), spacing: 16)
+                                GridItem(.flexible(), spacing: 16),
                             ],
                             spacing: 16
                         ) {

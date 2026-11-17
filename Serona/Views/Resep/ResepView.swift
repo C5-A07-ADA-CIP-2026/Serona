@@ -115,7 +115,7 @@ struct ResepView: View {
 
 @MainActor
 private func previewResepContainer(isi: Bool) -> ModelContainer {
-    let container = try! SeronaSchema.makeContainer(inMemory: true)
+    let container = SeronaSchema.makePreviewContainer()
     guard isi else { return container }
     let context = container.mainContext
 
