@@ -59,7 +59,11 @@ struct TambahProyekView: View {
     var body: some View {
         NavigationStack {
             formContent
-                .toolbarVisibility(.hidden, for: .navigationBar)
+                // The bar stays visible on the root so pushing a screen never toggles it from hidden to
+                // visible; that toggle made the pushed header start too high and snap down inside the sheet.
+                .navigationTitle(resolvedBakTitle)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar { headerToolbar }
                 .navigationDestination(isPresented: $isShowingDeviceList) { deviceListScreen }
                 .navigationDestination(isPresented: $isShowingPilihResep) { pilihWarnaScreen }
         }
@@ -104,69 +108,45 @@ struct TambahProyekView: View {
     }
 
     private var formContent: some View {
-        VStack(spacing: 20) {
-            headerBar
-
-            ScrollView {
-                VStack(spacing: 16) {
-                    perangkatCard
-                    warnaCard
-                    namaPemesanCard
-                    jumlahAirCard
-                }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 24)
+        ScrollView {
+            VStack(spacing: 16) {
+                perangkatCard
+                warnaCard
+                namaPemesanCard
+                jumlahAirCard
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .scrollDismissesKeyboard(.interactively)
+            .padding(.horizontal, 24)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
         }
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollDismissesKeyboard(.interactively)
         .background(Color.white)
     }
 
-    // MARK: - Top Header Bar
+    // MARK: - Navigation Bar
 
-    private var headerBar: some View {
-        HStack {
-            Button {
+    @ToolbarContentBuilder
+    private var headerToolbar: some ToolbarContent {
+        ToolbarItem(placement: .cancellationAction) {
+            Button("Tutup", systemImage: "xmark") {
                 Task {
                     await viewModel.hapusPerangkat()
                     dismiss()
                 }
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.primary)
-                    .frame(width: 44, height: 44)
-                    .background(Color(UIColor.systemGray5))
-                    .clipShape(Circle())
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Tutup")
-
-            Spacer()
-
-            Text(resolvedBakTitle)
-                .font(.headline.bold())
-                .foregroundStyle(.primary)
-
-            Spacer()
-
-            Button {
-                simpanProyek()
-            } label: {
-                Image(systemName: "checkmark")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(canSubmit ? oliveGreen : Color.gray.opacity(0.65))
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .disabled(!canSubmit)
-            .accessibilityLabel("Simpan Proyek")
+            .labelStyle(.iconOnly)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 24)
+
+        ToolbarItem(placement: .confirmationAction) {
+            Button("Simpan Proyek", systemImage: "checkmark") {
+                simpanProyek()
+            }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.borderedProminent)
+            .tint(oliveGreen)
+            .disabled(!canSubmit)
+        }
     }
 }
 
