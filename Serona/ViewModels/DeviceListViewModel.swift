@@ -22,8 +22,10 @@ final class DeviceListViewModel {
     /// Identifies the scan that owns `devices` and `isScanning`, so a superseded scan cannot touch them.
     private var activeScan: UUID?
 
-    init(service: (any DeviceConnecting)? = nil) {
+    /// `connectedDevice` is the device that is already connected when the list opens, so it shows as connected.
+    init(service: (any DeviceConnecting)? = nil, connectedDevice: DiscoveredDevice? = nil) {
         self.service = service ?? DeviceConnectionServices.default
+        self.connectedDevice = connectedDevice
     }
 
     /// Starts a fresh scan (replacing a running one) and returns when it ends.

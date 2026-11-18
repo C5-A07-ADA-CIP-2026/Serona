@@ -7,6 +7,7 @@ import SwiftUI
 
 struct DeviceListSheetView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var viewModel: DeviceListViewModel
     private let onConnected: (DiscoveredDevice) -> Void
     private let onDisconnected: (DiscoveredDevice) -> Void
@@ -14,17 +15,22 @@ struct DeviceListSheetView: View {
     /// True when pushed inside a `NavigationStack`: the system bar replaces the custom header and Back button.
     private let isPushed: Bool
 
+    /// No vertical inset: every row is as tall as its 44 pt minimum, so the connected row (with its 44 pt button)
+    /// and the others stay the same height.
+    private static let rowInsets = EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+
     private let oliveGreen = Color("oliveGreen")
     private let alertRed = Color(hex: "#DE2428")
 
     init(
         service: (any DeviceConnecting)? = nil,
         assignedDeviceIDs: Set<UUID> = [],
+        connectedDevice: DiscoveredDevice? = nil,
         isPushed: Bool = false,
         onConnected: @escaping (DiscoveredDevice) -> Void = { _ in },
         onDisconnected: @escaping (DiscoveredDevice) -> Void = { _ in }
     ) {
-        _viewModel = State(wrappedValue: DeviceListViewModel(service: service))
+        _viewModel = State(wrappedValue: DeviceListViewModel(service: service, connectedDevice: connectedDevice))
         self.assignedDeviceIDs = assignedDeviceIDs
         self.isPushed = isPushed
         self.onConnected = onConnected
@@ -60,24 +66,22 @@ struct DeviceListSheetView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 } else {
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            if let connected = viewModel.connectedDevice {
-                                connectedRow(connected)
-                                Divider()
-                            }
-
-                            ForEach(viewModel.devices.filter { $0.id != viewModel.connectedDevice?.id }) { device in
-                                deviceRow(device)
-                                Divider()
-                            }
+                    List {
+                        if let connected = viewModel.connectedDevice {
+                            connectedRow(connected)
+                                .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+                                .listRowInsets(Self.rowInsets)
                         }
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 24)
+
+                        ForEach(viewModel.devices.filter { $0.id != viewModel.connectedDevice?.id }) { device in
+                            deviceRow(device)
+                                .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+                                .listRowInsets(Self.rowInsets)
+                        }
                     }
+                    .listStyle(.plain)
                 }
             }
-            .padding(.vertical)
         }
         .background(Color.white)
         .modalSheetStyle(isEnabled: !isPushed)
@@ -100,7 +104,10 @@ struct DeviceListSheetView: View {
         .onChange(of: viewModel.connectedDevice) { _, device in
             guard let device else { return }
             onConnected(device)
-            dismiss()
+            // Pushed, the list stays so the connected device shows at the top; the Back button leaves it.
+            if !isPushed {
+                dismiss()
+            }
         }
         .alert(
             viewModel.connectingDevice?.nama ?? "Perangkat",
@@ -167,50 +174,58 @@ struct DeviceListSheetView: View {
 
     // MARK: - Device Rows
 
+    /// The whole row is the button: tapping it connects. A device that another active bak uses is not a button, and
+    /// stays in secondary text (not the dimmed disabled style) so "Dipakai bak lain" remains readable.
+    @ViewBuilder
     private func deviceRow(_ device: DiscoveredDevice) -> some View {
-        let isAssigned = assignedDeviceIDs.contains(device.id)
-        return HStack(spacing: 12) {
-            Image(systemName: "wifi")
-                .font(.body.weight(.semibold))
-                .foregroundStyle(.primary)
-
-            Text(device.nama)
-                .font(.body)
-                .foregroundStyle(.primary)
-
-            Spacer()
-
+        if assignedDeviceIDs.contains(device.id) {
+            deviceRowContent(device, isAssigned: true)
+                .accessibilityElement(children: .combine)
+                .accessibilityHint("Perangkat sudah digunakan oleh bak aktif lain")
+        } else {
             Button {
                 Task { await viewModel.connect(device) }
             } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: isAssigned ? "lock.fill" : "plus")
-                        .font(.caption.bold())
-                    Text(isAssigned ? "Dipakai bak lain" : "Hubungkan")
-                        .font(.subheadline.weight(.semibold))
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .frame(minHeight: 44)
-                .background(oliveGreen, in: Capsule())
+                deviceRowContent(device, isAssigned: false)
             }
             .buttonStyle(.plain)
-            .disabled(isAssigned)
-            .accessibilityHint(isAssigned ? "Perangkat sudah digunakan oleh bak aktif lain" : "")
+            .accessibilityHint("Menghubungkan perangkat")
         }
-        .padding(.vertical, 14)
+    }
+
+    private func deviceRowContent(_ device: DiscoveredDevice, isAssigned: Bool) -> some View {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 12))
+        return layout {
+            Text(device.nama)
+                .font(.body)
+                .foregroundStyle(isAssigned ? .secondary : .primary)
+
+            if !dynamicTypeSize.isAccessibilitySize {
+                Spacer()
+            }
+
+            if isAssigned {
+                Label("Dipakai bak lain", systemImage: "lock.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+        .contentShape(Rectangle())
     }
 
     private func connectedRow(_ device: DiscoveredDevice) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: "wifi")
+            Image(systemName: "checkmark")
                 .font(.body.weight(.semibold))
                 .foregroundStyle(Color.oliveGreenText)
+                .accessibilityHidden(true)
 
             Text(device.nama)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(Color.oliveGreenText)
+                .font(.body)
+                .foregroundStyle(.primary)
 
             Spacer()
 
@@ -224,11 +239,12 @@ struct DeviceListSheetView: View {
                     .font(.title3)
                     .foregroundStyle(alertRed)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderless)
             .frame(minWidth: 44, minHeight: 44)
             .accessibilityLabel("Putuskan Perangkat")
         }
-        .padding(.vertical, 14)
+        .frame(minHeight: 44)
+        .accessibilityElement(children: .contain)
     }
 
     // MARK: - Alert Bindings

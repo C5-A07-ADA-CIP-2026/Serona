@@ -11,6 +11,7 @@ import SwiftUI
 struct PilihWarnaSheetView: View {
     @Query(sort: \Resep.dibuat, order: .reverse) private var daftarResep: [Resep]
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @State private var chosenResep: Resep?
 
@@ -43,10 +44,11 @@ struct PilihWarnaSheetView: View {
             } else {
                 ScrollView {
                     LazyVGrid(
-                        columns: [
-                            GridItem(.flexible(), spacing: 20),
-                            GridItem(.flexible(), spacing: 20),
-                        ],
+                        // One column at accessibility sizes so names and the placeholder text have room.
+                        columns: Array(
+                            repeating: GridItem(.flexible(), spacing: 20),
+                            count: dynamicTypeSize.isAccessibilitySize ? 1 : 2
+                        ),
                         spacing: 20
                     ) {
                         ForEach(daftarResep) { resep in
@@ -61,7 +63,7 @@ struct PilihWarnaSheetView: View {
         }
         .background(Color.white)
         .modalSheetStyle(isEnabled: !isPushed)
-        .navigationTitle("Pilih Warna")
+        .navigationTitle("Warna")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if isPushed {
@@ -98,7 +100,7 @@ struct PilihWarnaSheetView: View {
 
             Spacer()
 
-            Text("Pilih Warna")
+            Text("Warna")
                 .font(.headline.bold())
                 .foregroundStyle(.primary)
 
@@ -125,6 +127,37 @@ struct PilihWarnaSheetView: View {
         .padding(.top, 24)
     }
 
+    /// Stands in for the color swatch of a recipe that has no color yet. Square at normal sizes; at accessibility
+    /// sizes it grows with its text instead of clipping or overflowing it.
+    private var placeholderTile: some View {
+        let content = VStack(spacing: 8) {
+            Image(systemName: "photo")
+                .font(.largeTitle)
+                .foregroundStyle(.secondary)
+
+            Text("Warna akan muncul\nsetelah digunakan")
+                .font(.caption)
+                .multilineTextAlignment(.center)
+                // Primary at reduced opacity keeps this above 4.5:1 on the gray tile; plain gray was about 2.4:1.
+                .foregroundStyle(.primary.opacity(0.75))
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity)
+
+        return Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                content
+                    .padding(.vertical, 12)
+                    .background(Color(UIColor.systemGray5), in: RoundedRectangle(cornerRadius: 12))
+            } else {
+                Color(UIColor.systemGray5)
+                    .aspectRatio(1, contentMode: .fit)
+                    .overlay { content }
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+        }
+    }
+
     private func resepCard(for resep: Resep) -> some View {
         let isSelected = chosenResep?.persistentModelID == resep.persistentModelID
 
@@ -137,29 +170,12 @@ struct PilihWarnaSheetView: View {
                         .fill(Color(hex: hex))
                         .aspectRatio(1, contentMode: .fit)
                 } else {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(UIColor.systemGray5))
-                            .aspectRatio(1, contentMode: .fit)
-
-                        VStack(spacing: 8) {
-                            Image(systemName: "photo")
-                                .font(.largeTitle)
-                                .foregroundStyle(Color.gray.opacity(0.75))
-
-                            Text("Warna akan muncul\nsetelah digunakan")
-                                .font(.caption)
-                                .multilineTextAlignment(.center)
-                                .foregroundStyle(Color.gray)
-                        }
-                        .padding(8)
-                    }
+                    placeholderTile
                 }
 
                 Text(resep.namaWarna)
                     .font(.headline.bold())
                     .foregroundStyle(.primary)
-                    .lineLimit(2)
             }
             .padding(14)
             .background(Color.white)
