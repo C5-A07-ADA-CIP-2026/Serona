@@ -43,6 +43,8 @@ struct WarnaKotak: View {
                 .font(.subheadline)
                 .foregroundStyle(Color.gray)
                 .multilineTextAlignment(.center)
+                .lineLimit(3)
+                .minimumScaleFactor(0.7)
         }
         .padding(12)
     }

@@ -32,7 +32,7 @@ struct ResepView: View {
 
             GeometryReader { geometry in
                 let gridColumns = AdaptiveLayout.gridColumns(
-                    forWidth: geometry.size.width, minimumItemWidth: 170, spacing: 16,
+                    forWidth: geometry.size.width, minimumItemWidth: 250, spacing: 40,
                     limits: dynamicTypeSize.isAccessibilitySize ? 1 ... 1 : 2 ... 5
                 )
                 let sidePadding = AdaptiveLayout.sidePadding(forWidth: geometry.size.width)
@@ -52,7 +52,7 @@ struct ResepView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         ScrollView {
-                            LazyVGrid(columns: gridColumns, spacing: 16) {
+                            LazyVGrid(columns: gridColumns, spacing: 50) {
                                 ForEach(hasilCari) { resep in
                                     Button {
                                         resepDipilih = resep

@@ -164,27 +164,11 @@ struct PilihWarnaSheetView: View {
         return Button {
             chosenResep = resep
         } label: {
-            VStack(alignment: .leading, spacing: 12) {
-                if let hex = resep.warnaHex, !hex.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(hex: hex))
-                        .aspectRatio(1, contentMode: .fit)
-                } else {
-                    placeholderTile
-                }
-
-                Text(resep.namaWarna)
-                    .font(.headline.bold())
-                    .foregroundStyle(.primary)
-            }
-            .padding(14)
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 18))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18)
-                    .stroke(isSelected ? oliveGreen : Color.clear, lineWidth: 2.5)
-            )
-            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 3)
+            WarnaCardView(resep: resep)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(isSelected ? oliveGreen : Color.clear, lineWidth: 2.5)
+                )
         }
         .buttonStyle(.plain)
     }

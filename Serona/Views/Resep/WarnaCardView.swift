@@ -27,14 +27,15 @@ struct WarnaCardView: View {
                 cornerRadius: 14,
                 iconSize: 44
             )
-            .aspectRatio(1, contentMode: .fit)
+            .aspectRatio(1.25, contentMode: .fit)
 
             // Recipe Color Name
             Text(resep.namaWarna)
                 .font(.title3.bold())
                 .foregroundStyle(titleColor)
         }
-        .padding(14)
+        .padding(15)
+        .padding(.bottom, 30)
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 18))
         .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 3)
