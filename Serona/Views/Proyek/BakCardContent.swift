@@ -14,12 +14,33 @@ struct BakCardContent: View {
 
     // MARK: - Stage & Threshold Resolution
 
+    /// True while this bak is in active use (including when the IoT sensor is disconnected).
+    private var isUsedBak: Bool {
+        proyek.status == .aktif
+    }
+
     var stage: BakCardStage {
-        guard proyek.status == .aktif,
-              let viewModel,
-              viewModel.isDataScanned,
-              viewModel.colorMeasurementError == nil
-        else {
+        guard proyek.status == .aktif else {
+            return .inactive
+        }
+
+        guard let viewModel else {
+            return .disconnected
+        }
+
+        let isDisconnected: Bool = switch viewModel.connectionState {
+        case .disconnected, .failed:
+            true
+        case .ready, .connecting, .discovering, .reconnecting:
+            false
+        }
+
+        if !viewModel.isScanning,
+           isDisconnected || (viewModel.colorMeasurementError != nil && viewModel.connectionState != .ready) {
+            return .disconnected
+        }
+
+        guard viewModel.isDataScanned else {
             return .inactive
         }
 
@@ -30,31 +51,31 @@ struct BakCardContent: View {
         return hasLiveAlert ? .activeWarning : .active
     }
 
-    private var isConnected: Bool {
-        viewModel?.connectionState == .ready
-    }
-
     private var isScanning: Bool {
         viewModel?.isScanning ?? false
     }
 
     private var isConcentrationBelowLimit: Bool {
-        guard stage != .inactive, let concentration = viewModel?.latestConcentration else { return false }
+        guard stage == .active || stage == .activeWarning,
+              let concentration = viewModel?.latestConcentration else { return false }
         return concentration < proyek.batasKepekatan
     }
 
     private var isPHBelowLimit: Bool {
-        guard stage != .inactive, let waterPH = viewModel?.latestWaterPH else { return false }
+        guard stage == .active || stage == .activeWarning,
+              let waterPH = viewModel?.latestWaterPH else { return false }
         return waterPH < proyek.batasPH
     }
 
     private var kepekatanDisplay: String {
-        guard stage != .inactive, let concentration = viewModel?.latestConcentration else { return "-" }
+        guard stage == .active || stage == .activeWarning,
+              let concentration = viewModel?.latestConcentration else { return "-" }
         return String(format: "%.0f%%", concentration)
     }
 
     private var phDisplay: String {
-        guard stage != .inactive, let waterPH = viewModel?.latestWaterPH else { return "-" }
+        guard stage == .active || stage == .activeWarning,
+              let waterPH = viewModel?.latestWaterPH else { return "-" }
         return ProyekColorMeasurements.format(waterPH)
     }
 
@@ -86,20 +107,17 @@ extension BakCardContent {
     // MARK: - Card Subviews
 
     private var headerRow: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
-            let status = connectionStatus(at: context.date)
-            // The status moves under the name when both do not fit on one line (a narrow card or large text).
-            ViewThatFits(in: .horizontal) {
-                HStack {
-                    nameLabel
-                    Spacer()
-                    connectionLabel(status)
-                }
+        let status = connectionStatus
+        return ViewThatFits(in: .horizontal) {
+            HStack {
+                nameLabel
+                Spacer()
+                connectionLabel(status)
+            }
 
-                VStack(alignment: .leading, spacing: 6) {
-                    nameLabel
-                    connectionLabel(status)
-                }
+            VStack(alignment: .leading, spacing: 6) {
+                nameLabel
+                connectionLabel(status)
             }
         }
     }
@@ -111,38 +129,30 @@ extension BakCardContent {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    private func connectionLabel(_ status: (text: String, icon: String)) -> some View {
+    private func connectionLabel(_ status: (text: String, dotColor: Color)) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: status.icon)
+            Circle()
+                .fill(status.dotColor)
+                .frame(width: 8, height: 8)
                 .accessibilityHidden(true)
 
             Text(status.text)
                 .font(.caption)
-                .foregroundStyle(.primary)
+                .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
 
-    private func connectionStatus(at date: Date) -> (text: String, icon: String) {
-        guard let viewModel else { return ("Tidak tersambung", "antenna.radiowaves.left.and.right.slash") }
-        switch viewModel.connectionState {
-        case .ready:
-            return viewModel.isMeasurementStale(at: date)
-                ? ("Data sensor lama", "clock.badge.exclamationmark")
-                : ("Tersambung", "antenna.radiowaves.left.and.right")
-        case .connecting, .discovering:
-            return ("Menyambungkan", "antenna.radiowaves.left.and.right")
-        case .reconnecting:
-            return ("Menyambungkan ulang", "arrow.clockwise")
-        case .failed:
-            return ("Koneksi gagal", "exclamationmark.triangle")
-        case .disconnected:
-            return ("Tidak tersambung", "antenna.radiowaves.left.and.right.slash")
+    private var connectionStatus: (text: String, dotColor: Color) {
+        if proyek.status == .aktif, viewModel?.connectionState == .ready {
+            return ("Terhubung", Color(hex: "#34C759"))
         }
+        return ("Tidak Terhubung", Color.gray.opacity(0.85))
     }
 
     private var swatchColor: Color {
-        guard stage != .inactive, let hex = proyek.warnaHex else {
+        // Keep the color displayed when the bak is in use (even when the sensor is disconnected).
+        guard isUsedBak, let hex = proyek.warnaHex else {
             return Color.gray.opacity(0.85)
         }
         return Color(hex: hex)
@@ -155,12 +165,12 @@ extension BakCardContent {
                 .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(stage == .inactive ? "-" : proyek.namaWarna)
+                Text(isUsedBak ? proyek.namaWarna : "-")
                     .font(.headline)
                     .foregroundStyle(.primary)
                     .lineLimit(2)
 
-                Text(stage == .inactive ? "-" : proyek.perangkatNama)
+                Text(isUsedBak ? proyek.perangkatNama : "-")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -226,7 +236,7 @@ extension BakCardContent {
                 Text(title)
                     .font(.caption.weight(.medium))
             }
-            .foregroundStyle(Color.black.opacity(0.75))
+            .foregroundStyle(Color.oliveGreenText)
 
             Text(value)
                 .font(.largeTitle.bold())
@@ -240,7 +250,7 @@ extension BakCardContent {
 
     private var actionButton: some View {
         Button {
-            if stage == .inactive {
+            if stage == .inactive || stage == .disconnected {
                 onMulaiPindai?()
             } else {
                 onSelesai?()
@@ -249,61 +259,32 @@ extension BakCardContent {
             HStack(spacing: 8) {
                 if isScanning {
                     ProgressView()
-                        .tint(buttonForeground)
+                        .tint(.white)
                         .controlSize(.small)
                 }
                 Text(buttonTitle)
                     .font(.subheadline.bold())
             }
-            .foregroundStyle(buttonForeground)
-            .padding(.horizontal, 24)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 36)
             .padding(.vertical, 12)
             .frame(minHeight: 44)
-            .background(buttonBackground)
+            .background(Color.oliveGreen)
             .clipShape(Capsule())
-            .shadow(color: buttonShadow, radius: 6, x: 0, y: 3)
+            .shadow(color: Color.oliveGreen.opacity(0.3), radius: 6, x: 0, y: 3)
         }
         .buttonStyle(.plain)
         .disabled(isScanning)
-        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Stage Styling Helpers
-
-    private var buttonBackground: Color {
-        switch stage {
-        case .active, .activeWarning:
-            .white
-        case .inactive:
-            Color.oliveGreen
-        }
-    }
-
-    private var buttonForeground: Color {
-        switch stage {
-        case .active:
-            .black
-        case .activeWarning:
-            Color(hex: "#DE2428")
-        case .inactive:
-            .white
-        }
-    }
-
-    private var buttonShadow: Color {
-        switch stage {
-        case .active, .activeWarning:
-            Color.black.opacity(0.12)
-        case .inactive:
-            Color.oliveGreen.opacity(0.3)
-        }
-    }
 
     private var statusIcon: String {
         switch stage {
         case .active: "checkmark.circle.fill"
         case .activeWarning: "exclamationmark.triangle.fill"
-        case .inactive: "questionmark.circle.fill"
+        case .inactive, .disconnected: "questionmark.circle.fill"
         }
     }
 
@@ -311,7 +292,7 @@ extension BakCardContent {
         switch stage {
         case .active: "Kualitas Larutan Baik"
         case .activeWarning: "Kualitas Larutan Menurun"
-        case .inactive: "Tidak ada data yang terbaca"
+        case .inactive, .disconnected: "Tidak ada data yang terbaca"
         }
     }
 
@@ -320,7 +301,7 @@ extension BakCardContent {
         // Darker than the brand tints so small status text keeps 4.5:1 on the tinted pill.
         case .active: Color.oliveGreenText
         case .activeWarning: Color(hex: "#C8191C")
-        case .inactive: Color.primary.opacity(0.7)
+        case .inactive, .disconnected: Color.primary.opacity(0.7)
         }
     }
 
@@ -328,12 +309,12 @@ extension BakCardContent {
         switch stage {
         case .active: Color.oliveGreen.opacity(0.12)
         case .activeWarning: Color(hex: "#FF4245").opacity(0.12)
-        case .inactive: Color.gray.opacity(0.12)
+        case .inactive, .disconnected: Color.gray.opacity(0.12)
         }
     }
 
     private var buttonTitle: String {
-        if stage == .inactive {
+        if stage == .inactive || stage == .disconnected {
             return isScanning ? "Memindai..." : "Mulai Pindai"
         }
         return "Selesai"
