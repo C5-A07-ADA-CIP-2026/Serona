@@ -14,7 +14,7 @@ struct WarnaKotak: View {
     /// For wide, short strips: the placeholder lays out icon and text side by side instead of stacked.
     var isCompact = false
 
-    private static let placeholderText = "*warna akan muncul ketika sudah dipakai pada bak pewarna"
+    private static let placeholderText = "Warna akan muncul setelah digunakan"
 
     var body: some View {
         if isCompact, Color(hex: hex) == nil {
@@ -35,7 +35,7 @@ struct WarnaKotak: View {
 
     private var stackedPlaceholder: some View {
         VStack(spacing: 8) {
-            Image(systemName: "photo.badge.exclamationmark")
+            Image(systemName: "photo")
                 .font(.system(size: iconSize))
                 .foregroundStyle(Color.gray)
 
@@ -49,7 +49,7 @@ struct WarnaKotak: View {
 
     private var compactPlaceholder: some View {
         HStack(spacing: 8) {
-            Image(systemName: "photo.badge.exclamationmark")
+            Image(systemName: "photo")
                 .font(.footnote)
                 .foregroundStyle(Color.gray)
 

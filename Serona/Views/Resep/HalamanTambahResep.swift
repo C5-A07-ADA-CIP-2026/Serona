@@ -17,8 +17,8 @@ struct HalamanTambahResep: View {
     @State private var konfirmasiHapus = false
 
     private let tampilSebagaiSheet: Bool
-    private let titleColor = Color("titleColor")
     private let oliveGreen = Color("oliveGreen")
+    private let latarBelakang = Color("backgroundModal")
 
     init(resep: Resep? = nil, tampilSebagaiSheet: Bool = false) {
         self.tampilSebagaiSheet = tampilSebagaiSheet
@@ -26,8 +26,8 @@ struct HalamanTambahResep: View {
             _viewModel = State(initialValue: FormResepViewModel(resep: resep))
         } else {
             let formViewModel = FormResepViewModel()
-            formViewModel.pewarna = []
-            formViewModel.zatPembantu = []
+            formViewModel.pewarna = [BahanInput()]
+            formViewModel.zatPembantu = [BahanInput()]
             formViewModel.kepekatan = 90
             formViewModel.batasPH = 11
             _viewModel = State(initialValue: formViewModel)
@@ -35,41 +35,36 @@ struct HalamanTambahResep: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            headerBar
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
-                .padding(.bottom, 16)
+        ZStack(alignment: .top) {
+            latarBelakang.ignoresSafeArea()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 20) {
                     namaWarnaCard
+                    jumlahAirCard
                     pewarnaSection
-                    airSection
                     zatPembantuSection
 
                     if viewModel.sedangMengedit {
                         hapusButton
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 4)
+                .padding(.horizontal, 20)
+                .padding(.top, 76)
                 .padding(.bottom, 28)
             }
             .scrollDismissesKeyboard(.interactively)
+
+            headerBar
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
         }
-        .background(Color.white)
-        .presentationSizing(.form)
-        .presentationBackground(Color.white)
+        .presentationBackground(latarBelakang)
         .presentationDragIndicator(.hidden)
         .onAppear {
             if !viewModel.sedangMengedit {
-                if viewModel.kepekatan == nil {
-                    viewModel.kepekatan = 90
-                }
-                if viewModel.batasPH == nil {
-                    viewModel.batasPH = 11
-                }
+                if viewModel.kepekatan == nil { viewModel.kepekatan = 90 }
+                if viewModel.batasPH == nil { viewModel.batasPH = 11 }
             }
         }
         .alert("Gagal menyimpan", isPresented: $gagalMenyimpan) {
@@ -86,7 +81,7 @@ struct HalamanTambahResep: View {
         }
     }
 
-    // MARK: - Top Header Bar
+    // MARK: - Header
 
     private var headerBar: some View {
         HStack {
@@ -94,22 +89,20 @@ struct HalamanTambahResep: View {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.subheadline.bold())
+                    .font(.title3.weight(.medium))
                     .foregroundStyle(.primary)
-                    .frame(width: 44, height: 44)
-                    .background(Color(UIColor.systemGray5))
-                    .clipShape(Circle())
+                    .frame(width: 48, height: 48)
+                    .background(Color.white, in: Circle())
+                    .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 3)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Tutup")
 
             Spacer()
 
-            Text(viewModel.sedangMengedit ? viewModel.namaWarna : "Tambah Warna")
-                .font(.headline.bold())
+            Text("Warna")
+                .font(.headline)
                 .foregroundStyle(.primary)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
 
             Spacer()
 
@@ -117,11 +110,11 @@ struct HalamanTambahResep: View {
                 simpan()
             } label: {
                 Image(systemName: "checkmark")
-                    .font(.subheadline.bold())
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(viewModel.bisaSimpan ? oliveGreen : Color.gray.opacity(0.65))
-                    .clipShape(Circle())
+                    .frame(width: 48, height: 48)
+                    .background(viewModel.bisaSimpan ? oliveGreen : Color.gray.opacity(0.65), in: Circle())
+                    .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 3)
             }
             .buttonStyle(.plain)
             .disabled(!viewModel.bisaSimpan)
@@ -129,57 +122,101 @@ struct HalamanTambahResep: View {
         }
     }
 
-    // MARK: - Sections
+    // MARK: - Nama Warna & Jumlah Air
 
     private var namaWarnaCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        HStack {
             Text("Nama Warna")
-                .font(.headline)
-                .foregroundStyle(.black)
+                .font(.title3)
+                .foregroundStyle(.primary)
 
-            TextField("", text: $viewModel.namaWarna)
-                .font(.subheadline)
+            TextField("Contoh: Marun", text: $viewModel.namaWarna)
+                .font(.title3)
+                .multilineTextAlignment(.trailing)
+                .foregroundStyle(.secondary)
                 .autocorrectionDisabled()
-                .padding(.horizontal, 12)
-                .frame(height: 40)
-                .background(Color.white)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Color.gray.opacity(0.25), lineWidth: 1)
-                )
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+        .padding(.horizontal, 26)
+        .frame(height: 60)
+        .background(Color.white, in: Capsule())
     }
+
+    private var jumlahAirCard: some View {
+        HStack {
+            Text("Jumlah Air")
+                .font(.title3)
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            Text("\(viewModel.ukuranAir ?? 0) Liter")
+                .font(.title3)
+                .foregroundStyle(.primary)
+                .monospacedDigit()
+
+            HStack(spacing: 0) {
+                Button {
+                    let sekarang = viewModel.ukuranAir ?? 0
+                    if sekarang > 0 {
+                        viewModel.ukuranAir = sekarang - 1
+                    }
+                } label: {
+                    Image(systemName: "minus")
+                        .font(.body.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 58, height: 40)
+                }
+
+                Rectangle()
+                    .fill(Color.gray.opacity(0.35))
+                    .frame(width: 1, height: 26)
+
+                Button {
+                    viewModel.ukuranAir = (viewModel.ukuranAir ?? 0) + 1
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.body.weight(.bold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 58, height: 40)
+                }
+            }
+            .background(Color(UIColor.systemGray5), in: Capsule())
+            .buttonStyle(.plain)
+        }
+        .padding(.leading, 26)
+        .padding(.trailing, 18)
+        .frame(height: 70)
+        .background(Color.white, in: Capsule())
+    }
+
+    // MARK: - Napthol
 
     private var pewarnaSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 10) {
-                Image(systemName: "cylinder.split.1x2")
-                    .font(.title3)
-                    .foregroundStyle(.primary)
-                    .frame(width: 24)
+            ForEach(Array(viewModel.pewarna.enumerated()), id: \.element.id) { index, item in
+                VStack(alignment: .leading, spacing: 14) {
+                    SectionHeader(
+                        title: "Napthol \(index + 1)",
+                        tampilkanHapus: index > 0
+                    ) {
+                        withAnimation(.snappy) {
+                            viewModel.pewarna.removeAll { $0.id == item.id }
+                        }
+                    }
 
-                Text("Kode Pewarna Naphtol")
-                    .font(.headline)
-                    .foregroundStyle(.primary)
+                    BahanCard(
+                        labelKode: "Kode Pewarna",
+                        item: bindingPewarna(item.id),
+                        pilihan: viewModel.pilihanPewarna(untuk: item)
+                    )
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            ForEach($viewModel.pewarna) { $item in
-                BahanRowView(
-                    item: $item,
-                    pilihan: viewModel.pilihanPewarna(untuk: item),
-                    titleColor: titleColor
-                )
-            }
-
-            OliveCapsuleButton(
-                title: "Tambah Pewarna",
-                systemImage: "plus",
-                isEnabled: viewModel.bisaTambahPewarna
+            TambahButton(
+                title: "Tambah Napthol",
+                isEnabled: viewModel.bisaTambahPewarna,
+                warna: oliveGreen
             ) {
                 withAnimation(.snappy) {
                     viewModel.pewarna.append(BahanInput())
@@ -188,65 +225,34 @@ struct HalamanTambahResep: View {
         }
     }
 
-    private var airSection: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "drop.fill")
-                .font(.title3)
-                .foregroundStyle(.primary)
-                .frame(width: 24)
-
-            Text("Air")
-                .font(.headline)
-                .foregroundStyle(.primary)
-
-            Spacer()
-
-            HStack(spacing: 10) {
-                TextField("0", value: $viewModel.ukuranAir, format: .number)
-                    .keyboardType(.numberPad)
-                    .multilineTextAlignment(.center)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(titleColor)
-                    .monospacedDigit()
-                    .frame(width: 64, height: 38)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(Color.gray.opacity(0.25), lineWidth: 1)
-                    )
-
-                Text("L")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(titleColor)
-                    .frame(width: 20, alignment: .leading)
-            }
-        }
-    }
+    // MARK: - Zat Pembantu
 
     private var zatPembantuSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 10) {
-                Image(systemName: "cylinder.split.1x2")
-                    .font(.title3)
-                    .foregroundStyle(.primary)
-                    .frame(width: 24)
+            ForEach(Array(viewModel.zatPembantu.enumerated()), id: \.element.id) { index, item in
+                VStack(alignment: .leading, spacing: 14) {
+                    SectionHeader(
+                        title: index == 0 ? "Zat Pembantu" : "Zat Pembantu \(index + 1)",
+                        tampilkanHapus: index > 0
+                    ) {
+                        withAnimation(.snappy) {
+                            viewModel.zatPembantu.removeAll { $0.id == item.id }
+                        }
+                    }
 
-                Text("Zat Pembantu")
-                    .font(.headline)
-                    .foregroundStyle(.primary)
+                    BahanCard(
+                        labelKode: "Soda",
+                        item: bindingZatPembantu(item.id),
+                        pilihan: viewModel.pilihanZatPembantu(untuk: item)
+                    )
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            ForEach($viewModel.zatPembantu) { $item in
-                BahanRowView(
-                    item: $item,
-                    pilihan: viewModel.pilihanZatPembantu(untuk: item),
-                    titleColor: titleColor
-                )
-            }
-
-            OliveCapsuleButton(
+            TambahButton(
                 title: "Tambah Zat Pembantu",
-                systemImage: "plus",
-                isEnabled: viewModel.bisaTambahZatPembantu
+                isEnabled: viewModel.bisaTambahZatPembantu,
+                warna: oliveGreen
             ) {
                 withAnimation(.snappy) {
                     viewModel.zatPembantu.append(BahanInput())
@@ -254,6 +260,8 @@ struct HalamanTambahResep: View {
             }
         }
     }
+
+    // MARK: - Hapus
 
     private var hapusButton: some View {
         Button(role: .destructive) {
@@ -268,7 +276,30 @@ struct HalamanTambahResep: View {
         .buttonBorderShape(.capsule)
         .padding(.top, 4)
     }
+    
+    private func bindingPewarna(_ id: BahanInput.ID) -> Binding<BahanInput> {
+        Binding(
+            get: { viewModel.pewarna.first(where: { $0.id == id }) ?? BahanInput() },
+            set: { baru in
+                if let i = viewModel.pewarna.firstIndex(where: { $0.id == id }) {
+                    viewModel.pewarna[i] = baru
+                }
+            }
+        )
+    }
 
+    private func bindingZatPembantu(_ id: BahanInput.ID) -> Binding<BahanInput> {
+        Binding(
+            get: { viewModel.zatPembantu.first(where: { $0.id == id }) ?? BahanInput() },
+            set: { baru in
+                if let i = viewModel.zatPembantu.firstIndex(where: { $0.id == id }) {
+                    viewModel.zatPembantu[i] = baru
+                }
+            }
+        )
+    }
+
+    
     // MARK: - Actions
 
     private func simpan() {
@@ -292,88 +323,120 @@ struct HalamanTambahResep: View {
 
 // MARK: - Helper Subviews
 
-private struct OliveCapsuleButton: View {
+private struct SectionHeader: View {
     let title: String
-    var systemImage: String?
-    var isEnabled: Bool = true
-    let action: () -> Void
-
-    private let oliveGreen = Color("oliveGreen")
+    var tampilkanHapus: Bool = false
+    var onHapus: () -> Void = {}
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.subheadline.bold())
-                }
-                Text(title)
-                    .font(.subheadline.bold())
-            }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 46)
-            .background(isEnabled ? oliveGreen : Color.gray.opacity(0.45), in: Capsule())
-        }
-        .buttonStyle(.plain)
-        .disabled(!isEnabled)
-    }
-}
-
-private struct BahanRowView: View {
-    @Binding var item: BahanInput
-    let pilihan: [String]
-    let titleColor: Color
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Menu {
-                ForEach(pilihan, id: \.self) { opsi in
-                    Button(opsi) {
-                        item.kode = opsi
-                    }
-                }
-            } label: {
-                HStack {
-                    Text(item.kode.isEmpty ? "Pilih Kode" : item.kode)
-                        .font(.subheadline)
-                        .foregroundStyle(item.kode.isEmpty ? Color.gray : .primary)
-                        .lineLimit(1)
-                    Spacer()
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.black)
-                }
-                .padding(.horizontal, 12)
-                .frame(width: 195, height: 38)
-                .background(Color.white)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .stroke(Color.gray.opacity(0.25), lineWidth: 1)
-                )
-            }
+        HStack {
+            Text(title)
+                .font(.title3.bold())
+                .foregroundStyle(.primary)
 
             Spacer()
 
-            HStack(spacing: 10) {
-                TextField("0", value: $item.gram, format: .number)
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.center)
-                    .font(.subheadline.weight(.medium))
-                    .monospacedDigit()
-                    .frame(width: 64, height: 38)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(Color.gray.opacity(0.25), lineWidth: 1)
-                    )
-
-                Text("gr")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(titleColor)
-                    .frame(width: 20, alignment: .leading)
+            if tampilkanHapus {
+                Button(action: onHapus) {
+                    Image(systemName: "trash")
+                        .font(.title3)
+                        .foregroundStyle(.red.opacity(0.85))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Hapus")
             }
         }
-        .padding(.leading, 34)
+        .padding(.horizontal, 2)
+        .padding(.top, 4)
+    }
+}
+
+private struct BahanCard: View {
+    let labelKode: String
+    @Binding var item: BahanInput
+    let pilihan: [String]
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(labelKode)
+                    .font(.title3)
+                    .foregroundStyle(.primary)
+
+                Spacer()
+
+                Menu {
+                    ForEach(pilihan, id: \.self) { opsi in
+                        Button(opsi) { item.kode = opsi }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(item.kode.isEmpty ? "Pilih" : item.kode)
+                            .font(.title3)
+                            .foregroundStyle(.gray)
+                            .lineLimit(1)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.body.weight(.medium))
+                            .foregroundStyle(.gray)
+                    }
+                }
+            }
+            .frame(height: 48)
+
+            Divider()
+                .overlay(Color.gray.opacity(0.5))
+                .padding(.horizontal, 8)
+
+            HStack {
+                Text("Berat")
+                    .font(.title3)
+                    .foregroundStyle(.primary)
+
+                Spacer()
+
+                TextField("0", value: $item.gram, format: .number)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                    .frame(width: 90)
+
+                Text("gr")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(height: 48)
+            .padding(.trailing, 8)
+        }
+        .padding(.horizontal, 26)
+        .padding(.vertical, 8)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+    }
+}
+
+private struct TambahButton: View {
+    let title: String
+    var isEnabled: Bool = true
+    let warna: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: "plus.circle")
+                    .font(.title2)
+                Text(title)
+                    .font(.title3)
+                Spacer()
+            }
+            .foregroundStyle(isEnabled ? warna : Color.gray.opacity(0.6))
+            .padding(.horizontal, 26)
+            .frame(height: 60)
+            .background(Color.white, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
     }
 }
 
