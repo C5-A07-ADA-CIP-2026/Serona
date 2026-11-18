@@ -7,10 +7,10 @@ import SwiftUI
 
 struct PerbaikiLarutanView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var guide: PerbaikiLarutanViewModel
     @ObservedObject var viewModel: ProyekDetailViewModel
 
-    @ScaledMetric(relativeTo: .body) private var sheetIdealWidth: CGFloat = 440
     @ScaledMetric(relativeTo: .body) private var closeButtonSize: CGFloat = 38
     @ScaledMetric(relativeTo: .body) private var numericFieldWidth: CGFloat = 68
 
@@ -59,59 +59,14 @@ struct PerbaikiLarutanView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(alignment: .leading, spacing: 20) {
-                Text(headerTitle)
-                    .font(.headline.bold())
-                    .foregroundStyle(.primary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 4)
-
-                Text(
-                    "Ikuti panduan penambahan bahan di bawah ini untuk mengembalikan kualitas larutan sesuai threshold."
-                )
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
-
-                stepContent
-
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        guide.lanjut(waterPH: viewModel.latestWaterPH)
-                    }
-                } label: {
-                    Text("Selanjutnya")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(
-                            canProceed ? Color.oliveGreen : Color.gray.opacity(0.75),
-                            in: Capsule()
-                        )
-                }
-                .buttonStyle(.plain)
-                .disabled(!canProceed)
-                .padding(.top, 4)
+        GeometryReader { proxy in
+            // The form sheet has a fixed height. Fill it so the content sits at the top and the button at the
+            // bottom, and scroll when the content is taller (large Dynamic Type).
+            ScrollView {
+                guideContent
+                    .frame(minHeight: proxy.size.height, alignment: .top)
             }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 28)
-            .frame(minWidth: 340, idealWidth: sheetIdealWidth, maxWidth: 480)
-
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: closeButtonSize, height: closeButtonSize)
-                    .background(Color.white, in: Circle())
-                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Tutup")
-            .padding(20)
+            .scrollBounceBehavior(.basedOnSize)
         }
         .background(Color.white)
         .presentationSizing(.form)
@@ -135,6 +90,76 @@ struct PerbaikiLarutanView: View {
 }
 
 extension PerbaikiLarutanView {
+    // MARK: - Layout
+
+    private var guideContent: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            // The close button lives in the title row, so it scrolls with the content instead of covering it.
+            ZStack(alignment: .trailing) {
+                Text(headerTitle)
+                    .font(.headline.bold())
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.horizontal, closeButtonSize + 8)
+
+                closeButton
+            }
+
+            Text(
+                "Ikuti panduan penambahan bahan di bawah ini untuk mengembalikan kualitas larutan sesuai threshold."
+            )
+            .font(.subheadline)
+            .foregroundStyle(.primary)
+            .fixedSize(horizontal: false, vertical: true)
+
+            stepContent
+
+            Spacer(minLength: 20)
+
+            nextButton
+        }
+        .padding(.horizontal, 28)
+        .padding(.top, 24)
+        .padding(.bottom, 28)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var nextButton: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                guide.lanjut(waterPH: viewModel.latestWaterPH)
+            }
+        } label: {
+            Text("Selanjutnya")
+                .font(.subheadline.bold())
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    canProceed ? Color.oliveGreen : Color.gray.opacity(0.75),
+                    in: Capsule()
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(!canProceed)
+    }
+
+    private var closeButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .frame(width: closeButtonSize, height: closeButtonSize)
+                .background(Color.white, in: Circle())
+                .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Tutup")
+    }
+
     // MARK: - Step Views
 
     @ViewBuilder
@@ -161,32 +186,39 @@ extension PerbaikiLarutanView {
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            HStack(spacing: 12) {
+            // At accessibility sizes the label gets its own line so it is not squeezed into broken words.
+            let rowLayout = dynamicTypeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+                : AnyLayout(HStackLayout(spacing: 12))
+
+            rowLayout {
                 Text("Tambahkan Air")
                     .font(.subheadline.bold())
                     .foregroundStyle(.primary)
 
-                TextField("0", value: $guide.jumlahAir, format: .number)
-                    .keyboardType(.numberPad)
-                    .multilineTextAlignment(.center)
-                    .font(.subheadline.weight(.medium))
-                    .monospacedDigit()
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: numericFieldWidth)
-                    .onChange(of: guide.jumlahAir) { _, newValue in
-                        if newValue < 0 {
-                            guide.jumlahAir = 0
+                HStack(spacing: 12) {
+                    TextField("0", value: $guide.jumlahAir, format: .number)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.center)
+                        .font(.subheadline.weight(.medium))
+                        .monospacedDigit()
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: numericFieldWidth)
+                        .onChange(of: guide.jumlahAir) { _, newValue in
+                            if newValue < 0 {
+                                guide.jumlahAir = 0
+                            }
                         }
-                    }
 
-                Text("L")
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
+                    Text("L")
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
 
-                Spacer()
+                    Spacer()
 
-                Stepper("Jumlah air", value: $guide.jumlahAir, in: 0 ... 999)
-                    .labelsHidden()
+                    Stepper("Jumlah air", value: $guide.jumlahAir, in: 0 ... 999)
+                        .labelsHidden()
+                }
             }
             .padding(.top, 4)
         }
