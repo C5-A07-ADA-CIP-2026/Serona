@@ -23,6 +23,21 @@ struct DeviceListViewModelTests {
         #expect(viewModel.errorMessage == nil)
     }
 
+    @Test("A device that is already connected when the list opens starts as the connected one")
+    func startsWithConnectedDevice() async {
+        let viewModel = DeviceListViewModel(
+            service: StubDeviceConnectionService(devices: [esp, espB]),
+            connectedDevice: esp
+        )
+
+        #expect(viewModel.connectedDevice == esp)
+
+        await viewModel.scan()
+
+        #expect(viewModel.connectedDevice == esp)
+        #expect(viewModel.devices == [esp, espB])
+    }
+
     @Test("Devices appear while the scan is still running")
     func devicesAppearWhileScanning() async {
         let (stream, continuation) = AsyncThrowingStream<DiscoveredDevice, any Error>.makeStream()
