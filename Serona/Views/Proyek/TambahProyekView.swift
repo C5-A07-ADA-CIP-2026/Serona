@@ -230,16 +230,17 @@ extension TambahProyekView {
                         .foregroundStyle(.secondary)
 
                     ZStack(alignment: .trailing) {
-                        WarnaKotak(hex: resep.warnaHex, cornerRadius: 12, iconSize: 22)
-                            .frame(height: 44)
+                        WarnaKotak(hex: resep.warnaHex, cornerRadius: 12, iconSize: 22, isCompact: true)
+                            .frame(minHeight: 44)
 
                         Button {
                             viewModel.hapusResep()
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.body)
-                                .foregroundStyle(.white)
-                                .padding(.trailing, 12)
+                                // White disappears on the light gray placeholder, so use gray there.
+                                .foregroundStyle(Color(hex: resep.warnaHex) == nil ? Color.gray : Color.white)
+                                .frame(minWidth: 44, minHeight: 44)
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Hapus Warna")
