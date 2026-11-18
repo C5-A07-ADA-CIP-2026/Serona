@@ -30,6 +30,7 @@ struct ProyekListView: View {
     /// Owned by the app root, so measurements keep running while this view is not on screen.
     let store: ProyekMeasurementStore
     @State private var scanSetupTarget: Proyek?
+    @State private var deviceSwitchTarget: Proyek?
     @State private var activeAlertTarget: ProyekQualityAlertTarget?
     @State private var lastShownAlertTarget: ProyekQualityAlertTarget?
     @State private var queuedAlertTargets: [ProyekQualityAlertTarget] = []
@@ -111,6 +112,20 @@ struct ProyekListView: View {
                 startScanAfterSetup(for: configuredProyek)
             }
         }
+        .sheet(item: $deviceSwitchTarget) { targetProyek in
+            DeviceListSheetView(
+                service: deviceConnectingProvider(),
+                assignedDeviceIDs: Set(
+                    semuaProyek.compactMap { proyek in
+                        guard proyek.status == .aktif, proyek.id != targetProyek.id else { return nil }
+                        return proyek.perangkatID
+                    }
+                ),
+                onConnected: { device in
+                    switchDeviceAndReconnect(for: targetProyek, to: device)
+                }
+            )
+        }
         .sheet(item: $activeAlertTarget, onDismiss: handleAlertDismissed) { target in
             QualityAlertSheetView(alert: target.alert, bakName: target.proyek.nama) {
                 pendingRepairTarget = ProyekRepairTarget(
@@ -128,12 +143,18 @@ struct ProyekListView: View {
             "Data warna tidak tersedia",
             isPresented: scanErrorIsPresented,
             presenting: activeScanError
-        ) { _ in
+        ) { errorInfo in
+            if let failedProyek = errorInfo.proyek, failedProyek.status == .aktif {
+                Button("Pilih Perangkat Lain") {
+                    clearAllScanErrors()
+                    deviceSwitchTarget = failedProyek
+                }
+            }
             Button("Tutup", role: .cancel) {
                 clearAllScanErrors()
             }
-        } message: { error in
-            Text(error)
+        } message: { errorInfo in
+            Text(errorInfo.message)
         }
         .alert(
             "Gagal menyimpan proyek",
@@ -196,7 +217,11 @@ struct ProyekListView: View {
             proyek: item,
             viewModel: detailVM,
             onMulaiPindai: {
-                scanSetupTarget = item
+                if item.status == .aktif {
+                    reconnectProyek(proyek: item)
+                } else {
+                    scanSetupTarget = item
+                }
             },
             onSelesai: {
                 finishProyek(proyek: item, viewModel: detailVM)
@@ -299,6 +324,28 @@ extension ProyekListView {
         }
     }
 
+    /// Reconnects an active bak whose IoT sensor disconnected, retrieving and preserving its saved `Proyek` data.
+    private func reconnectProyek(proyek: Proyek) {
+        print("[List] 🔄 reconnectProyek \(proyek.nama)")
+        guard proyek.perangkatID != nil else {
+            deviceSwitchTarget = proyek
+            return
+        }
+
+        store.remove(proyek.id)
+        let detailViewModel = getOrMakeViewModel(for: proyek)
+        Task {
+            await detailViewModel.sambungkanUlang(in: modelContext)
+        }
+    }
+
+    private func switchDeviceAndReconnect(for proyek: Proyek, to device: DiscoveredDevice) {
+        proyek.perangkatNama = device.nama
+        proyek.perangkatID = device.id
+        try? modelContext.save()
+        reconnectProyek(proyek: proyek)
+    }
+
     private func finishProyek(proyek: Proyek, viewModel: ProyekDetailViewModel) {
         viewModel.clearQualityAlert()
         viewModel.clearColorConcentrationWarning()
@@ -311,10 +358,7 @@ extension ProyekListView {
 
         if !viewModel.selesaikan(in: modelContext) {
             viewModel.berhenti()
-            proyek.selesaikan(
-                kepekatanAkhir: viewModel.latestConcentration,
-                phAkhir: viewModel.latestWaterPH
-            )
+            proyek.selesaikan()
             try? modelContext.save()
         }
         store.remove(proyek.id)
@@ -322,8 +366,11 @@ extension ProyekListView {
 
     // MARK: - Alert Bindings
 
-    private var activeScanError: String? {
-        store.allViewModels.compactMap(\.colorMeasurementError).first
+    private var activeScanError: (proyek: Proyek?, message: String)? {
+        guard let vm = store.allViewModels.first(where: { $0.colorMeasurementError != nil }),
+              let message = vm.colorMeasurementError
+        else { return nil }
+        return (vm.proyek, message)
     }
 
     private var scanErrorIsPresented: Binding<Bool> {

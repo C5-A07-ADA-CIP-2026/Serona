@@ -108,11 +108,24 @@ final class Proyek {
         self.resep = resep
     }
 
-    /// Stores the final readings and moves the project to the inactive list. Does nothing when already finished.
-    func selesaikan(kepekatanAkhir: Double?, phAkhir: Double?) {
+    /// Deletes all saved bath data and resets the bak to unused (`nonaktif`).
+    func selesaikan(kepekatanAkhir _: Double? = nil, phAkhir _: Double? = nil) {
         guard status == .aktif else { return }
-        self.kepekatanAkhir = kepekatanAkhir
-        self.phAkhir = phAkhir
+        kepekatanAkhir = nil
+        phAkhir = nil
+        visibleAverageAwal = nil
+        rasioAwal = nil
+        rasioAirBersih = nil
+        phAwal = nil
+        perangkatNamaTersimpan = ""
+        perangkatID = nil
+        pewarnaTersimpan = []
+        zatPembantuTersimpan = []
+        airTersimpan = nil
+        airResepTersimpan = nil
+        namaWarna = "-"
+        warnaHex = nil
+        resep = nil
         status = .nonaktif
     }
 

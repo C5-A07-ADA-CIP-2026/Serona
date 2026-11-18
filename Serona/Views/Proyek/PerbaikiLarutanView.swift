@@ -20,17 +20,21 @@ struct PerbaikiLarutanView: View {
     init(
         issue: QualityIssue,
         viewModel: ProyekDetailViewModel,
-        initialStep: PerbaikiStep = .air,
-        initialJumlahAir: Int = 0
+        initialStep: PerbaikiStep? = nil,
+        initialJumlahAir: Int? = nil
     ) {
-        _guide = State(wrappedValue: PerbaikiLarutanViewModel(
-            issue: issue,
-            proyek: viewModel.proyek,
-            pHSebelum: viewModel.latestWaterPH,
-            initialStep: initialStep,
-            initialJumlahAir: initialJumlahAir
-        ))
         self.viewModel = viewModel
+        if initialStep != nil || initialJumlahAir != nil {
+            _guide = State(wrappedValue: PerbaikiLarutanViewModel(
+                issue: issue,
+                proyek: viewModel.proyek,
+                pHSebelum: viewModel.latestWaterPH,
+                initialStep: initialStep ?? .air,
+                initialJumlahAir: initialJumlahAir ?? 0
+            ))
+        } else {
+            _guide = State(wrappedValue: viewModel.repairGuide(for: issue))
+        }
     }
 
     private var headerTitle: String {
@@ -60,8 +64,8 @@ struct PerbaikiLarutanView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            // The form sheet has a fixed height. Fill it so the content sits at the top and the button at the
-            // bottom, and scroll when the content is taller (large Dynamic Type).
+            // Fill the current detent height so content stays at the top and the button stays at the bottom,
+            // while scrolling smoothly when resized to a shorter detent or larger Dynamic Type.
             ScrollView {
                 guideContent
                     .frame(minHeight: proxy.size.height, alignment: .top)
@@ -69,9 +73,10 @@ struct PerbaikiLarutanView: View {
             .scrollBounceBehavior(.basedOnSize)
         }
         .background(Color.white)
-        .presentationSizing(.form)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .presentationContentInteraction(.scrolls)
         .presentationBackground(Color.white)
-        .presentationDragIndicator(.hidden)
         .onChange(of: viewModel.qualityAlert) { _, alert in
             if let alert {
                 guide.updateIssue(alert.issue)
@@ -82,6 +87,7 @@ struct PerbaikiLarutanView: View {
         }
         .onChange(of: guide.isFinished) { _, isFinished in
             if isFinished {
+                viewModel.clearRepairGuide()
                 viewModel.clearQualityAlert()
                 dismiss()
             }
@@ -131,7 +137,7 @@ extension PerbaikiLarutanView {
                 guide.lanjut(waterPH: viewModel.latestWaterPH)
             }
         } label: {
-            Text("Selanjutnya")
+            Text(guide.buttonTitle(for: guide.currentStep))
                 .font(.subheadline.bold())
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)

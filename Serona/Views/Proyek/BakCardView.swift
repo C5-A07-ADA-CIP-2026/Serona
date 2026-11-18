@@ -10,6 +10,7 @@ import SwiftUI
 enum BakCardStage {
     case active
     case activeWarning
+    case disconnected
     case inactive
 }
 
@@ -52,10 +53,23 @@ private struct ObservedBakCardBody: View {
     var onQualityAlert: ((QualityAlert) -> Void)?
 
     private var currentStage: BakCardStage {
-        guard proyek.status == .aktif,
-              viewModel.isDataScanned,
-              viewModel.colorMeasurementError == nil
-        else {
+        guard proyek.status == .aktif else {
+            return .inactive
+        }
+
+        let isDisconnected: Bool = switch viewModel.connectionState {
+        case .disconnected, .failed:
+            true
+        case .ready, .connecting, .discovering, .reconnecting:
+            false
+        }
+
+        if !viewModel.isScanning,
+           isDisconnected || (viewModel.colorMeasurementError != nil && viewModel.connectionState != .ready) {
+            return .disconnected
+        }
+
+        guard viewModel.isDataScanned else {
             return .inactive
         }
 
@@ -67,28 +81,35 @@ private struct ObservedBakCardBody: View {
     }
 
     var body: some View {
-        BakCardContent(
-            proyek: proyek,
-            viewModel: viewModel,
-            onMulaiPindai: onMulaiPindai,
-            onSelesai: onSelesai,
-            onPerbaikiLarutan: onPerbaikiLarutan
-        )
-        .onAppear {
-            if let existingAlert = viewModel.qualityAlert {
-                onQualityAlert?(existingAlert)
-            } else if currentStage == .activeWarning {
-                onQualityAlert?(makeFallbackAlert())
+        // Re-evaluate periodically so BLE disconnect/reconnect transitions update the card immediately.
+        TimelineView(.periodic(from: .now, by: 1)) { _ in
+            let stage = currentStage
+
+            BakCardContent(
+                proyek: proyek,
+                viewModel: viewModel,
+                onMulaiPindai: onMulaiPindai,
+                onSelesai: onSelesai,
+                onPerbaikiLarutan: onPerbaikiLarutan
+            )
+            .onAppear {
+                if stage == .activeWarning {
+                    if let existingAlert = viewModel.qualityAlert {
+                        onQualityAlert?(existingAlert)
+                    } else {
+                        onQualityAlert?(makeFallbackAlert())
+                    }
+                }
             }
-        }
-        .onChange(of: viewModel.qualityAlert) { _, newAlert in
-            if let newAlert {
-                onQualityAlert?(newAlert)
+            .onChange(of: viewModel.qualityAlert) { _, newAlert in
+                if let newAlert, stage != .disconnected {
+                    onQualityAlert?(newAlert)
+                }
             }
-        }
-        .onChange(of: currentStage) { oldStage, newStage in
-            if newStage == .activeWarning, oldStage != .activeWarning {
-                onQualityAlert?(viewModel.qualityAlert ?? makeFallbackAlert())
+            .onChange(of: stage) { oldStage, newStage in
+                if newStage == .activeWarning, oldStage != .activeWarning {
+                    onQualityAlert?(viewModel.qualityAlert ?? makeFallbackAlert())
+                }
             }
         }
     }

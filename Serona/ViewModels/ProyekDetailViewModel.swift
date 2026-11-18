@@ -28,6 +28,9 @@ final class ProyekDetailViewModel: ObservableObject {
     @Published private(set) var latestWaterPH: Double?
     @Published private(set) var lastMeasurementAt: Date?
 
+    /// Preserves step progress (`Tahap 1`, `Tahap 2`, `Tahap 3`) if the user closes and reopens the repair modal.
+    var repairGuide: PerbaikiLarutanViewModel?
+
     private let service: any ColorMeasurementSource
     private var measurementTask: Task<Void, Never>?
     var initialVisibleAverage: Double?
@@ -64,6 +67,26 @@ final class ProyekDetailViewModel: ObservableObject {
         }
     }
 
+    /// Returns the ongoing repair guide for this bak so reopening the sheet resumes at the last step,
+    /// or creates a new one if no repair is currently in progress.
+    func repairGuide(for issue: QualityIssue) -> PerbaikiLarutanViewModel {
+        if let existing = repairGuide, !existing.isFinished {
+            existing.updateIssue(issue)
+            return existing
+        }
+        let guide = PerbaikiLarutanViewModel(
+            issue: issue,
+            proyek: proyek,
+            pHSebelum: latestWaterPH
+        )
+        repairGuide = guide
+        return guide
+    }
+
+    func clearRepairGuide() {
+        repairGuide = nil
+    }
+
     /// Connects to the device and starts streaming live readings. The initial color and pH are not taken from
     /// this read: the user sets them from the live readings (`tetapkanWarnaAwal`, `tetapkanPHAwal`).
     /// Does nothing for a finished project or while a scan is already reading the device.
@@ -73,7 +96,6 @@ final class ProyekDetailViewModel: ObservableObject {
             print("[Proyek] ⛔️ ditolak guard")
             return
         }
-        guard proyek.status == .aktif, !isScanning else { return }
         isScanning = true
         defer { isScanning = false }
         colorMeasurementError = nil
@@ -91,11 +113,23 @@ final class ProyekDetailViewModel: ObservableObject {
     }
 
     /// Starts a newly configured bath and persists its first successful color reading as the 100% baseline.
-    /// Reconnection must use `lanjutkanPengukuran()` so the saved baseline is never replaced.
+    /// Reconnection must use `sambungkanUlang(in:)` or `lanjutkanPengukuran()` so the saved baseline is preserved.
     func mulaiPindaiDenganBaselineAwal(in persistence: some ModelPersisting) async {
+        clearRepairGuide()
         await mulaiPindai()
         guard colorMeasurementError == nil, !isInitialColorSet else { return }
         _ = tetapkanWarnaAwal(in: persistence)
+    }
+
+    /// Reconnects an active bath after its IoT sensor disconnected, retrieving and keeping the saved `Proyek` data.
+    func sambungkanUlang(in persistence: some ModelPersisting) async {
+        measurementTask?.cancel()
+        measurementTask = nil
+        await mulaiPindai()
+        guard colorMeasurementError == nil else { return }
+        if !isInitialColorSet {
+            _ = tetapkanWarnaAwal(in: persistence)
+        }
     }
 
     /// True while the latest concentration is below the project limit.
@@ -215,10 +249,6 @@ final class ProyekDetailViewModel: ObservableObject {
     /// Nil without a channel baseline or channels in the reading.
     private func concentrationPercent(of measurement: ColorMeasurement) -> Double? {
         guard let initialRatios else { return nil }
-//        let absorbanceBased = proyek.rasioAirBersih.flatMap {
-//            measurement.concentration(relativeToRatios: initialRatios, cleanRatios: $0)
-//        }
-//        return absorbanceBased ?? measurement.concentration(relativeToRatios: initialRatios)
         return measurement.concentration(
             relativeToRatios: initialRatios,
             cleanRatios: Self.defaultCleanWaterRatios
@@ -237,31 +267,55 @@ final class ProyekDetailViewModel: ObservableObject {
         return QualityAlert(issue: issue, message: message)
     }
 
-    /// Finishes the scanned project: stores the final readings and moves it to the inactive list.
-    /// Returns `false` and changes nothing when the project is not active, was not scanned yet, or the save fails.
-    /// Final readings are nil (never 0) when the sensor has not streamed them yet.
+    /// Finishes the active bath: clears all saved bath data and resets the bak to unused (`nonaktif`).
     @discardableResult
     func selesaikan(in persistence: some ModelPersisting) -> Bool {
-        guard proyek.status == .aktif, isDataScanned else { return false }
+        guard proyek.status == .aktif else { return false }
 
-        proyek.selesaikan(kepekatanAkhir: latestConcentration, phAkhir: latestWaterPH)
+        let savedName = proyek.namaWarna
+        let savedHex = proyek.warnaHex
+        let savedDeviceName = proyek.perangkatNama
+        let savedDeviceID = proyek.perangkatID
+        let savedPewarna = proyek.pewarna
+        let savedZat = proyek.zatPembantu
+        let savedAir = proyek.airTersimpan
+        let savedAirResep = proyek.airResepTersimpan
+        let savedResep = proyek.resep
+        let savedBaseline = proyek.visibleAverageAwal
+        let savedRasio = proyek.rasioAwal
+        let savedAirBersih = proyek.rasioAirBersih
+        let savedPHAwal = proyek.phAwal
+
+        proyek.selesaikan()
         do {
             try persistence.save()
         } catch {
             proyek.batalkanSelesai()
+            proyek.namaWarna = savedName
+            proyek.warnaHex = savedHex
+            proyek.perangkatNama = savedDeviceName
+            proyek.perangkatID = savedDeviceID
+            proyek.pewarna = savedPewarna
+            proyek.zatPembantu = savedZat
+            proyek.airTersimpan = savedAir
+            proyek.airResepTersimpan = savedAirResep
+            proyek.resep = savedResep
+            proyek.visibleAverageAwal = savedBaseline
+            proyek.rasioAwal = savedRasio
+            proyek.rasioAirBersih = savedAirBersih
+            proyek.phAwal = savedPHAwal
             saveError = "Gagal menyimpan proyek: \(error.localizedDescription)"
             return false
         }
+        clearRepairGuide()
         berhenti()
         return true
     }
 
-    /// Points the project at `device` after the user reconnects to another one because the connection failed.
-    /// Returns `false` and keeps the previous device when the project is finished, already being measured
-    /// (the device cannot change mid-project) or the save fails.
+    /// Points the active bath at `device` after reconnecting to another sensor, keeping all saved bath data.
     @discardableResult
     func gantiPerangkat(_ device: DiscoveredDevice, in persistence: some ModelPersisting) -> Bool {
-        guard proyek.status == .aktif, !isDataScanned else { return false }
+        guard proyek.status == .aktif else { return false }
 
         let sebelumnya = proyek.perangkatNama
         let idSebelumnya = proyek.perangkatID
@@ -278,11 +332,11 @@ final class ProyekDetailViewModel: ObservableObject {
         return true
     }
 
-    /// Switches the project to `device` (see `gantiPerangkat`) and retries the read that failed, now from the new one.
+    /// Switches the project to `device` (see `gantiPerangkat`) and reconnects with saved bath data intact.
     @discardableResult
     func pindahPerangkat(_ device: DiscoveredDevice, in persistence: some ModelPersisting) async -> Bool {
         guard gantiPerangkat(device, in: persistence) else { return false }
-        await mulaiPindai()
+        await sambungkanUlang(in: persistence)
         return true
     }
 

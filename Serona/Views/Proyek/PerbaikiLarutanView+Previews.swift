@@ -8,7 +8,7 @@ import SwiftUI
 
 // MARK: - Previews
 
-#Preview("Tahap 1: Volume Air (0 L)", traits: .landscapeLeft) {
+#Preview("Tahap 1: Volume Air (0 L - Medium)", traits: .landscapeLeft) {
     PerbaikiLarutanStepPreview(
         previewID: "step1-0L",
         step: .air,
@@ -18,7 +18,7 @@ import SwiftUI
     )
 }
 
-#Preview("Tahap 1: Volume Air (2 L)", traits: .landscapeLeft) {
+#Preview("Tahap 1: Volume Air (2 L - Medium)", traits: .landscapeLeft) {
     PerbaikiLarutanStepPreview(
         previewID: "step1-2L",
         step: .air,
@@ -28,7 +28,7 @@ import SwiftUI
     )
 }
 
-#Preview("Tahap 2: pH Air (pH 8)", traits: .landscapeLeft) {
+#Preview("Tahap 2: pH Air (pH 8 - Medium)", traits: .landscapeLeft) {
     PerbaikiLarutanStepPreview(
         previewID: "step2-ph8",
         step: .phAir,
@@ -38,17 +38,18 @@ import SwiftUI
     )
 }
 
-#Preview("Tahap 2: pH Air (Target 12)", traits: .landscapeLeft) {
+#Preview("Tahap 2: pH Air (Target 12 - Large)", traits: .landscapeLeft) {
     PerbaikiLarutanStepPreview(
         previewID: "step2-ph12",
         step: .phAir,
         jumlahAir: 2,
         visibleAverage: 72,
-        waterPH: 12
+        waterPH: 12,
+        detent: .large
     )
 }
 
-#Preview("Tahap 3: Kepekatan (72%)", traits: .landscapeLeft) {
+#Preview("Tahap 3: Kepekatan (72% - Medium)", traits: .landscapeLeft) {
     PerbaikiLarutanStepPreview(
         previewID: "step3-72",
         step: .kepekatan,
@@ -58,13 +59,14 @@ import SwiftUI
     )
 }
 
-#Preview("Tahap 3: Kepekatan (Target 100%)", traits: .landscapeLeft) {
+#Preview("Tahap 3: Kepekatan (Target 100% - Large)", traits: .landscapeLeft) {
     PerbaikiLarutanStepPreview(
         previewID: "step3-100",
         step: .kepekatan,
         jumlahAir: 2,
         visibleAverage: 100,
-        waterPH: 12
+        waterPH: 12,
+        detent: .large
     )
 }
 
@@ -74,6 +76,7 @@ private struct PerbaikiLarutanStepPreview: View {
     let previewID: String
     let step: PerbaikiStep
     let jumlahAir: Int
+    @State private var selectedDetent: PresentationDetent
     @StateObject private var previewViewModel: ProyekDetailViewModel
 
     init(
@@ -81,11 +84,13 @@ private struct PerbaikiLarutanStepPreview: View {
         step: PerbaikiStep,
         jumlahAir: Int,
         visibleAverage: Double,
-        waterPH: Double
+        waterPH: Double,
+        detent: PresentationDetent = .medium
     ) {
         self.previewID = previewID
         self.step = step
         self.jumlahAir = jumlahAir
+        _selectedDetent = State(initialValue: detent)
         _previewViewModel = StateObject(wrappedValue: ProyekDetailViewModel(
             proyek: .previewRepairSample,
             service: PreviewRepairMeasurementSource(
@@ -100,24 +105,20 @@ private struct PerbaikiLarutanStepPreview: View {
     }
 
     var body: some View {
-        ZStack {
-            BackgroundGradient()
-            Color.black.opacity(0.25)
-                .ignoresSafeArea()
-
-            PerbaikiLarutanView(
-                issue: .keduanya,
-                viewModel: previewViewModel,
-                initialStep: step,
-                initialJumlahAir: jumlahAir
-            )
-            .clipShape(.rect(cornerRadius: 24, style: .continuous))
-            .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
-        }
-        .id(previewID)
-        .task(id: previewID) {
-            await previewViewModel.mulaiPindai()
-        }
+        BackgroundGradient()
+            .sheet(isPresented: .constant(true)) {
+                PerbaikiLarutanView(
+                    issue: .keduanya,
+                    viewModel: previewViewModel,
+                    initialStep: step,
+                    initialJumlahAir: jumlahAir
+                )
+                .presentationDetents([.medium, .large], selection: $selectedDetent)
+                .task(id: previewID) {
+                    await previewViewModel.mulaiPindai()
+                }
+            }
+            .id(previewID)
     }
 }
 
@@ -143,7 +144,7 @@ private extension Proyek {
             resep: Resep(
                 namaWarna: "Merah Ungu Dina",
                 warnaHex: "#933C64",
-                air: 5000,
+                air: 5,
                 kepekatan: 90,
                 batasPH: 11,
                 pewarna: [Bahan(kode: "Napthol AS", gram: 50)],
