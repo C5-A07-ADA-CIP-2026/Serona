@@ -28,6 +28,9 @@ final class ProyekDetailViewModel: ObservableObject {
     @Published private(set) var latestWaterPH: Double?
     @Published private(set) var lastMeasurementAt: Date?
 
+    /// Preserves step progress (`Tahap 1`, `Tahap 2`, `Tahap 3`) if the user closes and reopens the repair modal.
+    var repairGuide: PerbaikiLarutanViewModel?
+
     private let service: any ColorMeasurementSource
     private var measurementTask: Task<Void, Never>?
     var initialVisibleAverage: Double?
@@ -64,6 +67,26 @@ final class ProyekDetailViewModel: ObservableObject {
         }
     }
 
+    /// Returns the ongoing repair guide for this bak so reopening the sheet resumes at the last step,
+    /// or creates a new one if no repair is currently in progress.
+    func repairGuide(for issue: QualityIssue) -> PerbaikiLarutanViewModel {
+        if let existing = repairGuide, !existing.isFinished {
+            existing.updateIssue(issue)
+            return existing
+        }
+        let guide = PerbaikiLarutanViewModel(
+            issue: issue,
+            proyek: proyek,
+            pHSebelum: latestWaterPH
+        )
+        repairGuide = guide
+        return guide
+    }
+
+    func clearRepairGuide() {
+        repairGuide = nil
+    }
+
     /// Connects to the device and starts streaming live readings. The initial color and pH are not taken from
     /// this read: the user sets them from the live readings (`tetapkanWarnaAwal`, `tetapkanPHAwal`).
     /// Does nothing for a finished project or while a scan is already reading the device.
@@ -92,6 +115,7 @@ final class ProyekDetailViewModel: ObservableObject {
     /// Starts a newly configured bath and persists its first successful color reading as the 100% baseline.
     /// Reconnection must use `sambungkanUlang(in:)` or `lanjutkanPengukuran()` so the saved baseline is preserved.
     func mulaiPindaiDenganBaselineAwal(in persistence: some ModelPersisting) async {
+        clearRepairGuide()
         await mulaiPindai()
         guard colorMeasurementError == nil, !isInitialColorSet else { return }
         _ = tetapkanWarnaAwal(in: persistence)
@@ -103,7 +127,6 @@ final class ProyekDetailViewModel: ObservableObject {
         measurementTask = nil
         await mulaiPindai()
         guard colorMeasurementError == nil else { return }
-        // Only set baseline if the previous scan failed before saving one; otherwise preserve the saved baseline.
         if !isInitialColorSet {
             _ = tetapkanWarnaAwal(in: persistence)
         }
@@ -284,6 +307,7 @@ final class ProyekDetailViewModel: ObservableObject {
             saveError = "Gagal menyimpan proyek: \(error.localizedDescription)"
             return false
         }
+        clearRepairGuide()
         berhenti()
         return true
     }

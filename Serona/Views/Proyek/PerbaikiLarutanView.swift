@@ -20,17 +20,21 @@ struct PerbaikiLarutanView: View {
     init(
         issue: QualityIssue,
         viewModel: ProyekDetailViewModel,
-        initialStep: PerbaikiStep = .air,
-        initialJumlahAir: Int = 0
+        initialStep: PerbaikiStep? = nil,
+        initialJumlahAir: Int? = nil
     ) {
-        _guide = State(wrappedValue: PerbaikiLarutanViewModel(
-            issue: issue,
-            proyek: viewModel.proyek,
-            pHSebelum: viewModel.latestWaterPH,
-            initialStep: initialStep,
-            initialJumlahAir: initialJumlahAir
-        ))
         self.viewModel = viewModel
+        if initialStep != nil || initialJumlahAir != nil {
+            _guide = State(wrappedValue: PerbaikiLarutanViewModel(
+                issue: issue,
+                proyek: viewModel.proyek,
+                pHSebelum: viewModel.latestWaterPH,
+                initialStep: initialStep ?? .air,
+                initialJumlahAir: initialJumlahAir ?? 0
+            ))
+        } else {
+            _guide = State(wrappedValue: viewModel.repairGuide(for: issue))
+        }
     }
 
     private var headerTitle: String {
@@ -83,6 +87,7 @@ struct PerbaikiLarutanView: View {
         }
         .onChange(of: guide.isFinished) { _, isFinished in
             if isFinished {
+                viewModel.clearRepairGuide()
                 viewModel.clearQualityAlert()
                 dismiss()
             }
