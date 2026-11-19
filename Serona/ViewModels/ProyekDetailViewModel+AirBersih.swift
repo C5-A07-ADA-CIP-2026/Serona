@@ -8,14 +8,14 @@ import Foundation
 /// The clean-water reading the absorbance of the bath is measured against, and the dye amount that follows from it.
 extension ProyekDetailViewModel {
     static let defaultCleanWaterRatios: [Double] = [
-        0.0314,
-        0.0629,
-        0.1200,
-        0.2229,
-        0.3371,
-        0.4800,
-        0.7714,
-        0.6114,
+        0.0332,
+        0.1796,
+        0.3443,
+        0.2172,
+        0.2633,
+        0.2978,
+        0.2592,
+        0.1365,
     ]
 
     /// True once the user has set the clean-water reading the absorbance is measured against.

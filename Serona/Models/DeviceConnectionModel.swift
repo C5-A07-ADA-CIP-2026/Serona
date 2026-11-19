@@ -129,11 +129,11 @@ extension ColorMeasurement {
     /// Update `channels` (F1...F8), `clearFirst` (clear1 for F1–F4), and `clear` (clear for F5–F8)
     /// with your measured clean-water counts from the ESP32.
     static let defaultCleanWater = ColorMeasurement(
-        visibleAverage: 100,
-        clear: 1000,
-        nir: 100,
-        channels: [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000],
-        clearFirst: 1000
+        visibleAverage: 1572.3,
+        clear: 7266,
+        nir: 248,
+        channels: [241, 1305, 2502, 1578, 1913, 2164, 1883, 992],
+        clearFirst: 7266
     )
 
     /// Normalized 8-channel ratios (`F1...F4 / clearFirst`, `F5...F8 / clear`) for clean water.
