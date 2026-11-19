@@ -57,15 +57,15 @@ private struct ObservedBakCardBody: View {
             return .inactive
         }
 
-        let isDisconnected: Bool = switch viewModel.connectionState {
+        let isDisconnected = switch viewModel.connectionState {
         case .disconnected, .failed:
             true
         case .ready, .connecting, .discovering, .reconnecting:
             false
         }
 
-        if !viewModel.isScanning,
-           isDisconnected || (viewModel.colorMeasurementError != nil && viewModel.connectionState != .ready) {
+        let hasUnreadyError = viewModel.colorMeasurementError != nil && viewModel.connectionState != .ready
+        if !viewModel.isScanning, isDisconnected || hasUnreadyError {
             return .disconnected
         }
 
@@ -82,12 +82,13 @@ private struct ObservedBakCardBody: View {
 
     var body: some View {
         // Re-evaluate periodically so BLE disconnect/reconnect transitions update the card immediately.
-        TimelineView(.periodic(from: .now, by: 1)) { _ in
+        TimelineView(.periodic(from: .now, by: 1)) { context in
             let stage = currentStage
 
             BakCardContent(
                 proyek: proyek,
                 viewModel: viewModel,
+                liveRevision: LiveRevision(measuredAt: viewModel.lastMeasurementAt, tick: context.date),
                 onMulaiPindai: onMulaiPindai,
                 onSelesai: onSelesai,
                 onPerbaikiLarutan: onPerbaikiLarutan

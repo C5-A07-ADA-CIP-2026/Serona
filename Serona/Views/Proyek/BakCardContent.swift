@@ -5,9 +5,18 @@
 
 import SwiftUI
 
+struct LiveRevision: Hashable {
+    var measuredAt: Date?
+    var tick: Date?
+}
+
 struct BakCardContent: View {
     let proyek: Proyek
     var viewModel: ProyekDetailViewModel?
+    /// Changes with every new reading and every timeline tick. `viewModel` is a plain reference, so without a
+    /// changing input SwiftUI sees identical parameters and skips re-rendering this view (the numbers only
+    /// refreshed after a rotation).
+    var liveRevision: LiveRevision = .init()
     var onMulaiPindai: (() -> Void)?
     var onSelesai: (() -> Void)?
     var onPerbaikiLarutan: (() -> Void)?
@@ -28,15 +37,15 @@ struct BakCardContent: View {
             return .disconnected
         }
 
-        let isDisconnected: Bool = switch viewModel.connectionState {
+        let isDisconnected = switch viewModel.connectionState {
         case .disconnected, .failed:
             true
         case .ready, .connecting, .discovering, .reconnecting:
             false
         }
 
-        if !viewModel.isScanning,
-           isDisconnected || (viewModel.colorMeasurementError != nil && viewModel.connectionState != .ready) {
+        let hasUnreadyError = viewModel.colorMeasurementError != nil && viewModel.connectionState != .ready
+        if !viewModel.isScanning, isDisconnected || hasUnreadyError {
             return .disconnected
         }
 

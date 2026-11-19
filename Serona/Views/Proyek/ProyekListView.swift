@@ -317,7 +317,6 @@ extension ProyekListView {
         print("[List] 🚀 startScanAfterSetup \(proyek.nama)")
         queuedAlertTargets.removeAll { $0.id == proyek.id }
         store.remove(proyek.id)
-
         let detailViewModel = getOrMakeViewModel(for: proyek)
         Task {
             await detailViewModel.mulaiPindaiDenganBaselineAwal(in: modelContext)
@@ -350,12 +349,10 @@ extension ProyekListView {
         viewModel.clearQualityAlert()
         viewModel.clearColorConcentrationWarning()
         viewModel.clearWaterPHWarning()
-
         if activeAlertTarget?.id == proyek.id {
             activeAlertTarget = nil
         }
         queuedAlertTargets.removeAll { $0.id == proyek.id }
-
         if !viewModel.selesaikan(in: modelContext) {
             viewModel.berhenti()
             proyek.selesaikan()
@@ -367,10 +364,10 @@ extension ProyekListView {
     // MARK: - Alert Bindings
 
     private var activeScanError: (proyek: Proyek?, message: String)? {
-        guard let vm = store.allViewModels.first(where: { $0.colorMeasurementError != nil }),
-              let message = vm.colorMeasurementError
+        guard let failed = store.allViewModels.first(where: { $0.colorMeasurementError != nil }),
+              let message = failed.colorMeasurementError
         else { return nil }
-        return (vm.proyek, message)
+        return (failed.proyek, message)
     }
 
     private var scanErrorIsPresented: Binding<Bool> {
