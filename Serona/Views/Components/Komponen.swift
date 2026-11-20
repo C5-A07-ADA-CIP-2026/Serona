@@ -203,12 +203,12 @@ struct BarisIsian<Isian: View>: View {
         HStack {
             Text(label)
                 .font(labelTebal ? .judulBold : .labelBiasa)
-            
+
             Spacer()
-            
+
             HStack(spacing: UkuranKolom.spasi) {
                 isian
-                
+
                 if let satuan {
                     Text(satuan)
                         .frame(width: UkuranKolom.lebarSatuan, alignment: .leading)

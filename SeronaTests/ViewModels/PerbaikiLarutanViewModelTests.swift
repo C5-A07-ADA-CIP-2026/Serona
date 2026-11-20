@@ -3,6 +3,7 @@
 //  SeronaTests
 //
 
+import Foundation
 @testable import Serona
 import Testing
 
@@ -59,6 +60,52 @@ struct PerbaikiLarutanViewModelTests {
 
         #expect(viewModel.isDone(.phAir))
         #expect(viewModel.isFinished)
+    }
+
+    private func makeProyek() -> Proyek {
+        let resep = Resep(
+            namaWarna: "Ungu", warnaHex: "#4B0082", air: 1000, kepekatan: 80, batasPH: 7,
+            pewarna: [Bahan(kode: "Merah", gram: 5), Bahan(kode: "Biru", gram: 10)],
+            zatPembantu: [Bahan(kode: "Soda Abu", gram: 30)]
+        )
+        return Proyek(nama: "Seragam", perangkatNama: "ESP 32", resep: resep, jumlahKain: 10)
+    }
+
+    @Test("Confirming the water reads the pH after it and works out the soda and the bath volume")
+    func waterStepComputesSoda() throws {
+        let viewModel = PerbaikiLarutanViewModel(issue: .keduanya, proyek: makeProyek(), pHSebelum: 13)
+        viewModel.jumlahAir = 1
+
+        viewModel.lanjut(waterPH: 14 + log10(2.0 / 40))
+
+        let soda = try #require(viewModel.penambahanSoda)
+        #expect(abs(soda.volumeSekarang - 2) < 1e-9)
+        #expect(abs(soda.gramSoda - 56) < 1e-9)
+    }
+
+    @Test("The dye dose uses the bath volume found at the water step")
+    func dyeUsesBathVolume() {
+        let viewModel = PerbaikiLarutanViewModel(issue: .keduanya, proyek: makeProyek(), pHSebelum: 13)
+        viewModel.jumlahAir = 1
+        viewModel.lanjut(waterPH: 14 + log10(2.0 / 40))
+
+        // C_target = 15 g/L, V2 = 2 L, 70%: 15 x 2 x 0.3 = 9 g, split 1 : 2.
+        #expect(viewModel.volumeBakLiter != nil)
+        let tambahan = viewModel.proyek?.pewarnaYangDitambah(kepekatan: 70, volumeLiter: viewModel.volumeBakLiter)
+
+        #expect(tambahan?.map(\.kode) == ["Merah", "Biru"])
+        #expect(abs((tambahan?[0].gram ?? 0) - 3) < 1e-9)
+        #expect(abs((tambahan?[1].gram ?? 0) - 6) < 1e-9)
+    }
+
+    @Test("Without a pH before or after the water there is no soda, and the dye stays at the recipe volume")
+    func withoutPHReadings() {
+        let viewModel = PerbaikiLarutanViewModel(issue: .keduanya, proyek: makeProyek(), pHSebelum: nil)
+
+        viewModel.lanjut(waterPH: 12)
+
+        #expect(viewModel.penambahanSoda == nil)
+        #expect(viewModel.volumeBakLiter == nil)
     }
 
     @Test("Next after finishing does nothing")

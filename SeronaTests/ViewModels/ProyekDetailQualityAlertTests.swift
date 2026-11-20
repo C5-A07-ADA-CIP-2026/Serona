@@ -34,7 +34,7 @@ struct ProyekDetailQualityAlertTests {
                 liveUpdates: updates
             )
         )
-        await viewModel.mulaiPindai()
+        await viewModel.pindaiDenganWarnaAwal()
         return (viewModel, liveReadings)
     }
 

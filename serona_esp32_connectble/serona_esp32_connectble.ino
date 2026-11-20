@@ -10,6 +10,24 @@
 #define I2C_SDA_PIN        6
 #define I2C_SCL_PIN        7
 #define AS7341_I2C_ADDRESS 0x39
+// Arus LED onboard AS7341 (mA, 4-258, kelipatan 2). Naikkan bertahap kalau kurang
+// terang di tempat tertutup; turunkan kalau board reset (brownout) atau pembacaan saturasi.
+#define AS7341_LED_CURRENT_MA 20
+// Integrasi per siklus = (ATIME + 1) * (ASTEP + 1) * 2,78 us, jadi 30 * 600 * 2,78 us ~ 50 ms.
+// Satu pembacaan penuh memakai dua siklus (F1-F4, lalu F5-F8). Mengubah nilai ini atau gain
+// mengubah skala visibleAverage, sehingga warna awal di aplikasi harus ditetapkan ulang.
+#define AS7341_ATIME           29
+#define AS7341_ASTEP           599
+#define MEASUREMENT_INTERVAL_MS 200
+// 0 = serial monitor hanya menampilkan satu baris "pH | Kepekatan" per pembacaan.
+// 1 = tampilkan juga channel mentah, payload BLE, dan log debug pH.
+#define SERIAL_DEBUG 0
+// 1 = tampilkan rincian perhitungan kepekatan tiap pembacaan (channel mentah, rasio terhadap clear,
+// baseline, transmitansi per channel). Ini hanya untuk debugging awal: kepekatan yang dipakai aplikasi
+// dihitung di aplikasi dari channel mentah di payload BLE, dengan baseline dari tombol "tetapkan warna awal".
+#define SERIAL_DETAIL 1
+// 1 = tampilkan byte balasan sensor pH (sekali per detik) untuk mencari kenapa pH tidak terbaca.
+#define PH_DEBUG 1
 
 // Sensor pH RS485 Modbus RTU lewat modul TTL-RS485 (default pabrik SN-*-PH-N01:
 // 4800 baud 8N1, alamat 1, register 0x0000 = pH x100).
@@ -34,7 +52,15 @@ float lastPh = 0;
 bool phKnown = false;
 unsigned long lastPhAt = 0;
 unsigned long lastPhPollAt = 0;
+// Pembanding kepekatan di serial monitor (hanya untuk debugging; aplikasi menghitung sendiri).
+// Baseline TIDAK diambil otomatis: kirim karakter apa saja lewat serial monitor saat warna awal sudah
+// siap (sama seperti menekan "tetapkan warna awal" di aplikasi). Sebelum itu kepekatan tampil "--".
+// baselineRatio = rasio F_n / clear tiap channel F1..F8 pada saat itu.
+float baselineRatio[8] = {0};
+bool baselineRatioReady = false;
+bool baselineRequested = false;
 
+// callback otomatis fungsi terjadi
 class ServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
         deviceConnected = true;
@@ -46,6 +72,7 @@ class ServerCallbacks: public BLEServerCallbacks {
     }
 };
 
+// untuk menghitung CRC. crc adalah data berisi byte, length adalah panjang data
 uint16_t modbusCrc(const uint8_t *data, size_t length) {
     uint16_t crc = 0xFFFF;
     for (size_t i = 0; i < length; i++) {
@@ -83,6 +110,13 @@ bool readPh(float *ph) {
         delay(1);
     }
     if (received < sizeof(response)) {
+#if PH_DEBUG
+        Serial.printf("pH debug: hanya %u dari %u byte masuk:", (unsigned)received, (unsigned)sizeof(response));
+        for (size_t i = 0; i < received; i++) {
+            Serial.printf(" %02X", response[i]);
+        }
+        Serial.println();
+#endif
         return false;
     }
 
@@ -90,6 +124,13 @@ bool readPh(float *ph) {
     uint16_t receivedCrc = response[7] | (response[8] << 8);
     if (expectedCrc != receivedCrc || response[0] != PH_SLAVE_ADDRESS
         || response[1] != 0x03 || response[2] != 4) {
+#if PH_DEBUG
+        Serial.print("pH debug: balasan salah (CRC/alamat/fungsi):");
+        for (size_t i = 0; i < sizeof(response); i++) {
+            Serial.printf(" %02X", response[i]);
+        }
+        Serial.println();
+#endif
         return false;
     }
 
@@ -107,9 +148,11 @@ void updatePh() {
         lastPh = ph;
         lastPhAt = millis();
         phKnown = true;
+#if SERIAL_DEBUG
         Serial.printf("pH sensor: %.2f\n", ph);
     } else {
         Serial.println("pH sensor: tidak ada jawaban atau nilai tidak valid.");
+#endif
     }
 }
 
@@ -138,6 +181,13 @@ void setup() {
     sensorReady = as7341.begin(AS7341_I2C_ADDRESS, &Wire);
     if (sensorReady) {
         Serial.println("AS7341 siap di alamat I2C 0x39.");
+
+        as7341.setATIME(AS7341_ATIME);
+        as7341.setASTEP(AS7341_ASTEP);
+        as7341.setGain(AS7341_GAIN_64X);
+        as7341.setLEDCurrent(AS7341_LED_CURRENT_MA);
+        as7341.enableLED(true);
+        Serial.printf("LED AS7341 dinyalakan (%d mA).\n", AS7341_LED_CURRENT_MA);
     } else {
         Serial.println(
             "AS7341 tidak ditemukan di 0x39. Periksa power, GND, SDA, SCL, "
@@ -188,12 +238,19 @@ void setup() {
 }
 
 void loop() {
+    if (Serial.available()) {
+        while (Serial.available()) {
+            Serial.read();
+        }
+        baselineRequested = true;
+    }
+
     if (millis() - lastPhPollAt >= PH_POLL_INTERVAL_MS) {
         lastPhPollAt = millis();
         updatePh();
     }
 
-    if (sensorReady && millis() - lastMeasurementAt >= 500) {
+    if (sensorReady && millis() - lastMeasurementAt >= MEASUREMENT_INTERVAL_MS) {
         updateMeasurement();
         lastMeasurementAt = millis();
     }
@@ -248,14 +305,95 @@ void updateMeasurement() {
     }
 
     float visibleAverage = visibleTotal / 8.0f;
+
+    // F1-F4 dinormalisasi dengan clear siklus pertama (indeks 4), F5-F8 dengan clear siklus kedua (10).
+    float ratios[8];
+    bool clearValid = readings[4] > 0 && readings[10] > 0;
+    for (uint8_t i = 0; i < 8; i++) {
+        float clearValue = i < 4 ? readings[4] : readings[10];
+        ratios[i] = clearValue > 0 ? readings[visibleIndexes[i]] / clearValue : 0.0f;
+    }
+    if (baselineRequested && clearValid) {
+        for (uint8_t i = 0; i < 8; i++) {
+            baselineRatio[i] = ratios[i];
+        }
+        baselineRatioReady = true;
+        baselineRequested = false;
+        Serial.println(">> Baseline ditetapkan dari pembacaan ini (100%).");
+    }
+    // Transmitansi tiap channel = rasio sekarang / rasio blanko; channel terkecil paling terserap.
+    float concentration = 0.0f;
+    uint8_t dominantChannel = 0;
+    float transmittances[8] = {0};
+    if (baselineRatioReady && clearValid) {
+        float lowest = 1e9f;
+        for (uint8_t i = 0; i < 8; i++) {
+            if (baselineRatio[i] <= 0) {
+                continue;
+            }
+            float transmittance = ratios[i] / baselineRatio[i];
+            transmittances[i] = transmittance;
+            if (transmittance < lowest) {
+                lowest = transmittance;
+                dominantChannel = i;
+            }
+        }
+        concentration = lowest < 1e9f ? lowest * 100.0f : 0.0f;
+    }
+    // Channel mentah dikirim apa adanya; aplikasi yang menghitung kepekatan (channel / clear terhadap baseline).
+    // "clear" = clear siklus F5-F8, "clear1" = clear siklus F1-F4.
     String payload = "{\"visibleAverage\":" + String(visibleAverage, 1)
         + ",\"clear\":" + String(readings[10])
-        + ",\"nir\":" + String(readings[11]);
+        + ",\"clear1\":" + String(readings[4])
+        + ",\"nir\":" + String(readings[11])
+        + ",\"channels\":[";
+    for (uint8_t i = 0; i < 8; i++) {
+        payload += String(readings[visibleIndexes[i]]);
+        payload += i < 7 ? "," : "]";
+    }
     if (phIsFresh()) {
         payload += ",\"ph\":" + String(lastPh, 2);
     }
     payload += "}";
 
+#if SERIAL_DETAIL
+    Serial.println("---------------------------------------------");
+    Serial.printf("raw   F1..F8 : %u %u %u %u %u %u %u %u\n",
+        readings[0], readings[1], readings[2], readings[3],
+        readings[6], readings[7], readings[8], readings[9]);
+    Serial.printf("clear (F1-4 / F5-8) : %u / %u | nir : %u / %u\n",
+        readings[4], readings[10], readings[5], readings[11]);
+    Serial.printf("visibleAverage      : %.1f\n", visibleAverage);
+    Serial.printf("rasio F/clear       : %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f\n",
+        ratios[0], ratios[1], ratios[2], ratios[3], ratios[4], ratios[5], ratios[6], ratios[7]);
+    if (baselineRatioReady) {
+        Serial.printf("baseline            : %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f\n",
+            baselineRatio[0], baselineRatio[1], baselineRatio[2], baselineRatio[3],
+            baselineRatio[4], baselineRatio[5], baselineRatio[6], baselineRatio[7]);
+        Serial.printf("transmitansi %%      : %.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f\n",
+            transmittances[0] * 100.0f, transmittances[1] * 100.0f, transmittances[2] * 100.0f,
+            transmittances[3] * 100.0f, transmittances[4] * 100.0f, transmittances[5] * 100.0f,
+            transmittances[6] * 100.0f, transmittances[7] * 100.0f);
+        Serial.printf("channel terserap    : F%u (terendah)\n", dominantChannel + 1);
+    } else {
+        Serial.println("baseline            : belum ditetapkan (kirim karakter apa saja lewat serial)");
+    }
+#endif
+    if (phIsFresh()) {
+        if (baselineRatioReady) {
+            Serial.printf("pH: %.2f | Kepekatan: %.1f%% (F%u)\n", lastPh, concentration, dominantChannel + 1);
+        } else {
+            Serial.printf("pH: %.2f | Kepekatan: --\n", lastPh);
+        }
+    } else {
+        if (baselineRatioReady) {
+            Serial.printf("pH: -- | Kepekatan: %.1f%% (F%u)\n", concentration, dominantChannel + 1);
+        } else {
+            Serial.println("pH: -- | Kepekatan: --");
+        }
+    }
+
+#if SERIAL_DEBUG
     Serial.printf(
         "AS7341 raw F1..F8: %u, %u, %u, %u, %u, %u, %u, %u | clear=%u nir=%u | visibleAverage=%.1f\n",
         readings[0], readings[1], readings[2], readings[3],
@@ -264,6 +402,7 @@ void updateMeasurement() {
     );
     Serial.print("BLE payload: ");
     Serial.println(payload);
+#endif
 
     pCharacteristic->setValue(payload.c_str());
     if (deviceConnected) {

@@ -10,17 +10,25 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
     let clear: UInt16
     let nir: UInt16
     let waterPH: Double?
+    /// Raw F1...F8 counts; nil from firmware that does not send them.
+    let channels: [UInt16]?
+    /// Clear read together with F1-F4 (`clear` is the one read with F5-F8); nil when not sent.
+    let clearFirst: UInt16?
 
     init(
         visibleAverage: Double,
         clear: UInt16,
         nir: UInt16,
-        waterPH: Double? = nil
+        waterPH: Double? = nil,
+        channels: [UInt16]? = nil,
+        clearFirst: UInt16? = nil
     ) {
         self.visibleAverage = visibleAverage
         self.clear = clear
         self.nir = nir
         self.waterPH = waterPH
+        self.channels = channels
+        self.clearFirst = clearFirst
     }
 
     init(from decoder: Decoder) throws {
@@ -30,6 +38,58 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
         clear = try container.decode(UInt16.self, forKey: .clear)
         nir = try container.decode(UInt16.self, forKey: .nir)
         waterPH = try container.decodeIfPresent(Double.self, forKey: .waterPH)
+        channels = try container.decodeIfPresent([UInt16].self, forKey: .channels)
+        clearFirst = try container.decodeIfPresent(UInt16.self, forKey: .clearFirst)
+    }
+
+    /// Each of F1...F8 divided by the clear of the cycle that read it (F1-F4 by `clearFirst`, F5-F8 by `clear`).
+    /// Dividing by clear cancels fluctuations of the LED and distance. Nil without 8 channels or a positive clear.
+    var channelRatios: [Double]? {
+        guard let channels, channels.count == 8, let clearFirst, clearFirst > 0, clear > 0 else { return nil }
+        return channels.enumerated().map { index, count in
+            Double(count) / Double(index < 4 ? clearFirst : clear)
+        }
+    }
+
+    /// Percentage of the baseline in the channel that absorbs the most: the lowest `ratio / baseline` of
+    /// the 8 channels. Channels without baseline signal are skipped. Nil without channel data to compare.
+    func concentration(relativeToRatios baseline: [Double]) -> Double? {
+        guard let ratios = channelRatios, baseline.count == ratios.count else { return nil }
+        let transmittances = zip(ratios, baseline).compactMap { ratio, base in
+            base > 0 ? ratio / base : nil
+        }
+        return transmittances.min().map { $0 * 100 }
+    }
+
+    /// Channels whose transmittances differ by less than this are read as one color, so they are averaged.
+    private static let transmittanceSpreadLimit = 0.08
+
+    /// A = -log10(T) of a bath, with T = ratio / clean-water ratio per channel. T is the mean of the channels
+    /// when they differ by less than `transmittanceSpreadLimit`, else the lowest (the dominant color).
+    /// A channel with no clean-water signal counts as T = 1; one with no signal in the bath is skipped.
+    /// Nil when no channel is left, or the sizes differ.
+    static func absorbance(ratios: [Double], cleanRatios: [Double]) -> Double? {
+        guard ratios.count == cleanRatios.count else { return nil }
+        let transmittances = zip(ratios, cleanRatios).compactMap { ratio, clean -> Double? in
+            guard clean > 0 else { return 1 }
+            return ratio > 0 ? ratio / clean : nil
+        }
+        guard let lowest = transmittances.min(), let highest = transmittances.max() else { return nil }
+        let effective = highest - lowest < transmittanceSpreadLimit
+            ? transmittances.reduce(0, +) / Double(transmittances.count)
+            : lowest
+        return -log10(effective)
+    }
+
+    /// Absorbance as a percentage of the baseline's, both against the same clean water. It follows the dye in
+    /// the bath: less dye, less absorbance. Nil without channels, or when the baseline has no absorbance.
+    func concentration(relativeToRatios baseline: [Double], cleanRatios: [Double]) -> Double? {
+        guard let ratios = channelRatios,
+              let current = Self.absorbance(ratios: ratios, cleanRatios: cleanRatios),
+              let initial = Self.absorbance(ratios: baseline, cleanRatios: cleanRatios),
+              initial > 0
+        else { return nil }
+        return current / initial * 100
     }
 
     /// Percentage of `baseline`; nil when there is no positive baseline to compare with.
@@ -40,7 +100,11 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
 
     func formattedConcentration(relativeTo baseline: Double) -> String {
         guard let percentage = concentration(relativeTo: baseline) else { return "0.0%" }
-        return String(
+        return Self.formatPercent(percentage)
+    }
+
+    static func formatPercent(_ percentage: Double) -> String {
+        String(
             format: "%.1f%%",
             locale: Locale(identifier: "en_US_POSIX"),
             percentage
@@ -53,6 +117,8 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
         case clear
         case nir
         case waterPH = "ph"
+        case channels
+        case clearFirst = "clear1"
     }
 }
 

@@ -27,6 +27,10 @@ final class ProyekDetailViewModel: ObservableObject {
     private let service: any ColorMeasurementSource
     private var measurementTask: Task<Void, Never>?
     private var initialVisibleAverage: Double?
+    /// The channel / clear ratios of the initial color; the concentration is measured against these when the
+    /// readings carry channels, else against `initialVisibleAverage`.
+    private var initialRatios: [Double]?
+    private(set) var latestMeasurement: ColorMeasurement?
     private var warningTracker = MeasurementWarningTracker()
 
     init(proyek: Proyek, service: (any ColorMeasurementSource)? = nil) {
@@ -36,21 +40,19 @@ final class ProyekDetailViewModel: ObservableObject {
             colorConcentrationLimit: proyek.batasKepekatan,
             waterPHLimit: proyek.batasPH
         )
-        // A scan that was already started on this project is picked up where it was left.
+        // A project whose initial color was already set is picked up where it was left.
         if proyek.status == .aktif, let baseline = proyek.visibleAverageAwal {
             initialVisibleAverage = baseline
-            measurements = ProyekColorMeasurements(
-                colorConcentrationLimit: proyek.batasKepekatan,
-                waterPHLimit: proyek.batasPH,
-                initialWaterPH: proyek.phAwal
-            )
+            initialRatios = proyek.rasioAwal
+            measurements = makeMeasurements()
             isDataScanned = true
         }
     }
 
-    /// Reads the baseline measurement, saves it on the project and starts streaming updates.
+    /// Connects to the device and starts streaming live readings. The initial color and pH are not taken from
+    /// this read: the user sets them from the live readings (`tetapkanWarnaAwal`, `tetapkanPHAwal`).
     /// Does nothing for a finished project or while a scan is already reading the device.
-    func mulaiPindai(in persistence: (any ModelPersisting)? = nil) async {
+    func mulaiPindai() async {
         guard proyek.status == .aktif, !isScanning else { return }
         isScanning = true
         defer { isScanning = false }
@@ -58,7 +60,6 @@ final class ProyekDetailViewModel: ObservableObject {
         do {
             let initial = try await service.readInitialColorMeasurement()
             beginMeasuring(from: initial)
-            saveBaseline(initial, in: persistence)
         } catch is CancellationError {
             // A cancelled read is not a failure.
             return
@@ -77,6 +78,16 @@ final class ProyekDetailViewModel: ObservableObject {
     /// True while the latest water pH is below the project limit.
     var isWaterPHLow: Bool {
         latestWaterPH.map { $0 < measurements.waterPHLimit } ?? false
+    }
+
+    /// What is below its limit right now; nil while both readings are within their limits.
+    var currentIssue: QualityIssue? {
+        switch (isConcentrationLow, isWaterPHLow) {
+        case (true, true): .keduanya
+        case (true, false): .kepekatan
+        case (false, true): .phAir
+        case (false, false): nil
+        }
     }
 
     /// True for the "current" row whose reading is below its limit.
@@ -102,25 +113,13 @@ final class ProyekDetailViewModel: ObservableObject {
     }
 
     private func beginMeasuring(from initial: ColorMeasurement) {
-        initialVisibleAverage = initial.visibleAverage
+        initialVisibleAverage = proyek.visibleAverageAwal
+        initialRatios = proyek.rasioAwal
+        latestMeasurement = initial
         warningTracker.reset()
-        measurements = ProyekColorMeasurements(
-            colorConcentrationLimit: proyek.batasKepekatan,
-            waterPHLimit: proyek.batasPH,
-            initialWaterPH: initial.waterPH
-        )
+        measurements = makeMeasurements()
         isDataScanned = true
         startStreaming()
-    }
-
-    private func saveBaseline(_ initial: ColorMeasurement, in persistence: (any ModelPersisting)?) {
-        proyek.visibleAverageAwal = initial.visibleAverage
-        proyek.phAwal = initial.waterPH
-        do {
-            try persistence?.save()
-        } catch {
-            saveError = "Gagal menyimpan proyek: \(error.localizedDescription)"
-        }
     }
 
     private func startStreaming() {
@@ -138,27 +137,32 @@ final class ProyekDetailViewModel: ObservableObject {
     }
 
     private func updateCurrentColorMeasurement(_ measurement: ColorMeasurement) {
-        guard let initialVisibleAverage, initialVisibleAverage > 0 else { return }
-        var updated = measurements.withCurrentConcentration(
-            measurement,
-            relativeTo: initialVisibleAverage
-        )
+        latestMeasurement = measurement
+        var updated = measurements
         if let waterPH = measurement.waterPH {
             updated = updated.withCurrentWaterPH(waterPH)
             latestWaterPH = waterPH
         }
+
+        // The concentration is only known once the user has set the initial color to compare with.
+        var concentration: Double?
+        if let percent = concentrationPercent(of: measurement) {
+            updated = updated.withCurrentConcentration(percent: percent)
+            concentration = percent
+        } else if let baseline = initialVisibleAverage, baseline > 0 {
+            updated = updated.withCurrentConcentration(measurement, relativeTo: baseline)
+            concentration = measurement.concentration(relativeTo: baseline)
+        }
         measurements = updated
 
-        guard let concentration = measurement.concentration(relativeTo: initialVisibleAverage) else { return }
-        latestConcentration = concentration
-
         var startsNewDip = false
-        if let warning = warningTracker.concentrationWarning(
-            for: concentration,
-            limit: updated.colorConcentrationLimit
-        ) {
-            colorConcentrationWarning = warning
-            startsNewDip = true
+        if let concentration {
+            latestConcentration = concentration
+            let limit = updated.colorConcentrationLimit
+            if let warning = warningTracker.concentrationWarning(for: concentration, limit: limit) {
+                colorConcentrationWarning = warning
+                startsNewDip = true
+            }
         }
 
         if let waterPH = measurement.waterPH {
@@ -167,29 +171,35 @@ final class ProyekDetailViewModel: ObservableObject {
             waterPHWarning = warning
         }
 
-        // The sheet shows once per dip; the red rows and banner follow the readings.
-        if startsNewDip {
-            qualityAlert = makeQualityAlert()
+        // The sheet shows once per dip; a new low merges into the alert that is already up.
+        if let currentIssue {
+            let issue = qualityAlert?.issue.combining(with: currentIssue) ?? currentIssue
+            if issue != qualityAlert?.issue, qualityAlert != nil || startsNewDip {
+                qualityAlert = makeQualityAlert(for: issue)
+            }
         }
     }
 
-    private func makeQualityAlert() -> QualityAlert? {
-        switch (isConcentrationLow, isWaterPHLow) {
-        case (true, true):
-            QualityAlert(issue: .keduanya, message: MeasurementWarningTracker.bothMessage)
-        case (true, false):
-            QualityAlert(
-                issue: .kepekatan,
-                message: MeasurementWarningTracker.concentrationMessage(limit: measurements.colorConcentrationLimit)
-            )
-        case (false, true):
-            QualityAlert(
-                issue: .phAir,
-                message: MeasurementWarningTracker.waterPHMessage(limit: measurements.waterPHLimit)
-            )
-        case (false, false):
-            nil
+    /// Absorbance against the baseline when the clean water is set too, else the lowest channel against the baseline.
+    /// Nil without a channel baseline or channels in the reading.
+    private func concentrationPercent(of measurement: ColorMeasurement) -> Double? {
+        guard let initialRatios else { return nil }
+        let absorbanceBased = proyek.rasioAirBersih.flatMap {
+            measurement.concentration(relativeToRatios: initialRatios, cleanRatios: $0)
         }
+        return absorbanceBased ?? measurement.concentration(relativeToRatios: initialRatios)
+    }
+
+    private func makeQualityAlert(for issue: QualityIssue) -> QualityAlert {
+        let message = switch issue {
+        case .keduanya:
+            MeasurementWarningTracker.bothMessage
+        case .kepekatan:
+            MeasurementWarningTracker.concentrationMessage(limit: measurements.colorConcentrationLimit)
+        case .phAir:
+            MeasurementWarningTracker.waterPHMessage(limit: measurements.waterPHLimit)
+        }
+        return QualityAlert(issue: issue, message: message)
     }
 
     /// Finishes the scanned project: stores the final readings and moves it to the inactive list.
@@ -234,7 +244,7 @@ final class ProyekDetailViewModel: ObservableObject {
     @discardableResult
     func pindahPerangkat(_ device: DiscoveredDevice, in persistence: some ModelPersisting) async -> Bool {
         guard gantiPerangkat(device, in: persistence) else { return false }
-        await mulaiPindai(in: persistence)
+        await mulaiPindai()
         return true
     }
 
@@ -255,7 +265,8 @@ final class ProyekDetailViewModel: ObservableObject {
 
     /// Shows the alert again for whatever is below its limit right now (the user dismissed it earlier).
     func tampilkanQualityAlert() {
-        qualityAlert = makeQualityAlert()
+        guard let currentIssue else { return }
+        qualityAlert = makeQualityAlert(for: currentIssue)
     }
 
     func clearQualityAlert() {
@@ -266,5 +277,124 @@ final class ProyekDetailViewModel: ObservableObject {
     func clearWaterPHWarning() {
         guard waterPHWarning != nil else { return }
         waterPHWarning = nil
+    }
+}
+
+// MARK: Initial color and pH
+
+extension ProyekDetailViewModel {
+    /// True once the user has set the initial pH from a live reading.
+    var isInitialPHSet: Bool {
+        proyek.phAwal != nil
+    }
+
+    /// True while a live pH reading can be set as the initial pH of this scanned, active project.
+    var canSetInitialPH: Bool {
+        proyek.status == .aktif && isDataScanned && !isInitialPHSet && latestWaterPH != nil
+    }
+
+    /// Sets the latest live pH reading as the initial pH and saves it. The sensor never sets it by itself.
+    /// Returns `false` and changes nothing when there is no reading to set, it is already set, or the save fails.
+    @discardableResult
+    func tetapkanPHAwal(in persistence: some ModelPersisting) -> Bool {
+        guard canSetInitialPH, let waterPH = latestWaterPH else { return false }
+        return savePHAwal(waterPH, in: persistence)
+    }
+
+    /// Clears the initial pH so a new one can be set from the live reading.
+    /// Returns `false` and keeps the previous value when it was not set or the save fails.
+    @discardableResult
+    func ukurUlangPHAwal(in persistence: some ModelPersisting) -> Bool {
+        guard proyek.status == .aktif, isDataScanned, isInitialPHSet else { return false }
+        return savePHAwal(nil, in: persistence)
+    }
+
+    private func savePHAwal(_ waterPH: Double?, in persistence: some ModelPersisting) -> Bool {
+        let sebelumnya = proyek.phAwal
+        proyek.phAwal = waterPH
+        guard save(persistence, undo: { proyek.phAwal = sebelumnya }) else { return false }
+        measurements = measurements.withInitialWaterPH(waterPH)
+        return true
+    }
+
+    /// True once the user has set the initial color (the 100% baseline) from a live reading.
+    var isInitialColorSet: Bool {
+        proyek.visibleAverageAwal != nil
+    }
+
+    /// True while a live reading can be set as the initial color of this scanned, active project.
+    var canSetInitialColor: Bool {
+        proyek.status == .aktif && isDataScanned && !isInitialColorSet && (latestMeasurement?.visibleAverage ?? 0) > 0
+    }
+
+    /// Sets the latest live reading as the initial color (100%) and saves it. The sensor never sets it by itself.
+    /// Returns `false` and changes nothing when there is no reading to set, it is already set, or the save fails.
+    @discardableResult
+    func tetapkanWarnaAwal(in persistence: some ModelPersisting) -> Bool {
+        guard canSetInitialColor, let latest = latestMeasurement else { return false }
+        let sebelumnya = proyek.visibleAverageAwal
+        let rasioSebelumnya = proyek.rasioAwal
+        proyek.visibleAverageAwal = latest.visibleAverage
+        proyek.rasioAwal = latest.channelRatios
+        guard save(persistence, undo: {
+            proyek.visibleAverageAwal = sebelumnya
+            proyek.rasioAwal = rasioSebelumnya
+        }) else { return false }
+
+        initialVisibleAverage = latest.visibleAverage
+        initialRatios = latest.channelRatios
+        warningTracker.reset()
+        latestConcentration = 100
+        measurements = measurements
+            .withInitialConcentration(isSet: true)
+            .withCurrentConcentration(percent: 100)
+        return true
+    }
+
+    /// Clears the initial color and the concentration measured against it, so a new one can be set.
+    /// Returns `false` and keeps the previous value when it was not set or the save fails.
+    @discardableResult
+    func ukurUlangWarnaAwal(in persistence: some ModelPersisting) -> Bool {
+        guard proyek.status == .aktif, isDataScanned, isInitialColorSet else { return false }
+        let sebelumnya = proyek.visibleAverageAwal
+        let rasioSebelumnya = proyek.rasioAwal
+        proyek.visibleAverageAwal = nil
+        proyek.rasioAwal = nil
+        guard save(persistence, undo: {
+            proyek.visibleAverageAwal = sebelumnya
+            proyek.rasioAwal = rasioSebelumnya
+        }) else { return false }
+
+        initialVisibleAverage = nil
+        initialRatios = nil
+        warningTracker.reset()
+        latestConcentration = nil
+        colorConcentrationWarning = nil
+        measurements = measurements
+            .withInitialConcentration(isSet: false)
+            .withoutCurrentConcentration()
+        return true
+    }
+
+    /// Saves; on failure runs `undo` and reports the error.
+    func save(_ persistence: some ModelPersisting, undo: () -> Void) -> Bool {
+        do {
+            try persistence.save()
+            return true
+        } catch {
+            undo()
+            saveError = "Gagal menyimpan proyek: \(error.localizedDescription)"
+            return false
+        }
+    }
+
+    /// The rows for the project's saved initial values; those not set yet show as unknown.
+    private func makeMeasurements() -> ProyekColorMeasurements {
+        ProyekColorMeasurements(
+            colorConcentrationLimit: proyek.batasKepekatan,
+            waterPHLimit: proyek.batasPH,
+            initialWaterPH: proyek.phAwal
+        )
+        .withInitialConcentration(isSet: proyek.visibleAverageAwal != nil)
     }
 }
