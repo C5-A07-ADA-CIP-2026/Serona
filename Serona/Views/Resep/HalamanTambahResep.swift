@@ -63,8 +63,12 @@ struct HalamanTambahResep: View {
         .presentationDragIndicator(.hidden)
         .onAppear {
             if !viewModel.sedangMengedit {
-                if viewModel.kepekatan == nil { viewModel.kepekatan = 90 }
-                if viewModel.batasPH == nil { viewModel.batasPH = 11 }
+                if viewModel.kepekatan == nil {
+                    viewModel.kepekatan = 90
+                }
+                if viewModel.batasPH == nil {
+                    viewModel.batasPH = 11
+                }
             }
         }
         .alert("Gagal menyimpan", isPresented: $gagalMenyimpan) {
@@ -142,51 +146,7 @@ struct HalamanTambahResep: View {
     }
 
     private var jumlahAirCard: some View {
-        HStack {
-            Text("Jumlah Air")
-                .font(.title3)
-                .foregroundStyle(.primary)
-
-            Spacer()
-
-            Text("\(viewModel.ukuranAir ?? 0) Liter")
-                .font(.title3)
-                .foregroundStyle(.primary)
-                .monospacedDigit()
-
-            HStack(spacing: 0) {
-                Button {
-                    let sekarang = viewModel.ukuranAir ?? 0
-                    if sekarang > 0 {
-                        viewModel.ukuranAir = sekarang - 1
-                    }
-                } label: {
-                    Image(systemName: "minus")
-                        .font(.body.weight(.bold))
-                        .foregroundStyle(.primary)
-                        .frame(width: 58, height: 40)
-                }
-
-                Rectangle()
-                    .fill(Color.gray.opacity(0.35))
-                    .frame(width: 1, height: 26)
-
-                Button {
-                    viewModel.ukuranAir = (viewModel.ukuranAir ?? 0) + 1
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.body.weight(.bold))
-                        .foregroundStyle(.primary)
-                        .frame(width: 58, height: 40)
-                }
-            }
-            .background(Color(UIColor.systemGray5), in: Capsule())
-            .buttonStyle(.plain)
-        }
-        .padding(.leading, 26)
-        .padding(.trailing, 18)
-        .frame(height: 70)
-        .background(Color.white, in: Capsule())
+        JumlahAirCard(ukuranAir: $viewModel.ukuranAir)
     }
 
     // MARK: - Napthol
@@ -276,30 +236,29 @@ struct HalamanTambahResep: View {
         .buttonBorderShape(.capsule)
         .padding(.top, 4)
     }
-    
+
     private func bindingPewarna(_ id: BahanInput.ID) -> Binding<BahanInput> {
-        Binding(
-            get: { viewModel.pewarna.first(where: { $0.id == id }) ?? BahanInput() },
-            set: { baru in
-                if let i = viewModel.pewarna.firstIndex(where: { $0.id == id }) {
-                    viewModel.pewarna[i] = baru
-                }
-            }
-        )
+        bindingBahan(\.pewarna, id: id)
     }
 
     private func bindingZatPembantu(_ id: BahanInput.ID) -> Binding<BahanInput> {
+        bindingBahan(\.zatPembantu, id: id)
+    }
+
+    private func bindingBahan(
+        _ daftar: ReferenceWritableKeyPath<FormResepViewModel, [BahanInput]>,
+        id: BahanInput.ID
+    ) -> Binding<BahanInput> {
         Binding(
-            get: { viewModel.zatPembantu.first(where: { $0.id == id }) ?? BahanInput() },
+            get: { viewModel[keyPath: daftar].first(where: { $0.id == id }) ?? BahanInput() },
             set: { baru in
-                if let i = viewModel.zatPembantu.firstIndex(where: { $0.id == id }) {
-                    viewModel.zatPembantu[i] = baru
+                if let indeks = viewModel[keyPath: daftar].firstIndex(where: { $0.id == id }) {
+                    viewModel[keyPath: daftar][indeks] = baru
                 }
             }
         )
     }
 
-    
     // MARK: - Actions
 
     private func simpan() {
@@ -318,125 +277,6 @@ struct HalamanTambahResep: View {
         } catch {
             gagalMenghapus = true
         }
-    }
-}
-
-// MARK: - Helper Subviews
-
-private struct SectionHeader: View {
-    let title: String
-    var tampilkanHapus: Bool = false
-    var onHapus: () -> Void = {}
-
-    var body: some View {
-        HStack {
-            Text(title)
-                .font(.title3.bold())
-                .foregroundStyle(.primary)
-
-            Spacer()
-
-            if tampilkanHapus {
-                Button(action: onHapus) {
-                    Image(systemName: "trash")
-                        .font(.title3)
-                        .foregroundStyle(.red.opacity(0.85))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Hapus")
-            }
-        }
-        .padding(.horizontal, 2)
-        .padding(.top, 4)
-    }
-}
-
-private struct BahanCard: View {
-    let labelKode: String
-    @Binding var item: BahanInput
-    let pilihan: [String]
-
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text(labelKode)
-                    .font(.title3)
-                    .foregroundStyle(.primary)
-
-                Spacer()
-
-                Menu {
-                    ForEach(pilihan, id: \.self) { opsi in
-                        Button(opsi) { item.kode = opsi }
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        Text(item.kode.isEmpty ? "Pilih" : item.kode)
-                            .font(.title3)
-                            .foregroundStyle(.gray)
-                            .lineLimit(1)
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.body.weight(.medium))
-                            .foregroundStyle(.gray)
-                    }
-                }
-            }
-            .frame(height: 48)
-
-            Divider()
-                .overlay(Color.gray.opacity(0.5))
-                .padding(.horizontal, 8)
-
-            HStack {
-                Text("Berat")
-                    .font(.title3)
-                    .foregroundStyle(.primary)
-
-                Spacer()
-
-                TextField("0", value: $item.gram, format: .number)
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.trailing)
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-                    .frame(width: 90)
-
-                Text("gr")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(height: 48)
-            .padding(.trailing, 8)
-        }
-        .padding(.horizontal, 26)
-        .padding(.vertical, 8)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 30, style: .continuous))
-    }
-}
-
-private struct TambahButton: View {
-    let title: String
-    var isEnabled: Bool = true
-    let warna: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 14) {
-                Image(systemName: "plus.circle")
-                    .font(.title2)
-                Text(title)
-                    .font(.title3)
-                Spacer()
-            }
-            .foregroundStyle(isEnabled ? warna : Color.gray.opacity(0.6))
-            .padding(.horizontal, 26)
-            .frame(height: 60)
-            .background(Color.white, in: Capsule())
-        }
-        .buttonStyle(.plain)
-        .disabled(!isEnabled)
     }
 }
 

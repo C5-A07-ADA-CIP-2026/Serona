@@ -15,15 +15,15 @@ struct ProyekDetailChannelConcentrationTests {
         Proyek(nama: "Seragam RT 5", perangkatNama: "ESP 32", resep: .sample(batasKepekatan: 80), jumlahKain: 3)
     }
 
-    /// All channels at 200 against a clear of 1000, except F7 (`channel7`, default 200), the most absorbed one
+    /// All channels at 200 against a clear of 1000, except F3 (`channel3`, default 200), the most absorbed one
     /// against the clean water.
-    private func reading(channel7: UInt16 = 200, average: Double = 1000, channels: Bool = true) -> ColorMeasurement {
+    private func reading(channel3: UInt16 = 200, average: Double = 1000, channels: Bool = true) -> ColorMeasurement {
         ColorMeasurement(
             visibleAverage: average,
             clear: 1000,
             nir: 10,
             waterPH: 11,
-            channels: channels ? [200, 200, 200, 200, 200, 200, channel7, 200] : nil,
+            channels: channels ? [200, 200, channel3, 200, 200, 200, 200, 200] : nil,
             clearFirst: channels ? 1000 : nil
         )
     }
@@ -61,8 +61,8 @@ struct ProyekDetailChannelConcentrationTests {
     }
 
     private static let baselineRatios = [Double](repeating: 0.2, count: 8)
-    /// F7 lightens to 0.4, so F8 becomes the most absorbed channel.
-    private static let lighterRatios: [Double] = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.4, 0.2]
+    /// F3 lightens to 0.3, so the next channel becomes the most absorbed one.
+    private static let lighterRatios: [Double] = [0.2, 0.2, 0.3, 0.2, 0.2, 0.2, 0.2, 0.2]
 
     @Test("Afterwards the concentration follows the most absorbed channel, not the visible average")
     func concentrationUsesChannels() async {
@@ -70,7 +70,7 @@ struct ProyekDetailChannelConcentrationTests {
         viewModel.tetapkanWarnaAwal(in: RecordingModelPersistence())
 
         // The visible average barely moves (990 of 1000) while the dominant channel changes.
-        liveReadings.yield(reading(channel7: 400, average: 990))
+        liveReadings.yield(reading(channel3: 300, average: 990))
         let expected = expectedConcentration(of: Self.lighterRatios, baseline: Self.baselineRatios)
         let applied = await waitUntil { viewModel.latestConcentration != 100 }
 
@@ -100,7 +100,7 @@ struct ProyekDetailChannelConcentrationTests {
         proyek.rasioAwal = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
         let (viewModel, liveReadings) = await makeLive(proyek: proyek, initial: reading())
 
-        liveReadings.yield(reading(channel7: 400, average: 990))
+        liveReadings.yield(reading(channel3: 300, average: 990))
         let expected = expectedConcentration(of: Self.lighterRatios, baseline: Self.baselineRatios)
         let applied = await waitUntil { abs((viewModel.latestConcentration ?? 100) - expected) < 0.0001 }
 
