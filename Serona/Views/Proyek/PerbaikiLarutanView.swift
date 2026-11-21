@@ -296,7 +296,6 @@ extension PerbaikiLarutanView {
 
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(additions, id: \.kode) { item in
-                    
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 0) {
                             Text("Tambahkan \(item.kode) sebanyak ")

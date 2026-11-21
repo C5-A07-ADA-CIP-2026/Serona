@@ -58,8 +58,8 @@ struct ProyekDetailDeviceSwitchTests {
         #expect(service.readCounter.value == 2)
     }
 
-    @Test("In the middle of a project the device cannot be switched")
-    func switchMidProjectIsRefused() async {
+    @Test("In the middle of a project the device can be switched and the bath data is kept")
+    func switchMidProjectKeepsBathData() async {
         let service = StubDeviceConnectionService()
         let persistence = RecordingModelPersistence()
         let proyek = makeProyek()
@@ -68,10 +68,10 @@ struct ProyekDetailDeviceSwitchTests {
 
         let didSwitch = await viewModel.pindahPerangkat(seronaB, in: persistence)
 
-        #expect(!didSwitch)
-        #expect(proyek.perangkatNama == "ESP 32")
-        #expect(persistence.events.isEmpty)
-        #expect(service.readCounter.value == 1)
+        #expect(didSwitch)
+        #expect(proyek.perangkatNama == "Serona-A1B2C3D4")
+        #expect(persistence.events.contains(.save))
+        #expect(service.readCounter.value == 2)
     }
 
     @Test("A failed save does not retry the read")
@@ -88,7 +88,7 @@ struct ProyekDetailDeviceSwitchTests {
         #expect(service.readCounter.value == 1)
     }
 
-    @Test("A finished project keeps the device it was made with")
+    @Test("A finished project cannot be switched to another device")
     func switchDeviceIgnoredWhenFinished() {
         let persistence = RecordingModelPersistence()
         let proyek = makeProyek()
@@ -98,7 +98,7 @@ struct ProyekDetailDeviceSwitchTests {
         let didSwitch = viewModel.gantiPerangkat(seronaB, in: persistence)
 
         #expect(!didSwitch)
-        #expect(proyek.perangkatNama == "ESP 32")
+        #expect(proyek.perangkatNama == "")
         #expect(persistence.events.isEmpty)
     }
 }
