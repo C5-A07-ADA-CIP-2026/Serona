@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Serona – Pantau warna dan pH larutan pewarna</title>
+  <meta name="description" content="Serona memantau kepekatan warna dan pH larutan pewarna kain secara langsung lewat sensor IoT, lalu memandu kamu memperbaikinya.">
+  <meta property="og:title" content="Serona – Jaga warna celupan tetap konsisten">
+  <meta property="og:description" content="Pantau kepekatan warna dan pH larutan pewarna langsung dari iPhone atau iPad.">
+  <meta property="og:image" content="assets/icon.png">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./"><img src="assets/icon.png" alt="" width="32" height="32"><span>Serona</span></a>
+    <nav class="nav" aria-label="Utama">
+      <a href="#fitur">Fitur</a>
+      <a href="#cara-kerja">Cara kerja</a>
+      <a href="#sensor">Sensor</a>
+      <a href="support/">Bantuan</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <div class="hero">
+      <div>
+        <span class="eyebrow">Untuk pewarna kain</span>
+        <h1>Jaga warna celupan tetap konsisten.</h1>
+        <p class="lead">Serona memantau kepekatan warna dan pH larutan pewarna secara langsung lewat sensor IoT, lalu memandu kamu memperbaikinya.</p>
+        <div class="actions">
+          <a class="btn" href="#cara-kerja">Lihat cara kerjanya</a>
+          <a class="btn ghost" href="support/">Butuh bantuan?</a>
+        </div>
+        <p class="soon">Segera hadir di App Store untuk iPhone dan iPad.</p>
+      </div>
+      <div>
+        <div class="stage">
+          <div class="turntable" data-turntable tabindex="0" role="img" aria-label="Model 3D casing sensor IoT Serona. Geser ke kiri atau kanan untuk memutar.">
+            <img src="assets/casing/frame-00.png" alt="" width="332" height="760">
+          </div>
+        </div>
+        <p class="hint">Geser untuk memutar sensor</p>
+      </div>
+    </div>
+
+    <section id="fitur">
+      <h2>Semua yang kamu perlu untuk satu bak warna</h2>
+      <p class="section-lead">Dari resep sampai larutan selesai dipakai, semuanya ada dalam satu aplikasi.</p>
+      <div class="grid four">
+        <article class="card">
+          <div class="icon" aria-hidden="true">◉</div>
+          <h3>Pantau langsung</h3>
+          <p>Kepekatan warna dan pH larutan muncul langsung dari sensor lewat Bluetooth.</p>
+        </article>
+        <article class="card">
+          <div class="icon" aria-hidden="true">▤</div>
+          <h3>Resep warna</h3>
+          <p>Simpan resep: jumlah air, pewarna, dan zat pembantu, lalu pakai ulang untuk bak berikutnya.</p>
+        </article>
+        <article class="card">
+          <div class="icon" aria-hidden="true">!</div>
+          <h3>Peringatan</h3>
+          <p>Kamu diberi tahu dengan tampilan dan bunyi saat kepekatan atau pH turun di bawah batas resep.</p>
+        </article>
+        <article class="card">
+          <div class="icon" aria-hidden="true">✓</div>
+          <h3>Panduan perbaikan</h3>
+          <p>Ikuti tiga tahap: volume air, pH, lalu kepekatan warna, lengkap dengan takaran yang perlu ditambahkan.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="cara-kerja">
+      <h2>Cara kerja</h2>
+      <p class="section-lead">Tiga langkah dari resep sampai larutan terjaga.</p>
+      <div class="grid three">
+        <article class="card">
+          <div class="step-no">1</div>
+          <h3>Buat resep warna</h3>
+          <p>Isi nama warna, jumlah air, kode pewarna, dan zat pembantu beserta beratnya.</p>
+        </article>
+        <article class="card">
+          <div class="step-no">2</div>
+          <h3>Hubungkan sensor</h3>
+          <p>Tambahkan bak, pilih sensor lewat Bluetooth, lalu mulai pindai. Pembacaan pertama menjadi acuan 100%.</p>
+        </article>
+        <article class="card">
+          <div class="step-no">3</div>
+          <h3>Pantau dan perbaiki</h3>
+          <p>Lihat kepekatan dan pH terkini. Kalau menurun, ikuti panduan perbaikan. Tekan Selesai bila bak sudah tidak dipakai.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="sensor">
+      <div class="hardware">
+        <div>
+          <h2>Sensor IoT Serona</h2>
+          <p class="section-lead" style="margin-bottom:16px">Casing sensor dirancang sendiri oleh tim Serona dan terhubung ke aplikasi lewat Bluetooth.</p>
+          <ul>
+            <li>Menggunakan ESP32 dengan sensor warna AS7341.</li>
+            <li>Membaca pH dan kepekatan warna larutan secara berkala.</li>
+            <li>Satu sensor untuk satu bak, dan setiap bak punya riwayat pembacaannya sendiri.</li>
+          </ul>
+          <p><a href="support/">Panduan menghubungkan sensor</a></p>
+        </div>
+        <div>
+          <div class="stage" style="height:min(480px,60vh)">
+            <div class="turntable" data-turntable tabindex="0" role="img" aria-label="Model 3D casing sensor IoT Serona dari berbagai sudut. Geser untuk memutar.">
+              <img src="assets/casing/frame-18.png" alt="" width="332" height="760">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <p>© 2026 Tim Serona · <a href="support/">Bantuan dan kontak</a> · <a href="privacy/">Kebijakan privasi</a></p>
+  </footer>
+
+  <script src="assets/turntable.js"></script>
+</body>
+</html>

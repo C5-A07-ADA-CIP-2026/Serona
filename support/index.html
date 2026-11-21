@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bantuan Serona – Dukungan dan kontak</title>
+  <meta name="description" content="Bantuan untuk aplikasi Serona: menghubungkan sensor, memahami kepekatan dan pH, dan cara menghubungi tim.">
+  <link rel="icon" type="image/png" href="../assets/favicon.png">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../"><img src="../assets/icon.png" alt="" width="32" height="32"><span>Serona</span></a>
+    <nav class="nav" aria-label="Utama">
+      <a href="../#fitur">Fitur</a>
+      <a href="../#cara-kerja">Cara kerja</a>
+      <a href="../#sensor">Sensor</a>
+      <a href="./" aria-current="page">Bantuan</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <div class="page-head">
+      <span class="eyebrow">Bantuan</span>
+      <h1>Ada yang bisa kami bantu?</h1>
+      <p class="lead">Temukan jawaban cepat di bawah ini. Kalau belum terjawab, hubungi kami.</p>
+    </div>
+
+    <section>
+      <div class="card contact">
+        <div>
+          <h2 style="font-size:1.5rem;margin-bottom:6px">Hubungi tim Serona</h2>
+          <p>Ceritakan masalahnya, sertakan tipe iPhone/iPad dan versi iOS kamu.</p>
+        </div>
+        <a class="email" href="mailto:hanaazizahn@gmail.com?subject=Bantuan%20Serona">hanaazizahn@gmail.com</a>
+      </div>
+    </section>
+
+    <section>
+      <h2>Yang kamu butuhkan</h2>
+      <div class="req">
+        <article class="card"><h3>iPhone atau iPad</h3><p>Dengan iOS 27 atau lebih baru.</p></article>
+        <article class="card"><h3>Sensor IoT Serona</h3><p>Perangkat dengan ESP32 yang terhubung lewat Bluetooth.</p></article>
+        <article class="card"><h3>Izin Bluetooth</h3><p>Serona memerlukan Bluetooth untuk terhubung ke perangkat ESP32.</p></article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Pertanyaan umum</h2>
+      <p class="section-lead">Ketuk pertanyaan untuk melihat jawabannya.</p>
+
+      <details>
+        <summary>Cara menghubungkan sensor ke bak</summary>
+        <ol>
+          <li>Nyalakan sensor Serona dan pastikan Bluetooth di iPhone atau iPad aktif.</li>
+          <li>Di tab Bak Warna, tekan tanda + untuk menambahkan bak, lalu pilih resep warna.</li>
+          <li>Pilih perangkat sensor dari daftar, tunggu sampai berstatus terhubung, lalu mulai pindai.</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>Sensor tidak muncul di daftar perangkat</summary>
+        <ul>
+          <li>Nyalakan perangkat dan Bluetooth, lalu cari ulang.</li>
+          <li>Buka Pengaturan &gt; Serona dan pastikan izin Bluetooth aktif.</li>
+          <li>Dekatkan sensor ke iPhone atau iPad, lalu coba matikan dan nyalakan sensor.</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Muncul "Menunggu sensor…" terus</summary>
+        <p>Pastikan perangkat tetap menyala dan terhubung. Jika masih tertahan, pilih perangkat lagi dari daftar atau gunakan sambungkan ulang pada bak tersebut. Pembacaan awal yang sudah tersimpan tidak hilang.</p>
+      </details>
+
+      <details>
+        <summary>Apa arti kepekatan warna dan pH?</summary>
+        <p>Pembacaan pertama saat bak dimulai menjadi acuan 100% kepekatan. Pembacaan berikutnya dibandingkan dengan acuan itu. Batas kepekatan dan batas pH mengikuti resep warna yang kamu pilih.</p>
+      </details>
+
+      <details>
+        <summary>Muncul peringatan "Kualitas Larutan Menurun"</summary>
+        <p>Artinya kepekatan warna atau pH larutan sudah di bawah batas. Tekan Mulai Perbaiki Larutan dan ikuti tahapnya: penyesuaian volume air, penyesuaian pH, lalu penyesuaian kepekatan warna. Aplikasi menampilkan takaran yang perlu ditambahkan, dan kamu perlu menunggu sebentar sampai larutan kembali ke target.</p>
+      </details>
+
+      <details>
+        <summary>Apa yang terjadi saat saya menekan Selesai?</summary>
+        <p>Setelah selesai, bak tidak bisa dipindai atau diubah lagi dan kembali ke keadaan belum dipakai. Jadi tekan Selesai hanya saat larutan sudah tidak digunakan.</p>
+      </details>
+
+      <details>
+        <summary>Di mana data saya disimpan?</summary>
+        <p>Resep dan proyek tersimpan di iPhone atau iPad kamu. Aplikasi memakai Bluetooth hanya untuk terhubung ke sensor. Selengkapnya ada di <a href="../privacy/">kebijakan privasi</a>.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <p>© 2026 Tim Serona · <a href="../">Kembali ke beranda</a> · <a href="../privacy/">Kebijakan privasi</a></p>
+  </footer>
+</body>
+</html>
