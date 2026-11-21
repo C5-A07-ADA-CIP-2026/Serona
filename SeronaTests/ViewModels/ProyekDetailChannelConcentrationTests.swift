@@ -7,22 +7,23 @@ import Foundation
 @testable import Serona
 import Testing
 
-/// The app, not the device, computes the concentration: the lowest per-channel transmittance (channel / clear)
-/// against the ratios saved when the initial color was set.
+/// The app, not the device, computes the concentration: the absorbance of the dominant (most absorbed) channel
+/// against the fixed clean water, as a share of the absorbance of the ratios saved with the initial color.
 @MainActor
 struct ProyekDetailChannelConcentrationTests {
     private func makeProyek() -> Proyek {
         Proyek(nama: "Seragam RT 5", perangkatNama: "ESP 32", resep: .sample(batasKepekatan: 80), jumlahKain: 3)
     }
 
-    /// All channels at 200 against a clear of 1000, except F5 (`channel5`, default 200).
-    private func reading(channel5: UInt16 = 200, average: Double = 1000, channels: Bool = true) -> ColorMeasurement {
+    /// All channels at 200 against a clear of 1000, except F7 (`channel7`, default 200), the most absorbed one
+    /// against the clean water.
+    private func reading(channel7: UInt16 = 200, average: Double = 1000, channels: Bool = true) -> ColorMeasurement {
         ColorMeasurement(
             visibleAverage: average,
             clear: 1000,
             nir: 10,
             waterPH: 11,
-            channels: channels ? [200, 200, 200, 200, channel5, 200, 200, 200] : nil,
+            channels: channels ? [200, 200, 200, 200, 200, 200, channel7, 200] : nil,
             clearFirst: channels ? 1000 : nil
         )
     }
@@ -51,18 +52,32 @@ struct ProyekDetailChannelConcentrationTests {
         #expect(viewModel.latestConcentration == 100)
     }
 
+    /// Absorbance of `ratios` as a percentage of the baseline's, against the fixed clean water.
+    private func expectedConcentration(of ratios: [Double], baseline: [Double]) -> Double {
+        let clean = ProyekDetailViewModel.defaultCleanWaterRatios
+        let now = ColorMeasurement.absorbance(ratios: ratios, cleanRatios: clean) ?? 0
+        let initial = ColorMeasurement.absorbance(ratios: baseline, cleanRatios: clean) ?? 1
+        return now / initial * 100
+    }
+
+    private static let baselineRatios = [Double](repeating: 0.2, count: 8)
+    /// F7 lightens to 0.4, so F8 becomes the most absorbed channel.
+    private static let lighterRatios: [Double] = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.4, 0.2]
+
     @Test("Afterwards the concentration follows the most absorbed channel, not the visible average")
     func concentrationUsesChannels() async {
         let (viewModel, liveReadings) = await makeLive(initial: reading())
         viewModel.tetapkanWarnaAwal(in: RecordingModelPersistence())
 
-        // The visible average barely moves (990 of 1000) while F5 falls to 72% of its baseline.
-        liveReadings.yield(reading(channel5: 144, average: 990))
+        // The visible average barely moves (990 of 1000) while the dominant channel changes.
+        liveReadings.yield(reading(channel7: 400, average: 990))
+        let expected = expectedConcentration(of: Self.lighterRatios, baseline: Self.baselineRatios)
         let applied = await waitUntil { viewModel.latestConcentration != 100 }
 
         #expect(applied)
-        #expect(abs((viewModel.latestConcentration ?? 0) - 72) < 0.0001)
-        #expect(viewModel.measurements.current[0].value == "72.0%")
+        #expect(expected < 100)
+        #expect(abs((viewModel.latestConcentration ?? 0) - expected) < 0.0001)
+        #expect(viewModel.measurements.current[0].value == ColorMeasurement.formatPercent(expected))
     }
 
     @Test("Without channels in the readings it falls back to the visible average")
@@ -85,11 +100,11 @@ struct ProyekDetailChannelConcentrationTests {
         proyek.rasioAwal = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
         let (viewModel, liveReadings) = await makeLive(proyek: proyek, initial: reading())
 
-        liveReadings.yield(reading(channel5: 144, average: 990))
-        let applied = await waitUntil { viewModel.latestConcentration != nil }
+        liveReadings.yield(reading(channel7: 400, average: 990))
+        let expected = expectedConcentration(of: Self.lighterRatios, baseline: Self.baselineRatios)
+        let applied = await waitUntil { abs((viewModel.latestConcentration ?? 100) - expected) < 0.0001 }
 
         #expect(applied)
-        #expect(abs((viewModel.latestConcentration ?? 0) - 72) < 0.0001)
     }
 
     @Test("Measuring the initial color again clears the saved ratios")

@@ -21,10 +21,10 @@ final class FormResepViewModel {
     var zatPembantu = [BahanInput()]
 
     let daftarPilihanPewarna = [
-        "Naphtol AS-G", "Naphtol AS-LB", "Naphtol AS", "Naphtol AS-D", "Naphtol AS-OL",
-        "Naphtol AS-BS", "Naphtol AS-BO", "Naphtol AS-BR", "Naphtol AS-GR", "Naphtol Soga 91",
+        "AS-G", "AS-LB", "AS", "AS-D", "AS-OL",
+        "AS-BS", "AS-BO", "AS-BR", "AS-GR", "Soga 91",
     ]
-    let daftarPilihanZatPembantu = ["Soda Kostik", "Soda Abu"]
+    let daftarPilihanZatPembantu = ["Kostik", "Abu"]
 
     /// Resep yang sedang dilihat. `nil` berarti mode tambah.
     private(set) var resepAsli: Resep?
@@ -35,7 +35,7 @@ final class FormResepViewModel {
 
     var formLengkap: Bool {
         namaWarna.tidakKosong
-            && warnaDipilih != nil
+//            && warnaDipilih != nil
             && (ukuranAir ?? 0) > 0
             && (kepekatan ?? 0) > 0
             && (batasPH ?? 0) > 0
@@ -43,11 +43,29 @@ final class FormResepViewModel {
             && zatPembantu.valid
     }
 
+    /// Kode yang sudah dipilih baris lain tidak ditawarkan lagi, supaya pewarna tidak dobel.
+    func pilihanPewarna(untuk baris: BahanInput) -> [String] {
+        pewarna.pilihan(dari: daftarPilihanPewarna, untukBaris: baris.id)
+    }
+
+    func pilihanZatPembantu(untuk baris: BahanInput) -> [String] {
+        zatPembantu.pilihan(dari: daftarPilihanZatPembantu, untukBaris: baris.id)
+    }
+
+    /// Baris baru hanya berguna kalau baris terakhir sudah lengkap dan masih ada kode yang belum dipakai.
+    var bisaTambahPewarna: Bool {
+        pewarna.semuaTerisi && pewarna.masihAdaPilihan(dari: daftarPilihanPewarna)
+    }
+
+    var bisaTambahZatPembantu: Bool {
+        zatPembantu.semuaTerisi && zatPembantu.masihAdaPilihan(dari: daftarPilihanZatPembantu)
+    }
+
     /// `true` kalau ada isian yang berbeda dari resep asli.
     var adaPerubahan: Bool {
         guard let asli = resepAsli, !asli.isDeleted else { return false }
         return namaWarna != asli.namaWarna
-            || warnaDipilih?.hexString != asli.warnaHex
+//            || warnaDipilih?.hexString != asli.warnaHex
             || ukuranAir != asli.air
             || kepekatan != asli.kepekatan
             || batasPH != asli.batasPH
@@ -66,7 +84,7 @@ final class FormResepViewModel {
     init(resep: Resep) {
         resepAsli = resep
         namaWarna = resep.namaWarna
-        warnaDipilih = Color(hex: resep.warnaHex)
+//        warnaDipilih = Color(hex: resep.warnaHex)
         ukuranAir = resep.air
         kepekatan = resep.kepekatan
         batasPH = resep.batasPH
@@ -77,7 +95,7 @@ final class FormResepViewModel {
     /// Menyimpan form sebagai `Resep` baru. Tidak melakukan apa pun bila form belum lengkap.
     func simpan(context: some ModelPersisting) throws {
         guard formLengkap,
-              let warna = warnaDipilih,
+//              let warna = warnaDipilih,
               let air = ukuranAir,
               let kepekatan,
               let batasPH
@@ -85,7 +103,7 @@ final class FormResepViewModel {
 
         if let resep = resepAsli {
             resep.namaWarna = namaWarna
-            resep.warnaHex = warna.hexString
+//            resep.warnaHex = warna.hexString
             resep.air = air
             resep.kepekatan = kepekatan
             resep.batasPH = batasPH
@@ -95,7 +113,7 @@ final class FormResepViewModel {
         } else {
             let resep = Resep(
                 namaWarna: namaWarna,
-                warnaHex: warna.hexString,
+                warnaHex: nil,
                 air: air,
                 kepekatan: kepekatan,
                 batasPH: batasPH,

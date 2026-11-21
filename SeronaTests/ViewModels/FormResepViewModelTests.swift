@@ -30,7 +30,8 @@ struct FormResepViewModelTests {
         #expect(hasil.count == 1)
         let resep = try #require(hasil.first)
         #expect(resep.namaWarna == "Merah Marun")
-        #expect(resep.warnaHex == "#B50202")
+        // The color picker is switched off in the form, so no hex is stored for now.
+        #expect(resep.warnaHex == nil)
         #expect(resep.air == 200)
         #expect(resep.kepekatan == 80)
         #expect(resep.batasPH == 7)
@@ -95,6 +96,16 @@ struct FormResepViewModelTests {
 
         viewModel.pewarna = [BahanInput(kode: "N-1", gram: 5), BahanInput(kode: "", gram: 3)]
         #expect(!viewModel.bisaSimpan)
+    }
+
+    @Test("The same dye twice blocks saving")
+    func duplicateDyeBlocksSaving() {
+        let viewModel = formLengkap()
+        viewModel.pewarna = [BahanInput(kode: "N-1", gram: 5), BahanInput(kode: "N-1", gram: 3)]
+        #expect(!viewModel.bisaSimpan)
+
+        viewModel.pewarna = [BahanInput(kode: "N-1", gram: 5), BahanInput(kode: "N-2", gram: 3)]
+        #expect(viewModel.bisaSimpan)
     }
 
     @Test("Rows that are all empty still block saving")

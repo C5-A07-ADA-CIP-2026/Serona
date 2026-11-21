@@ -5,46 +5,98 @@
 
 import SwiftUI
 
-/// "Tambahkan Perangkat": the Serona devices nearby, each with a "Hubungkan" button.
 struct DeviceListSheetView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var viewModel: DeviceListViewModel
     private let onConnected: (DiscoveredDevice) -> Void
     private let onDisconnected: (DiscoveredDevice) -> Void
+    private let assignedDeviceIDs: Set<UUID>
+    /// True when pushed inside a `NavigationStack`: the system bar replaces the custom header and Back button.
+    private let isPushed: Bool
+
+    /// No vertical inset: every row is as tall as its 44 pt minimum, so the connected row (with its 44 pt button)
+    /// and the others stay the same height.
+    private static let rowInsets = EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+
+    private let oliveGreen = Color("oliveGreen")
+    private let alertRed = Color(hex: "#DE2428")
 
     init(
         service: (any DeviceConnecting)? = nil,
+        assignedDeviceIDs: Set<UUID> = [],
+        connectedDevice: DiscoveredDevice? = nil,
+        isPushed: Bool = false,
         onConnected: @escaping (DiscoveredDevice) -> Void = { _ in },
         onDisconnected: @escaping (DiscoveredDevice) -> Void = { _ in }
     ) {
-        _viewModel = State(wrappedValue: DeviceListViewModel(service: service))
+        _viewModel = State(wrappedValue: DeviceListViewModel(service: service, connectedDevice: connectedDevice))
+        self.assignedDeviceIDs = assignedDeviceIDs
+        self.isPushed = isPushed
         self.onConnected = onConnected
         self.onDisconnected = onDisconnected
     }
 
     var body: some View {
-        NavigationStack {
-            content
-                .navigationTitle("Tambahkan Perangkat")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button(role: .close) {
-                            dismiss()
+        VStack(spacing: 0) {
+            if !isPushed {
+                modalHeaderBar
+                    .padding(.horizontal, 24)
+                    .padding(.top, 24)
+                    .padding(.bottom, 12)
+            }
+
+            Group {
+                if viewModel.devices.isEmpty, viewModel.connectedDevice == nil {
+                    if viewModel.isScanning {
+                        ProgressView("Mencari perangkat…")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        ContentUnavailableView {
+                            Label("Perangkat tidak ditemukan", systemImage: "antenna.radiowaves.left.and.right.slash")
+                        } description: {
+                            Text("Nyalakan perangkat dan Bluetooth, lalu cari ulang.")
+                        } actions: {
+                            Button("Cari Ulang") {
+                                Task { await viewModel.scan() }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(oliveGreen)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                } else {
+                    List {
+                        if let connected = viewModel.connectedDevice {
+                            connectedRow(connected)
+                                .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+                                .listRowInsets(Self.rowInsets)
+                        }
+
+                        ForEach(viewModel.devices.filter { $0.id != viewModel.connectedDevice?.id }) { device in
+                            deviceRow(device)
+                                .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+                                .listRowInsets(Self.rowInsets)
                         }
                     }
-                    ToolbarItem(placement: .primaryAction) {
-                        Button {
-                            Task { await viewModel.scan() }
-                        } label: {
-                            Label("Cari Ulang", systemImage: "arrow.triangle.2.circlepath")
-                                .labelStyle(.iconOnly)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .buttonBorderShape(.circle)
-                        .disabled(viewModel.isScanning || viewModel.connectingDevice != nil)
-                    }
+                    .listStyle(.plain)
                 }
+            }
+        }
+        .background(Color.white)
+        .modalSheetStyle(isEnabled: !isPushed)
+        .navigationTitle("Hubungkan Perangkat")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if isPushed {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Cari Ulang Perangkat", systemImage: "arrow.clockwise") {
+                        Task { await viewModel.scan() }
+                    }
+                    .labelStyle(.iconOnly)
+                    .disabled(viewModel.isScanning || viewModel.connectingDevice != nil)
+                }
+            }
         }
         .task {
             await viewModel.scan()
@@ -52,14 +104,16 @@ struct DeviceListSheetView: View {
         .onChange(of: viewModel.connectedDevice) { _, device in
             guard let device else { return }
             onConnected(device)
+            // Pushed, the list stays so the connected device shows at the top; the Back button leaves it.
+            if !isPushed {
+                dismiss()
+            }
         }
         .alert(
             viewModel.connectingDevice?.nama ?? "Perangkat",
             isPresented: connectingIsPresented
         ) {
-            Button("Batalkan", role: .cancel) {
-                viewModel.cancelConnecting()
-            }
+            Button("Batalkan", role: .cancel) { viewModel.cancelConnecting() }
         } message: {
             Text("Menghubungkan…")
         }
@@ -74,48 +128,126 @@ struct DeviceListSheetView: View {
         }
     }
 
-    @ViewBuilder
-    private var content: some View {
-        if viewModel.devices.isEmpty, viewModel.connectedDevice == nil {
-            if viewModel.isScanning {
-                ProgressView("Mencari perangkat…")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ContentUnavailableView {
-                    Label("Perangkat tidak ditemukan", systemImage: "antenna.radiowaves.left.and.right.slash")
-                } description: {
-                    Text("Nyalakan perangkat dan Bluetooth, lalu cari ulang.")
-                } actions: {
-                    Button("Cari Ulang") {
-                        Task { await viewModel.scan() }
-                    }
-                }
+    // MARK: - Header Bar
+
+    private var modalHeaderBar: some View {
+        HStack {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+                    .frame(width: 44, height: 44)
+                    .background(Color(UIColor.systemGray6))
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.06), radius: 3, x: 0, y: 1)
             }
-        } else {
-            List {
-                Section {
-                    if let connected = viewModel.connectedDevice {
-                        ConnectedDeviceRow(device: connected) {
-                            Task {
-                                await viewModel.disconnect()
-                                onDisconnected(connected)
-                            }
-                        }
-                    }
-                    ForEach(viewModel.devices.filter { $0.id != viewModel.connectedDevice?.id }) { device in
-                        DeviceRow(device: device) {
-                            Task { await viewModel.connect(device) }
-                        }
-                    }
-                } footer: {
-                    if viewModel.isScanning {
-                        Label("Mencari perangkat…", systemImage: "dot.radiowaves.left.and.right")
-                    }
-                }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Tutup")
+
+            Spacer()
+
+            Text("Hubungkan Perangkat")
+                .font(.headline.bold())
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            Button {
+                Task { await viewModel.scan() }
+            } label: {
+                Image(systemName: "arrow.clockwise")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+                    .frame(width: 44, height: 44)
+                    .background(Color(UIColor.systemGray6))
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.06), radius: 3, x: 0, y: 1)
             }
-            .listStyle(.plain)
+            .buttonStyle(.plain)
+            .disabled(viewModel.isScanning || viewModel.connectingDevice != nil)
+            .opacity((viewModel.isScanning || viewModel.connectingDevice != nil) ? 0.5 : 1)
+            .accessibilityLabel("Cari Ulang Perangkat")
         }
     }
+
+    // MARK: - Device Rows
+
+    /// The whole row is the button: tapping it connects. A device that another active bak uses is not a button, and
+    /// stays in secondary text (not the dimmed disabled style) so "Dipakai bak lain" remains readable.
+    @ViewBuilder
+    private func deviceRow(_ device: DiscoveredDevice) -> some View {
+        if assignedDeviceIDs.contains(device.id) {
+            deviceRowContent(device, isAssigned: true)
+                .accessibilityElement(children: .combine)
+                .accessibilityHint("Perangkat sudah digunakan oleh bak aktif lain")
+        } else {
+            Button {
+                Task { await viewModel.connect(device) }
+            } label: {
+                deviceRowContent(device, isAssigned: false)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Menghubungkan perangkat")
+        }
+    }
+
+    private func deviceRowContent(_ device: DiscoveredDevice, isAssigned: Bool) -> some View {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 12))
+        return layout {
+            Text(device.nama)
+                .font(.body)
+                .foregroundStyle(isAssigned ? .secondary : .primary)
+
+            if !dynamicTypeSize.isAccessibilitySize {
+                Spacer()
+            }
+
+            if isAssigned {
+                Label("Dipakai bak lain", systemImage: "lock.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+        .contentShape(Rectangle())
+    }
+
+    private func connectedRow(_ device: DiscoveredDevice) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "checkmark")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Color.oliveGreenText)
+                .accessibilityHidden(true)
+
+            Text(device.nama)
+                .font(.body)
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            Button {
+                Task {
+                    await viewModel.disconnect()
+                    onDisconnected(device)
+                }
+            } label: {
+                Image(systemName: "minus.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(alertRed)
+            }
+            .buttonStyle(.borderless)
+            .frame(minWidth: 44, minHeight: 44)
+            .accessibilityLabel("Putuskan Perangkat")
+        }
+        .frame(minHeight: 44)
+        .accessibilityElement(children: .contain)
+    }
+
+    // MARK: - Alert Bindings
 
     private var connectingIsPresented: Binding<Bool> {
         Binding(
@@ -140,65 +272,10 @@ struct DeviceListSheetView: View {
     }
 }
 
-private struct ConnectedDeviceRow: View {
-    let device: DiscoveredDevice
-    let onDisconnect: () -> Void
+// MARK: - Previews
 
-    var body: some View {
-        HStack {
-            Label(device.nama, systemImage: "wifi")
-                .foregroundStyle(.tint)
-
-            Spacer()
-
-            Button(action: onDisconnect) {
-                Image(systemName: "minus.circle.fill")
-                    .foregroundStyle(.red)
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel("Putuskan \(device.nama)")
-        }
-        .padding(.vertical, 4)
-    }
-}
-
-private struct DeviceRow: View {
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
-    let device: DiscoveredDevice
-    let onConnect: () -> Void
-
-    var body: some View {
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
-            : AnyLayout(HStackLayout())
-        layout {
-            Label(device.nama, systemImage: "wifi")
-                .foregroundStyle(.primary)
-
-            if !dynamicTypeSize.isAccessibilitySize {
-                Spacer()
-            }
-
-            Button(action: onConnect) {
-                HStack(spacing: 4) {
-                    Image(systemName: "plus")
-                    Text("Hubungkan")
-                }
-                .font(.footnote)
-                .fixedSize()
-            }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.capsule)
-            .controlSize(.small)
-            .accessibilityLabel("Hubungkan \(device.nama)")
-        }
-        .padding(.vertical, 4)
-    }
-}
-
-#Preview {
-    Color.clear
+#Preview("Device List Sheet", traits: .landscapeLeft) {
+    BackgroundGradient()
         .sheet(isPresented: .constant(true)) {
             DeviceListSheetView(service: SimulatedDeviceConnectionService(discoveryDelay: .milliseconds(200)))
         }

@@ -95,6 +95,7 @@ struct TambahProyekViewModelTests {
         #expect(isSameModel(persistence.insertedModels[0], saved))
         #expect(saved.nama == "Seragam RT 5")
         #expect(saved.perangkatNama == "ESP 32")
+        #expect(saved.perangkatID == esp.id)
         #expect(saved.status == .aktif)
         #expect(saved.jumlahKain == 2)
         #expect(saved.namaWarna == "Merah Marun")

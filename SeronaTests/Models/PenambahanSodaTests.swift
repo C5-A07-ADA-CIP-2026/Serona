@@ -12,15 +12,15 @@ import Testing
 @Suite("Penambahan soda")
 @MainActor
 struct PenambahanSodaTests {
-    /// Recipe water 1000 mL per cloth x 10 cloths = 10 L; auxiliaries 30 g per cloth, so C_target = 30 g/L.
+    /// Recipe water 1 L with 30 g of auxiliaries, so C_target = 30 g/L.
     private static let zatBawaan = [Bahan(kode: "Soda Abu", gram: 20), Bahan(kode: "Soda Kostik", gram: 10)]
 
-    private func makeProyek(zatPembantu: [Bahan] = zatBawaan, air: Int = 1000) -> Proyek {
+    private func makeProyek(zatPembantu: [Bahan] = zatBawaan, air: Int = 1) -> Proyek {
         let resep = Resep(
             namaWarna: "Ungu", warnaHex: "#4B0082", air: air, kepekatan: 80, batasPH: 7,
             pewarna: [Bahan(kode: "Merah", gram: 5)], zatPembantu: zatPembantu
         )
-        return Proyek(nama: "Seragam", perangkatNama: "ESP 32", resep: resep, jumlahKain: 10)
+        return Proyek(nama: "Seragam", perangkatNama: "ESP 32", resep: resep)
     }
 
     @Test("Soda concentration from pH is 10^(pH - 14) x 40 g/L")

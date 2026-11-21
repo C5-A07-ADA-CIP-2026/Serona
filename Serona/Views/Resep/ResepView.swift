@@ -7,134 +7,130 @@ import SwiftData
 import SwiftUI
 
 struct ResepView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Resep.dibuat, order: .reverse) private var daftar: [Resep]
-    @State private var showModal = false
-    @State private var teksCari = ""
-    @ScaledMetric(relativeTo: .largeTitle) private var ukuranIkon = 100.0
+
+    @Binding var teksCari: String
+    @State private var resepDipilih: Resep?
+
+    init(teksCari: Binding<String> = .constant("")) {
+        _teksCari = teksCari
+    }
 
     private var hasilCari: [Resep] {
         daftar.cari(teksCari)
     }
 
+    private let backgroundColor = Color("backgroundColor")
+    private let titleColor = Color("titleColor")
+    private let oliveGreen = Color("oliveGreen")
+
     var body: some View {
-        content
-            // .background(Color(hex: "#F2E8DC").ignoresSafeArea())
-            .navigationTitle("Warna Saya")
-            .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $teksCari, placement: .navigationBarDrawer(displayMode: .always), prompt: "Cari Warna")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showModal = true
-                    } label: {
-                        Label("Tambah Warna", systemImage: "plus")
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-            }
-            .sheet(isPresented: $showModal) {
-                NavigationStack {
-                    HalamanTambahResep(tampilSebagaiSheet: true)
-                }
-            }
-            .navigationDestination(for: Resep.self) { resep in
-                HalamanTambahResep(resep: resep)
-            }
-    }
+        ZStack {
+            BackgroundGradient()
 
-    @ViewBuilder
-    private var content: some View {
-        if daftar.isEmpty {
-            emptyState
-        } else if hasilCari.isEmpty {
-            ContentUnavailableView.search(text: teksCari)
-        } else {
-            daftarWarna
+            GeometryReader { geometry in
+                let gridColumns = AdaptiveLayout.gridColumns(
+                    forWidth: geometry.size.width, minimumItemWidth: 250, spacing: 40,
+                    limits: dynamicTypeSize.isAccessibilitySize ? 1 ... 1 : 2 ... 5
+                )
+                let sidePadding = AdaptiveLayout.sidePadding(forWidth: geometry.size.width)
+
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Resep Warna")
+                        .font(.largeTitle.bold())
+                        .foregroundStyle(titleColor)
+                        .padding(.horizontal, sidePadding)
+                        .padding(.top, 12)
+
+                    if daftar.isEmpty {
+                        emptyState
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if hasilCari.isEmpty {
+                        ContentUnavailableView.search(text: teksCari)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        ScrollView {
+                            LazyVGrid(columns: gridColumns, spacing: 50) {
+                                ForEach(hasilCari) { resep in
+                                    Button {
+                                        resepDipilih = resep
+                                    } label: {
+                                        WarnaCardView(resep: resep)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.horizontal, sidePadding)
+                            .padding(.bottom, 24)
+                        }
+                    }
+                }
+            }
         }
-    }
-
-    private var daftarWarna: some View {
-        ScrollView {
-            LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 150), spacing: 12)],
-                spacing: 12
-            ) {
-                ForEach(hasilCari) { resep in
-                    NavigationLink(value: resep) {
-                        ResepRowView(resep: resep)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
+        .sheet(item: $resepDipilih) { resep in
+            HalamanTambahResep(resep: resep, tampilSebagaiSheet: true)
         }
     }
 
     private var emptyState: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "book")
+        VStack(spacing: 12) {
+            Image("IconResepWarna")
                 .resizable()
                 .scaledToFit()
-                .frame(width: ukuranIkon, height: ukuranIkon)
-                .foregroundStyle(.secondary)
+                .frame(width: 110, height: 110)
                 .accessibilityHidden(true)
 
-            Text("Belum ada warna")
-                .font(.title2)
-                .foregroundStyle(.secondary)
+            VStack(spacing: 4) {
+                Text("Tidak Ada Resep Warna")
+                    .font(.title3.bold())
+                    .foregroundStyle(Color(hex: "#B89B8D"))
 
-            Text("Tekan + untuk menambah warna")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                Text("Tekan tanda + untuk menambahkan resep")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Color(hex: "#B89B8D"))
+            }
         }
         .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 24)
+        .padding(.bottom, 48)
     }
 }
 
-#Preview("Kosong") {
+// MARK: - Previews
+
+#Preview("ResepView", traits: .landscapeLeft) {
     NavigationStack {
         ResepView()
     }
-    .modelContainer(for: SeronaSchema.models, inMemory: true)
+    .modelContainer(previewResepContainer(isi: true))
 }
 
-#Preview("Berisi") {
+#Preview("Empty State", traits: .landscapeLeft) {
     NavigationStack {
         ResepView()
     }
-    .modelContainer(previewContainer)
+    .modelContainer(previewResepContainer(isi: false))
 }
 
-#Preview("Accessibility 5") {
-    NavigationStack {
-        ResepView()
-    }
-    .modelContainer(previewContainer)
-    .dynamicTypeSize(.accessibility5)
-}
-
-#Preview("Kosong Accessibility 5") {
-    NavigationStack {
-        ResepView()
-    }
-    .modelContainer(for: SeronaSchema.models, inMemory: true)
-    .dynamicTypeSize(.accessibility5)
-}
+// MARK: - Preview Data Container
 
 @MainActor
-private let previewContainer: ModelContainer = {
-    // swiftlint:disable:next force_try
-    let container = try! SeronaSchema.makeContainer(inMemory: true)
-    container.mainContext.insert(Resep(
-        namaWarna: "Merah Marun", warnaHex: "#B50202",
-        air: 1000, kepekatan: 80, batasPH: 7
-    ))
-    container.mainContext.insert(Resep(
-        namaWarna: "Biru Laut", warnaHex: "#0044AA",
-        air: 1000, kepekatan: 80, batasPH: 7
-    ))
+private func previewResepContainer(isi: Bool) -> ModelContainer {
+    let container = SeronaSchema.makePreviewContainer()
+    guard isi else { return container }
+    let context = container.mainContext
+
+    context.insert(Resep(namaWarna: "Cokelat Bata", warnaHex: "#C0533E", air: 1000, kepekatan: 80, batasPH: 7))
+    context.insert(Resep(namaWarna: "Ungu Muda", warnaHex: "#B85282", air: 1000, kepekatan: 80, batasPH: 7))
+    context.insert(Resep(namaWarna: "Ungu Tua", warnaHex: "#9B3B6B", air: 1000, kepekatan: 80, batasPH: 7))
+    context.insert(Resep(namaWarna: "Merah Bata", warnaHex: "#B23B4E", air: 1000, kepekatan: 80, batasPH: 7))
+    context.insert(Resep(namaWarna: "Marun", warnaHex: "#800000", air: 1000, kepekatan: 80, batasPH: 7))
+    context.insert(Resep(namaWarna: "Merah Anggur", warnaHex: "#8B2B43", air: 1000, kepekatan: 80, batasPH: 7))
+    context.insert(Resep(namaWarna: "Ungu Abu", warnaHex: "#6B4F69", air: 1000, kepekatan: 80, batasPH: 7))
+    context.insert(Resep(namaWarna: "Krem", warnaHex: "#F29F75", air: 1000, kepekatan: 80, batasPH: 7))
+    context.insert(Resep(namaWarna: "Merah Ungu", warnaHex: "#B50202", air: 1000, kepekatan: 80, batasPH: 7))
+
     return container
-}()
+}

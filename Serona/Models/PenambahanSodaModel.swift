@@ -29,19 +29,19 @@ struct PenambahanSoda: Equatable {
 
 @MainActor
 extension Proyek {
-    /// The soda target (g/L): the recipe's auxiliaries for all the cloth over the recipe water.
+    /// The soda target (g/L): the recipe's auxiliaries over the recipe water (L).
     var targetSodaGramPerLiter: Double {
         guard volumeResepLiter > 0 else { return 0 }
-        return zatPembantu.reduce(0) { $0 + $1.gram } * Double(jumlahKain) / volumeResepLiter
+        return zatPembantu.reduce(0) { $0 + $1.gram } / volumeResepLiter
     }
 
     /// The soda to add after `airDitambahkanLiter` of water took the pH from `pHSebelum` to `pHSesudah`.
     /// Nil when the pH did not drop enough to tell the bath volume, or there is no water or recipe volume.
     func penambahanSoda(pHSebelum: Double, pHSesudah: Double, airDitambahkanLiter: Double) -> PenambahanSoda? {
-        guard airDitambahkanLiter > 0, volumeResepLiter > 0 else { return nil }
+        guard airDitambahkanLiter > 0, volumeResepLiter > 0, pHSebelum - pHSesudah >= 0.01 else { return nil }
         let sebelum = PenambahanSoda.konsentrasiSoda(nilaiPH: pHSebelum)
         let sesudah = PenambahanSoda.konsentrasiSoda(nilaiPH: pHSesudah)
-        guard sebelum - sesudah > PenambahanSoda.selisihMinimum else { return nil }
+        guard sebelum > sesudah else { return nil }
 
         let volumeDipakai = sesudah * airDitambahkanLiter / (sebelum - sesudah)
         let volumeSekarang = volumeDipakai + airDitambahkanLiter

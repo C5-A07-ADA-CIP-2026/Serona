@@ -6,67 +6,75 @@
 import SwiftData
 import SwiftUI
 
-/// "Tambahkan Proyek": name, device, color and amount of fabric of a new project.
 struct TambahProyekView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-    @State private var viewModel: TambahProyekViewModel
-    @State private var isShowingDeviceList = false
-    @State private var isShowingPilihResep = false
-    @FocusState private var isNamaFocused: Bool
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.modelContext) var modelContext
+    @Query(sort: \Proyek.tanggal, order: .forward) private var semuaProyek: [Proyek]
 
-    init(viewModel: TambahProyekViewModel = TambahProyekViewModel()) {
+    @State var viewModel: TambahProyekViewModel
+    @State var saveErrorMessage: String?
+    @FocusState private var isNamaPemesanFocused: Bool
+
+    var existingProyek: Proyek?
+    var bakTitleOverride: String?
+    var deviceService: (any DeviceConnecting)?
+    var onProyekCreated: ((Proyek) -> Void)?
+
+    private let oliveGreen = Color("oliveGreen")
+    private let maxBakCount = 6
+
+    init(
+        existingProyek: Proyek? = nil,
+        bakTitle: String? = nil,
+        deviceService: (any DeviceConnecting)? = nil,
+        viewModel: TambahProyekViewModel = TambahProyekViewModel(),
+        onProyekCreated: ((Proyek) -> Void)? = nil
+    ) {
+        self.existingProyek = existingProyek
+        bakTitleOverride = bakTitle
+        self.deviceService = deviceService
         _viewModel = State(wrappedValue: viewModel)
+        self.onProyekCreated = onProyekCreated
+    }
+
+    var resolvedBakTitle: String {
+        if let existingProyek {
+            return existingProyek.nama
+        }
+        if let bakTitleOverride, !bakTitleOverride.isEmpty {
+            return bakTitleOverride
+        }
+        let existingNames = Set(semuaProyek.map(\.nama))
+        let nextIndex = (1 ... maxBakCount).first { !existingNames.contains("Bak \($0)") } ?? (semuaProyek.count + 1)
+        return "Bak \(nextIndex)"
+    }
+
+    var canSubmit: Bool {
+        viewModel.canSubmitScan
     }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    namaField
-                    perangkatSection
-                    JumlahKainBaris(jumlahKain: $viewModel.jumlahKain)
-                    warnaSection
-                }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 8)
-            }
-            .scrollDismissesKeyboard(.interactively)
-            .task { isNamaFocused = true }
-            .navigationTitle("Tambahkan Proyek")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(role: .close) {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        if viewModel.simpan(in: modelContext) != nil {
-                            dismiss()
-                        }
-                    } label: {
-                        Label("Simpan Proyek", systemImage: "arrow.up")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!viewModel.canSubmit)
-                }
-            }
+            formContent
+                // The bar stays visible on the root so pushing a screen never toggles it from hidden to
+                // visible; that toggle made the pushed header start too high and snap down inside the sheet.
+                .navigationTitle(resolvedBakTitle)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar { headerToolbar }
         }
-        .sheet(isPresented: $isShowingDeviceList) {
-            DeviceListSheetView(
-                onConnected: { viewModel.pilihPerangkat($0) },
-                onDisconnected: { _ in Task { await viewModel.hapusPerangkat() } }
-            )
-        }
-        .sheet(isPresented: $isShowingPilihResep) {
-            PilihResepSheetView { viewModel.pilihResep($0) }
-        }
+        .modalSheetStyle()
         .alert(
             "Gagal menyimpan proyek",
-            isPresented: saveErrorIsPresented,
-            presenting: viewModel.saveError
+            isPresented: Binding(
+                get: { saveErrorMessage != nil },
+                set: {
+                    if !$0 {
+                        saveErrorMessage = nil
+                    }
+                }
+            ),
+            presenting: saveErrorMessage
         ) { _ in
             Button("Tutup", role: .cancel) {}
         } message: { error in
@@ -74,97 +82,95 @@ struct TambahProyekView: View {
         }
     }
 
-    private var namaField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            JudulBagian(teks: "Nama Proyek")
-            TextField("Cth: Seragam RT 5", text: $viewModel.nama)
-                .textFieldStyle(.roundedBorder)
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.words)
-                .focused($isNamaFocused)
-                .submitLabel(.done)
-        }
-    }
-
-    private var perangkatSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            JudulBagian(teks: "Perangkat")
-
-            if let perangkat = viewModel.perangkat {
-                HStack {
-                    Label(perangkat.nama, systemImage: "wifi")
-                        .font(.headline)
-                        .foregroundStyle(.blue)
-
-                    Spacer()
-
-                    Button {
-                        Task { await viewModel.hapusPerangkat() }
-                    } label: {
-                        Image(systemName: "minus.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.red)
-                    }
-                    .buttonStyle(.borderless)
-                    .accessibilityLabel("Putuskan \(perangkat.nama)")
+    private var deviceListScreen: some View {
+        DeviceListSheetView(
+            service: deviceService,
+            assignedDeviceIDs: Set(
+                semuaProyek.compactMap { proyek in
+                    guard proyek.status == .aktif, proyek.id != existingProyek?.id else { return nil }
+                    return proyek.perangkatID
                 }
-            }
-
-            Button {
-                isShowingDeviceList = true
-            } label: {
-                Text(viewModel.perangkat == nil ? "Pilih Perangkat" : "Ganti Perangkat")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-        }
-    }
-
-    private var warnaSection: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            JudulBagian(teks: "Warna")
-
-            if let resep = viewModel.resep {
-                WarnaSwatchView(namaWarna: resep.namaWarna, warnaHex: resep.warnaHex) {
-                    viewModel.hapusResep()
-                }
-                ResepWarnaView(
-                    pewarna: resep.pewarna,
-                    zatPembantu: resep.zatPembantu,
-                    air: resep.air > 0 ? resep.air : nil
-                )
-            } else {
-                Button {
-                    isShowingPilihResep = true
-                } label: {
-                    Text("Pilih Warna")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-            }
-        }
-    }
-
-    private var saveErrorIsPresented: Binding<Bool> {
-        Binding(
-            get: { viewModel.saveError != nil },
-            set: { isPresented in
-                if !isPresented {
-                    viewModel.clearSaveError()
-                }
-            }
+            ),
+            connectedDevice: viewModel.perangkat,
+            isPushed: true,
+            onConnected: { viewModel.pilihPerangkat($0) },
+            onDisconnected: { _ in Task { await viewModel.hapusPerangkat() } }
         )
     }
-}
 
-#Preview {
-    let viewModel = TambahProyekViewModel(service: SimulatedDeviceConnectionService())
-    viewModel.pilihPerangkat(SimulatedDeviceConnectionService.devices[0])
-    return Color.clear
-        .sheet(isPresented: .constant(true)) {
-            TambahProyekView(viewModel: viewModel)
+    private var pilihWarnaScreen: some View {
+        PilihWarnaSheetView(selectedResep: viewModel.resep, isPushed: true) {
+            viewModel.pilihResep($0)
         }
-        .modelContainer(for: SeronaSchema.models, inMemory: true)
+    }
+
+    /// A native grouped `Form`: system rows, row height, separators, chevrons and Dynamic Type behavior.
+    private var formContent: some View {
+        Form {
+            // One section per row gives the separate rounded rows of the design without custom drawing.
+            Section {
+                NavigationLink {
+                    deviceListScreen
+                } label: {
+                    LabeledContent("Perangkat", value: viewModel.perangkat?.nama ?? "")
+                }
+            }
+
+            Section {
+                NavigationLink {
+                    pilihWarnaScreen
+                } label: {
+                    LabeledContent("Warna", value: viewModel.resep?.namaWarna ?? "")
+                }
+            }
+
+            Section {
+                LabeledContent("Nama Pemesan") {
+                    TextField("", text: $viewModel.namaPemesan)
+                        .multilineTextAlignment(.trailing)
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
+                        .focused($isNamaPemesanFocused)
+                        .accessibilityLabel("Nama Pemesan")
+                }
+                .contentShape(Rectangle())
+                .onTapGesture { isNamaPemesanFocused = true }
+            }
+
+            Section {
+                Stepper(value: $viewModel.jumlahAir, in: 0 ... Int.max) {
+                    LabeledContent("Jumlah Air", value: "\(viewModel.jumlahAir) Liter")
+                }
+            }
+        }
+        .listSectionSpacing(12)
+        .contentMargins(.top, 8, for: .scrollContent)
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollDismissesKeyboard(.interactively)
+    }
+
+    // MARK: - Navigation Bar
+
+    @ToolbarContentBuilder
+    private var headerToolbar: some ToolbarContent {
+        ToolbarItem(placement: .cancellationAction) {
+            Button("Tutup", systemImage: "xmark") {
+                Task {
+                    await viewModel.hapusPerangkat()
+                    dismiss()
+                }
+            }
+            .labelStyle(.iconOnly)
+        }
+
+        ToolbarItem(placement: .confirmationAction) {
+            Button("Simpan Proyek", systemImage: "checkmark") {
+                simpanProyek()
+            }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.borderedProminent)
+            .tint(oliveGreen)
+            .disabled(!canSubmit)
+        }
+    }
 }

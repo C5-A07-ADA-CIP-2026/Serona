@@ -6,25 +6,25 @@
 @testable import Serona
 import Testing
 
-/// Dye to add = the recipe's dye for all the cloth x (1 - concentration / 100), split like the recipe.
+/// Dye to add = (target - bath g/L) x bath volume, split like the recipe. The recipe is per liter of water.
 @Suite("Penambahan pewarna")
 @MainActor
 struct PenambahanPewarnaTests {
-    private func makeProyek(jumlahKain: Int = 10) -> Proyek {
+    private func makeProyek() -> Proyek {
         let resep = Resep(
-            namaWarna: "Ungu", warnaHex: "#4B0082", air: 1000, kepekatan: 80, batasPH: 7,
+            namaWarna: "Ungu", warnaHex: "#4B0082", air: 1, kepekatan: 80, batasPH: 7,
             pewarna: [Bahan(kode: "Merah", gram: 5), Bahan(kode: "Biru", gram: 10)]
         )
-        return Proyek(nama: "Seragam", perangkatNama: "ESP 32", resep: resep, jumlahKain: jumlahKain)
+        return Proyek(nama: "Seragam", perangkatNama: "ESP 32", resep: resep)
     }
 
-    @Test("70% means 30% of the recipe's dye for the cloth, split by ingredient")
+    @Test("70% means 30% of the recipe's dye for its volume, split by ingredient")
     func addsTheMissingShare() {
         let tambahan = makeProyek().pewarnaYangDitambah(kepekatan: 70)
 
         #expect(tambahan.map(\.kode) == ["Merah", "Biru"])
-        #expect(abs(tambahan[0].gram - 15) < 1e-9)
-        #expect(abs(tambahan[1].gram - 30) < 1e-9)
+        #expect(abs(tambahan[0].gram - 1.5) < 1e-9)
+        #expect(abs(tambahan[1].gram - 3) < 1e-9)
     }
 
     @Test("At or above 100% nothing is added")
@@ -35,7 +35,7 @@ struct PenambahanPewarnaTests {
 
     @Test("With the bath volume after the soda step the dose scales from the recipe volume")
     func scalesWithTheBathVolume() {
-        // Recipe water 1000 mL per cloth x 10 cloths = 10 L; C_target = 150 g / 10 L = 15 g/L.
+        // Recipe water 1 L with 15 g of dye: C_target = 15 g/L.
         // At 70% in 20 L: 15 x 20 x 0.3 = 90 g, split 1 : 2 like the recipe.
         let tambahan = makeProyek().pewarnaYangDitambah(kepekatan: 70, volumeLiter: 20)
 
@@ -62,7 +62,7 @@ struct PenambahanPewarnaTests {
 
     @Test("The target is the recipe's dye over its water in g/L; the bath holds that share of it")
     func dyeConcentrationInGramPerLiter() {
-        let proyek = makeProyek() // 15 g per cloth x 10 cloths over 10 L of water
+        let proyek = makeProyek() // 15 g of dye over 1 L of water
 
         #expect(abs(proyek.targetPewarnaGramPerLiter - 15) < 1e-9)
         #expect(abs(proyek.konsentrasiPewarnaGramPerLiter(kepekatan: 100) - 15) < 1e-9)

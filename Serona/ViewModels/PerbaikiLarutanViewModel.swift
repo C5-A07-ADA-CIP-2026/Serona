@@ -6,39 +6,52 @@
 import Foundation
 import Observation
 
-/// One step of the "Perbaiki Larutan" guide.
 enum PerbaikiStep: Equatable {
     case air
     case phAir
     case kepekatan
 }
 
-/// Walks the user through the steps that bring the solution back above its limits, one at a time.
 @MainActor
 @Observable
 final class PerbaikiLarutanViewModel {
     static let gramSodaAbu = 10
     static let gramPewarna = 10
+    static let targetPH: Double = 12.0
+    static let targetConcentration: Double = 100.0
 
     private(set) var issue: QualityIssue
     private(set) var steps: [PerbaikiStep]
     let proyek: Proyek?
-    var jumlahAir = 7
+    var jumlahAir = 0
     private(set) var isFinished = false
-    /// The soda to add, known once the water step was confirmed with a pH before and after the water.
     private(set) var penambahanSoda: PenambahanSoda?
-    private let pHSebelum: Double?
+    private(set) var pHSebelum: Double?
     private(set) var activeIndex = 0
 
-    /// `pHSebelum` is the pH when the limit was crossed, before any water is added (pH1).
-    init(issue: QualityIssue, proyek: Proyek? = nil, pHSebelum: Double? = nil) {
+    /// `pHSebelum` is the live sensor pH right before adding water (C1), NOT `proyek.phAwal`.
+    init(
+        issue: QualityIssue,
+        proyek: Proyek? = nil,
+        pHSebelum: Double? = nil,
+        initialStep: PerbaikiStep = .air,
+        initialJumlahAir: Int = 0
+    ) {
         self.issue = issue
         self.proyek = proyek
         self.pHSebelum = pHSebelum
-        steps = Self.calculateSteps(for: issue, existingSteps: [])
+        jumlahAir = initialJumlahAir
+        let resolvedSteps = Self.calculateSteps(for: issue, existingSteps: [])
+        steps = resolvedSteps
+        activeIndex = resolvedSteps.firstIndex(of: initialStep) ?? 0
     }
 
-    /// Merges a newly detected issue and appends the steps it needs without losing the active progress.
+    /// Keeps `pHSebelum` synced to the live reading right until the user starts adding water in Step 1.
+    func syncPHBeforeWater(_ livePH: Double?) {
+        guard currentStep == .air, jumlahAir == 0, let livePH else { return }
+        pHSebelum = livePH
+    }
+
     func updateIssue(_ newIssue: QualityIssue) {
         guard newIssue != issue else { return }
         let combined = issue.combining(with: newIssue)
@@ -46,21 +59,13 @@ final class PerbaikiLarutanViewModel {
         steps = Self.calculateSteps(for: combined, existingSteps: steps)
     }
 
-    private static func calculateSteps(for issue: QualityIssue, existingSteps: [PerbaikiStep]) -> [PerbaikiStep] {
-        let canonicalOrder: [PerbaikiStep] = [.air, .phAir, .kepekatan]
-        let requiredSteps: Set<PerbaikiStep> = switch issue {
-        case .kepekatan: [.air, .kepekatan]
-        case .phAir: [.air, .phAir]
-        case .keduanya: [.air, .phAir, .kepekatan]
-        }
+    private static func calculateSteps(for _: QualityIssue, existingSteps _: [PerbaikiStep]) -> [PerbaikiStep] {
+        [.air, .phAir, .kepekatan]
+    }
 
-        var updated: [PerbaikiStep] = []
-        for step in canonicalOrder {
-            if existingSteps.contains(step) || requiredSteps.contains(step) {
-                updated.append(step)
-            }
-        }
-        return updated
+    var currentStep: PerbaikiStep {
+        guard activeIndex < steps.count else { return .kepekatan }
+        return steps[activeIndex]
     }
 
     var jumlahAirFormatted: String {
@@ -69,6 +74,23 @@ final class PerbaikiLarutanViewModel {
         formatter.minimumFractionDigits = 0
         formatter.maximumFractionDigits = 1
         return formatter.string(from: NSNumber(value: jumlahAir)) ?? "\(jumlahAir)"
+    }
+
+    /// Fallback bath volume only if pH did not drop enough in Step 1 to solve C1 * V1 = C2 * V2.
+    var totalVolumeLiter: Double {
+        let baseVolume: Double = if let proyek, proyek.volumeAwalLiter > 0 {
+            proyek.volumeAwalLiter
+        } else if let proyek, proyek.volumeResepLiter > 0 {
+            proyek.volumeResepLiter
+        } else {
+            1.0
+        }
+        return baseVolume + Double(max(0, jumlahAir))
+    }
+
+    /// Post-dilution bath volume V2 (L) from C1 * V1 = C2 * V2, falling back to `totalVolumeLiter`.
+    var volumeBakLiter: Double? {
+        penambahanSoda?.volumeSekarang ?? totalVolumeLiter
     }
 
     func isActive(_ step: PerbaikiStep) -> Bool {
@@ -84,13 +106,62 @@ final class PerbaikiLarutanViewModel {
         step == steps.last ? "Selesai" : "Selanjutnya"
     }
 
-    /// The bath volume after the water was added (V2, L); nil until the soda could be worked out.
-    var volumeBakLiter: Double? {
-        penambahanSoda?.volumeSekarang
+    func canProceed(currentPH: Double?, currentConcentration: Double?) -> Bool {
+        switch currentStep {
+        case .air:
+            return jumlahAir > 0
+        case .phAir:
+            guard let currentPH else { return false }
+            return currentPH >= Self.targetPH
+        case .kepekatan:
+            guard let currentConcentration else { return false }
+            return currentConcentration >= Self.targetConcentration
+        }
     }
 
-    /// Completes the active step and activates the next one; the last step finishes the guide.
-    /// Confirming the water step takes `waterPH`, the live pH after the water (pH2), to work out the soda.
+    func sodaAdditions(currentPH: Double?) -> [Bahan] {
+        if let penambahanSoda, !penambahanSoda.bahan.isEmpty {
+            return penambahanSoda.bahan.map {
+                Bahan(kode: $0.kode.lowercased(), gram: max(0, $0.gram))
+            }
+        }
+
+        let phNow = currentPH ?? pHSebelum ?? 8.0
+        let remainingFraction = min(1.0, max(0.0, pow(10, phNow - Self.targetPH)))
+
+        if let proyek, proyek.volumeResepLiter > 0, !proyek.zatPembantu.isEmpty {
+            let baseVolume = proyek.volumeAwalLiter > 0 ? proyek.volumeAwalLiter : proyek.volumeResepLiter
+            let targetGramPerLiter = proyek.targetSodaGramPerLiter
+            let effectiveUnalkalizedVolume = max(0, totalVolumeLiter - (baseVolume * remainingFraction))
+            let totalSodaGram = targetGramPerLiter * effectiveUnalkalizedVolume
+            let totalRecipeZat = proyek.zatPembantu.reduce(0) { $0 + $1.gram }
+
+            return proyek.zatPembantu.map { bahan in
+                let share = totalRecipeZat > 0 ? (bahan.gram / totalRecipeZat) : 1.0
+                return Bahan(kode: bahan.kode.lowercased(), gram: max(0, totalSodaGram * share))
+            }
+        }
+
+        let baseVolume = 1.0
+        let effectiveRatio = max(0, (totalVolumeLiter / baseVolume) - remainingFraction)
+        let fallbackGram = Double(Self.gramSodaAbu) * effectiveRatio
+        return [Bahan(kode: "soda abu", gram: max(0, fallbackGram))]
+    }
+
+    func pewarnaAdditions(currentConcentration: Double?) -> [Bahan] {
+        let concNow = currentConcentration ?? 72.0
+        let bathVolumeLiter = volumeBakLiter ?? totalVolumeLiter
+
+        if let proyek, proyek.volumeResepLiter > 0, !proyek.pewarna.isEmpty {
+            return proyek.pewarnaYangDitambah(kepekatan: concNow, volumeLiter: bathVolumeLiter)
+        }
+
+        let deficitFraction = max(0, (Self.targetConcentration - concNow) / Self.targetConcentration)
+        let fallbackGram = Double(Self.gramPewarna) * (deficitFraction / 0.28) * bathVolumeLiter
+        let kode = proyek?.pewarna.first?.kode ?? "Napthol AS"
+        return [Bahan(kode: kode, gram: max(0, fallbackGram))]
+    }
+
     func lanjut(waterPH: Double? = nil) {
         guard !isFinished else { return }
         if steps[activeIndex] == .air, let proyek, let pHSebelum, let waterPH {

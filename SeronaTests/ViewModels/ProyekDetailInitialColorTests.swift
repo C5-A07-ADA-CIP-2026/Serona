@@ -7,7 +7,7 @@ import Foundation
 @testable import Serona
 import Testing
 
-/// The initial color (100%) is the live reading the user chooses, not whatever the sensor read first.
+/// The initial color (100%) is captured during first-time bath setup and reused after reconnection.
 @MainActor
 struct ProyekDetailInitialColorTests {
     private func makeProyek() -> Proyek {
@@ -29,6 +29,22 @@ struct ProyekDetailInitialColorTests {
         )
         await viewModel.mulaiPindai()
         return (viewModel, liveReadings)
+    }
+
+    @Test("First-time setup automatically saves its first reading as the baseline")
+    func setupCapturesFirstReading() async {
+        let proyek = makeProyek()
+        let persistence = RecordingModelPersistence()
+        let viewModel = ProyekDetailViewModel(
+            proyek: proyek,
+            service: StubDeviceConnectionService(initial: reading(1000))
+        )
+
+        await viewModel.mulaiPindaiDenganBaselineAwal(in: persistence)
+
+        #expect(proyek.visibleAverageAwal == 1000)
+        #expect(viewModel.latestConcentration == 100)
+        #expect(persistence.events == [.save])
     }
 
     @Test("Before it is set the concentration is unknown, however the sensor reads")
@@ -59,7 +75,7 @@ struct ProyekDetailInitialColorTests {
         let persistence = RecordingModelPersistence()
         let (viewModel, liveReadings) = await makeLive(proyek: proyek)
         liveReadings.yield(reading(800))
-        _ = await waitUntil { viewModel.canSetInitialColor && viewModel.latestWaterPH == 11 }
+        _ = await waitUntil { viewModel.latestMeasurement?.visibleAverage == 800 && viewModel.canSetInitialColor }
 
         #expect(viewModel.tetapkanWarnaAwal(in: persistence))
 
