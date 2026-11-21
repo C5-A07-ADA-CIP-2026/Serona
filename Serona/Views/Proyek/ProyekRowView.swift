@@ -16,8 +16,7 @@ struct ProyekRowView: View {
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
             : AnyLayout(HStackLayout(spacing: 12))
         layout {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(hex: proyek.warnaHex))
+            WarnaKotak(hex: proyek.warnaHex, cornerRadius: 8, iconSize: 18)
                 .frame(width: min(ukuranSwatch, 64), height: min(ukuranSwatch, 64))
                 .accessibilityHidden(true)
 

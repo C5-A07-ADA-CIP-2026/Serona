@@ -8,6 +8,9 @@
 import SwiftUI
 
 extension Color {
+    /// Zaitun yang lebih gelap untuk teks kecil di atas latar terang (kontras >= 4.5:1 terhadap putih).
+    static let oliveGreenText = Color(red: 0.37, green: 0.42, blue: 0)
+
     /// Merah peringatan untuk teks (kontras >= 4.5:1 di mode terang dan gelap).
     static let peringatan = Color(UIColor { traits in
         traits.userInterfaceStyle == .dark ? .systemRed : UIColor(red: 0.77, green: 0.125, blue: 0.11, alpha: 1)
@@ -28,6 +31,11 @@ extension Color {
         let blue = Double(rgbValue & 0x0000FF) / 255.0
 
         self.init(red: red, green: green, blue: blue)
+    }
+
+    init?(hex: String?) {
+        guard let hex, !hex.isEmpty else { return nil }
+        self.init(hex: hex)
     }
 
     /// `#RRGGBB` (huruf besar) dari warna ini di color space sRGB.

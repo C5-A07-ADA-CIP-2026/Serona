@@ -24,7 +24,7 @@ final nonisolated class ReadCounter: @unchecked Sendable {
     }
 }
 
-struct StubDeviceConnectionService: DeviceConnectionService {
+struct StubDeviceConnectionService: DeviceConnectionService, ColorMeasurementSource {
     var initial = ColorMeasurement(visibleAverage: 1000, clear: 1200, nir: 200)
     var updates: [ColorMeasurement] = []
     /// When set, the first `readInitialColorMeasurement` suspends until this stream yields or finishes.
@@ -77,6 +77,10 @@ struct StubDeviceConnectionService: DeviceConnectionService {
 
     func disconnect(from _: DiscoveredDevice) async {
         _ = disconnectCounter.increment()
+    }
+
+    func measurementSource(for _: UUID) -> any ColorMeasurementSource {
+        self
     }
 
     func readInitialColorMeasurement() async throws -> ColorMeasurement {
