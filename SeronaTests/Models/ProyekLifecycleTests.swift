@@ -41,15 +41,18 @@ struct ProyekLifecycleTests {
         #expect(proyek.resep === resep)
     }
 
-    @Test("Finishing stores the final readings and makes the project inactive")
+    @Test("Finishing makes the project inactive and clears the bath data")
     func selesaikanMakesProyekInactive() {
         let proyek = Proyek(nama: "A", perangkatNama: "ESP 32", resep: makeResep(), jumlahKain: 1)
 
         proyek.selesaikan(kepekatanAkhir: 85, phAkhir: 6.5)
 
         #expect(proyek.status == .nonaktif)
-        #expect(proyek.kepekatanAkhir == 85)
-        #expect(proyek.phAkhir == 6.5)
+        #expect(proyek.kepekatanAkhir == nil)
+        #expect(proyek.phAkhir == nil)
+        #expect(proyek.namaWarna == "-")
+        #expect(proyek.perangkatNama == "")
+        #expect(proyek.resep == nil)
     }
 
     @Test("Final readings stay nil, never 0, when the sensor sent none")
@@ -66,12 +69,13 @@ struct ProyekLifecycleTests {
     @Test("Finishing an inactive project again changes nothing")
     func selesaikanIsIdempotent() {
         let proyek = Proyek(nama: "A", perangkatNama: "ESP 32", resep: makeResep(), jumlahKain: 1)
-        proyek.selesaikan(kepekatanAkhir: 85, phAkhir: 6.5)
+        proyek.selesaikan()
 
         proyek.selesaikan(kepekatanAkhir: 10, phAkhir: 2)
 
-        #expect(proyek.kepekatanAkhir == 85)
-        #expect(proyek.phAkhir == 6.5)
+        #expect(proyek.status == .nonaktif)
+        #expect(proyek.kepekatanAkhir == nil)
+        #expect(proyek.phAkhir == nil)
     }
 
     @Test("A project saved before these fields existed is an inactive history entry named after its color")
@@ -90,7 +94,7 @@ struct ProyekLifecycleTests {
         #expect(proyek.zatPembantu.isEmpty)
     }
 
-    @Test("Status, name, device and ingredients survive a save and fetch")
+    @Test("Status and name survive a save and fetch, and the cleared bath data stays cleared")
     func lifecyclePersists() throws {
         let context = try makeTestContext()
         let proyek = Proyek(nama: "Seragam RT 5", perangkatNama: "ESP 32", resep: makeResep(), jumlahKain: 2)
@@ -100,10 +104,10 @@ struct ProyekLifecycleTests {
         let hasil = try #require(try context.fetch(FetchDescriptor<Proyek>()).first)
 
         #expect(hasil.nama == "Seragam RT 5")
-        #expect(hasil.perangkatNama == "ESP 32")
+        #expect(hasil.perangkatNama == "")
         #expect(hasil.status == .nonaktif)
-        #expect(hasil.pewarna == [Bahan(kode: "Naphtol AS", gram: 5)])
-        #expect(hasil.zatPembantu == [Bahan(kode: "Kostik", gram: 2)])
+        #expect(hasil.pewarna.isEmpty)
+        #expect(hasil.zatPembantu.isEmpty)
     }
 }
 
