@@ -3,34 +3,36 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Serona – Pantau warna dan pH larutan pewarna</title>
-  <meta name="description" content="Serona memantau kepekatan warna dan pH larutan pewarna kain secara langsung lewat sensor IoT, lalu memandu kamu memperbaikinya.">
-  <meta property="og:title" content="Serona – Jaga warna celupan tetap konsisten">
-  <meta property="og:description" content="Pantau kepekatan warna dan pH larutan pewarna langsung dari iPhone atau iPad.">
+  <title>Serona – Warna celupan batik yang konsisten</title>
+  <meta name="description" content="Serona memantau pH dan warna bak celup batik secara langsung lewat sensor IoT, lalu memandu penambahan bahan yang tepat sebelum warna menyimpang.">
+  <meta property="og:title" content="Serona – Warna celupan batik yang sama, dari kain pertama sampai ke-600">
+  <meta property="og:description" content="Pantau pH dan kepekatan warna bak celup langsung dari iPhone atau iPad, dan ikuti panduan perbaikannya.">
   <meta property="og:image" content="assets/icon.png">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/style.css?v=5">
 </head>
 <body>
+  <a class="skip" href="#konten">Lewati ke konten</a>
   <header class="site-header">
     <a class="brand" href="./"><img src="assets/icon.png" alt="" width="32" height="32"><span>Serona</span></a>
     <nav class="nav" aria-label="Utama">
-      <a href="#fitur">Fitur</a>
-      <a href="#cara-kerja">Cara kerja</a>
+      <a href="#cerita">Cerita</a>
+      <a href="#simulasi">Simulasi</a>
       <a href="#sensor">Sensor</a>
       <a href="support/">Bantuan</a>
     </nav>
   </header>
 
-  <main class="wrap">
+  <main class="wrap" id="konten">
+    <!-- Hero -->
     <div class="hero">
       <div>
-        <span class="eyebrow">Untuk pewarna kain</span>
-        <h1>Jaga warna celupan tetap konsisten.</h1>
-        <p class="lead">Serona memantau kepekatan warna dan pH larutan pewarna secara langsung lewat sensor IoT, lalu memandu kamu memperbaikinya.</p>
+        <span class="eyebrow">Hadir untuk pembatik</span>
+        <h1>Warna celupan batik yang sama, dari kain pertama sampai ke&#8209;600.</h1>
+        <p class="lead">Serona memantau pH dan warna bak celup secara langsung lewat sensor IoT, lalu memandu kamu menambahkan bahan yang tepat sebelum warnanya menyimpang.</p>
         <div class="actions">
-          <a class="btn" href="#cara-kerja">Lihat cara kerjanya</a>
+          <a class="btn" href="#simulasi">Coba simulasinya</a>
           <a class="btn ghost" href="support/">Butuh bantuan?</a>
         </div>
         <p class="soon">Segera hadir di App Store untuk iPhone dan iPad.</p>
@@ -45,65 +47,222 @@
       </div>
     </div>
 
-    <section id="fitur">
-      <h2>Semua yang kamu perlu untuk satu bak warna</h2>
-      <p class="section-lead">Dari resep sampai larutan selesai dipakai, semuanya ada dalam satu aplikasi.</p>
-      <div class="grid four">
+    <!-- Cerita -->
+    <section id="cerita">
+      <span class="eyebrow">Masalahnya</span>
+      <h2>Warnanya bergeser, dan kamu tidak melihatnya.</h2>
+      <p class="section-lead">Bayangkan seorang pembatik menerima pesanan 600 seragam dengan satu warna kuning pekat. Di awal, hasilnya sempurna, jadi ia terus mencelup.</p>
+
+      <div class="drift" role="img" aria-label="Warna kain memudar perlahan dari kain pertama sampai kain ke-600">
+        <div class="swatches" data-swatches aria-hidden="true"></div>
+        <div class="drift-labels" aria-hidden="true">
+          <span>Kain 1<br><small>Warna sempurna</small></span>
+          <span>Kain 400<br><small>Sudah lebih pudar, belum ketahuan</small></span>
+          <span>Kain 600<br><small>Tidak lagi sama</small></span>
+        </div>
+      </div>
+
+      <div class="grid three">
         <article class="card">
-          <div class="icon" aria-hidden="true">◉</div>
-          <h3>Pantau langsung</h3>
-          <p>Kepekatan warna dan pH larutan muncul langsung dari sensor lewat Bluetooth.</p>
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9c2.2-2 4.4-2 6.6 0s4.4 2 6.6 0 3-1.5 4.8-.4"/><path d="M3 15c2.2-2 4.4-2 6.6 0s4.4 2 6.6 0 3-1.5 4.8-.4"/></svg></div>
+          <h3>Penyebabnya tak terlihat</h3>
+          <p>Bak celup yang terbuka menyerap CO₂ dari udara. pH turun pelan-pelan dan pewarna melemah. Setiap kain yang dicelup juga mengambil pewarna dari bak.</p>
         </article>
         <article class="card">
-          <div class="icon" aria-hidden="true">▤</div>
-          <h3>Resep warna</h3>
-          <p>Simpan resep: jumlah air, pewarna, dan zat pembantu, lalu pakai ulang untuk bak berikutnya.</p>
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg></div>
+          <h3>Baru ketahuan setelah kering</h3>
+          <p>Warna kain basah sulit dibandingkan. Perbedaannya baru tampak saat kain kering dan diletakkan berdampingan.</p>
         </article>
         <article class="card">
-          <div class="icon" aria-hidden="true">!</div>
-          <h3>Peringatan</h3>
-          <p>Kamu diberi tahu dengan tampilan dan bunyi saat kepekatan atau pH turun di bawah batas resep.</p>
-        </article>
-        <article class="card">
-          <div class="icon" aria-hidden="true">✓</div>
-          <h3>Panduan perbaikan</h3>
-          <p>Ikuti tiga tahap: volume air, pH, lalu kepekatan warna, lengkap dengan takaran yang perlu ditambahkan.</p>
+          <div class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></div>
+          <h3>Semua yang terlambat terbuang</h3>
+          <p>Kain yang tidak cocok harus dicelup ulang atau dibuang, begitu juga air dan pewarna. Waktu dan tenaga ikut hilang.</p>
         </article>
       </div>
     </section>
 
-    <section id="cara-kerja">
-      <h2>Cara kerja</h2>
-      <p class="section-lead">Tiga langkah dari resep sampai larutan terjaga.</p>
-      <div class="grid three">
+    <!-- Dengan Serona -->
+    <section id="solusi">
+      <span class="eyebrow">Dengan Serona</span>
+      <h2>Dari bacaan sensor ke takaran yang tepat.</h2>
+      <p class="section-lead">Sensor membaca bak celup terus-menerus. Serona menghitung dan memberi tahu apa yang perlu ditambahkan, sebelum kain berikutnya dicelup.</p>
+      <div class="flow">
         <article class="card">
           <div class="step-no">1</div>
-          <h3>Buat resep warna</h3>
-          <p>Isi nama warna, jumlah air, kode pewarna, dan zat pembantu beserta beratnya.</p>
+          <h3>Sensor membaca</h3>
+          <p>Sensor warna 8 kanal dan sensor pH membaca bak celup lewat Bluetooth.</p>
+        </article>
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <article class="card">
+          <div class="step-no">2</div>
+          <h3>Serona menghitung</h3>
+          <p>Kepekatan warna dan pH dibandingkan dengan resep acuan.</p>
+        </article>
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <article class="card">
+          <div class="step-no">3</div>
+          <h3>Kamu diberi saran</h3>
+          <p>"Tambahkan 10 gr pewarna, 26 gr kostik." Langsung, lengkap dengan takarannya.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Simulasi -->
+    <section id="simulasi">
+      <span class="eyebrow">Simulasi</span>
+      <h2>Coba sendiri, tanpa sensor.</h2>
+      <p class="section-lead">Geser jumlah kain yang dicelup dan lihat bak mulai menyimpang. Saat melewati batas, ikuti panduan perbaikannya.</p>
+
+      <div class="sim-wrap">
+        <div class="sim-panel">
+          <div class="segmented" role="group" aria-label="Pilih perangkat">
+            <button type="button" data-device="iphone" aria-pressed="true">iPhone</button>
+            <button type="button" data-device="ipad" aria-pressed="false">iPad</button>
+          </div>
+
+          <div class="card sim-controls">
+            <label for="simSlider"><strong>Kain yang sudah dicelup</strong></label>
+            <div class="slider-row">
+              <input id="simSlider" type="range" min="0" max="600" step="10" value="0" aria-describedby="simHelp">
+              <output id="simOutput" for="simSlider">0 kain</output>
+            </div>
+            <div class="presets" role="group" aria-label="Lompat ke kondisi bak">
+              <button type="button" data-preset="0">Awal</button>
+              <button type="button" data-preset="150">Mulai bergeser</button>
+              <button type="button" data-preset="500">Lewat batas</button>
+            </div>
+            <p id="simHelp" class="muted">Batas resep: kepekatan 90%, pH 11,0. Angka di sini hanya ilustrasi, bukan pembacaan nyata.</p>
+            <button type="button" class="btn ghost small" id="simReset">Ulangi dari awal</button>
+          </div>
+
+          <ol class="try">
+            <li>Geser slider ke kanan sampai kartu bak berubah merah.</li>
+            <li>Tekan <em>Mulai Perbaiki Larutan</em>.</li>
+            <li>Ikuti tiap tahap sampai selesai dan bak kembali normal.</li>
+          </ol>
+          <p class="sr-only" id="simStatus" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="sim-stage">
+          <div class="device iphone" id="simDevice">
+            <div class="screen">
+              <div class="app">
+                <div class="app-tabs"><span class="on">Bak Warna</span><span>Resep Warna</span></div>
+                <h3 class="app-title">Bak Warna</h3>
+                <div class="baks">
+                  <article class="bak static">
+                    <header><strong>Bak 1</strong><span class="conn"><i></i>Terhubung</span></header>
+                    <div class="who"><span class="sw" style="background:#8E1B2D"></span><div><b>Merah Bata</b><small>ESP 32 - A</small></div></div>
+                    <div class="pill ok"><i>✓</i><span>Kualitas Larutan Baik</span></div>
+                    <div class="tiles">
+                      <div class="tile"><small>Kepekatan</small><strong>96%</strong></div>
+                      <div class="tile"><small>pH Air</small><strong>11,4</strong></div>
+                    </div>
+                    <span class="done-btn">Selesai</span>
+                  </article>
+                  <article class="bak static">
+                    <header><strong>Bak 2</strong><span class="conn"><i></i>Terhubung</span></header>
+                    <div class="who"><span class="sw" style="background:#1F3A73"></span><div><b>Biru Indigo</b><small>ESP 32 - B</small></div></div>
+                    <div class="pill ok"><i>✓</i><span>Kualitas Larutan Baik</span></div>
+                    <div class="tiles">
+                      <div class="tile"><small>Kepekatan</small><strong>93%</strong></div>
+                      <div class="tile"><small>pH Air</small><strong>11,2</strong></div>
+                    </div>
+                    <span class="done-btn">Selesai</span>
+                  </article>
+                  <article class="bak live" id="simBak" data-state="ok">
+                    <header><strong>Bak 3</strong><span class="conn"><i></i>Terhubung</span></header>
+                    <div class="who"><span class="sw" style="background:#6B7F2A"></span><div><b>Hijau Zaitun</b><small>ESP 32 - C</small></div></div>
+                    <div class="pill ok" id="simPill"><i>✓</i><span>Kualitas Larutan Baik</span></div>
+                    <div class="tiles">
+                      <div class="tile" id="simTileK"><small>Kepekatan</small><strong>100%</strong></div>
+                      <div class="tile" id="simTileP"><small>pH Air</small><strong>11,5</strong></div>
+                    </div>
+                    <button type="button" class="done-btn" id="simFix" hidden>Perbaiki Larutan</button>
+                    <span class="done-btn" id="simDoneStatic">Selesai</span>
+                  </article>
+                </div>
+              </div>
+
+              <div class="scrim" id="simScrim" hidden>
+                <div class="sheet alert" id="simAlert" role="dialog" aria-modal="true" aria-labelledby="simAlertTitle" hidden>
+                  <button type="button" class="x" id="simAlertClose" aria-label="Tutup">×</button>
+                  <div class="bucket" aria-hidden="true">!</div>
+                  <h4 id="simAlertTitle">Kualitas Bak 3 Menurun</h4>
+                  <p>Lakukan langkah-langkah berikut untuk perbaiki larutan</p>
+                  <button type="button" class="cta" id="simStart">Mulai Perbaiki Larutan</button>
+                </div>
+                <div class="sheet repair" id="simRepair" role="dialog" aria-modal="true" aria-labelledby="simRepairTitle" hidden>
+                  <div class="repair-head"><strong>Hijau Zaitun</strong><button type="button" class="x" id="simRepairClose" aria-label="Tutup">×</button></div>
+                  <p class="intro">Ikuti panduan penambahan bahan di bawah ini untuk mengembalikan kualitas larutan.</p>
+                  <p class="progress" id="simProgress"></p>
+                  <h4 id="simRepairTitle"></h4>
+                  <div id="simRepairBody"></div>
+                  <button type="button" class="cta" id="simNext">Selanjutnya</button>
+                </div>
+              </div>
+
+              <div class="toast" id="simToast" hidden>✓ Bak kembali ke resep acuan</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Alur pakai -->
+    <section id="cara-kerja">
+      <span class="eyebrow">Cara pakai</span>
+      <h2>Empat langkah dari resep sampai larutan terjaga.</h2>
+      <div class="grid four">
+        <article class="card">
+          <div class="step-no">1</div>
+          <h3>Buat warna</h3>
+          <p>Isi nama warna, jumlah air, kode pewarna, dan zat pembantu beserta beratnya dalam gram.</p>
         </article>
         <article class="card">
           <div class="step-no">2</div>
-          <h3>Hubungkan sensor</h3>
-          <p>Tambahkan bak, pilih sensor lewat Bluetooth, lalu mulai pindai. Pembacaan pertama menjadi acuan 100%.</p>
+          <h3>Buat bak</h3>
+          <p>Tambahkan bak, sambungkan sensor Serona lewat Bluetooth, dan pilih warna yang dipakai.</p>
         </article>
         <article class="card">
           <div class="step-no">3</div>
-          <h3>Pantau dan perbaiki</h3>
-          <p>Lihat kepekatan dan pH terkini. Kalau menurun, ikuti panduan perbaikan. Tekan Selesai bila bak sudah tidak dipakai.</p>
+          <h3>Pantau</h3>
+          <p>Setiap bak punya kartu berisi pH dan kepekatan terkini. Kartu menjadi merah saat kualitas turun.</p>
+        </article>
+        <article class="card">
+          <div class="step-no">4</div>
+          <h3>Perbaiki</h3>
+          <p>Ikuti panduan tiga tahap: volume air, pH, lalu kepekatan warna, dengan takaran tiap bahan.</p>
         </article>
       </div>
+
+      <details class="calc">
+        <summary>Bagaimana Serona menghitung takarannya?</summary>
+        <div class="calc-body">
+          <p><strong>Kepekatan warna.</strong> Delapan kanal sensor membaca cahaya yang melewati bak dan membandingkannya dengan air bersih. Semakin sedikit pewarna, semakin rendah absorbansinya.</p>
+          <p class="formula">A = −log₁₀(T)<br>Kepekatan (%) = A<sub>sekarang</sub> ÷ A<sub>awal</sub> × 100</p>
+          <p><strong>pH dan soda.</strong> pH menunjukkan konsentrasi NaOH, jadi soda yang hilang karena CO₂ bisa dilacak.</p>
+          <p class="formula">Soda (g/L) = 10<sup>(pH−14)</sup> × 40</p>
+          <p><strong>Volume bak.</strong> Kamu tidak perlu mengukurnya dengan tangan. Tambahkan air, dan pH sebelum serta sesudahnya memberi tahu volumenya.</p>
+          <p><strong>Dosis.</strong> Takaran soda dan pewarna dihitung dari selisih konsentrasi terhadap resep acuan dan volume bak.</p>
+        </div>
+      </details>
     </section>
 
+    <!-- Sensor & teknologi -->
     <section id="sensor">
       <div class="hardware">
         <div>
           <h2>Sensor IoT Serona</h2>
           <p class="section-lead" style="margin-bottom:16px">Casing sensor dirancang sendiri oleh tim Serona dan terhubung ke aplikasi lewat Bluetooth.</p>
           <ul>
-            <li>Menggunakan ESP32 dengan sensor warna AS7341.</li>
-            <li>Membaca pH dan kepekatan warna larutan secara berkala.</li>
+            <li>ESP32-C3 dengan sensor warna AS7341 (8 kanal warna dan 1 kanal clear).</li>
+            <li>Sensor pH untuk membaca keasaman larutan.</li>
             <li>Satu sensor untuk satu bak, dan setiap bak punya riwayat pembacaannya sendiri.</li>
           </ul>
+          <p class="chips" aria-label="Teknologi">
+            <span>SwiftUI</span><span>SwiftData</span><span>CoreBluetooth</span><span>ESP32-C3</span>
+          </p>
           <p><a href="support/">Panduan menghubungkan sensor</a></p>
         </div>
         <div>
@@ -121,6 +280,7 @@
     <p>© 2026 Tim Serona · <a href="support/">Bantuan dan kontak</a> · <a href="privacy/">Kebijakan privasi</a></p>
   </footer>
 
-  <script src="assets/turntable.js"></script>
+  <script src="assets/turntable.js?v=5"></script>
+  <script src="assets/sim.js?v=5"></script>
 </body>
 </html>
