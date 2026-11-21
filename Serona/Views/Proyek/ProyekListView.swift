@@ -350,6 +350,7 @@ extension ProyekListView {
         viewModel.clearColorConcentrationWarning()
         viewModel.clearWaterPHWarning()
         if activeAlertTarget?.id == proyek.id {
+            QualityAlarmPlayer.shared.stop()
             activeAlertTarget = nil
         }
         queuedAlertTargets.removeAll { $0.id == proyek.id }

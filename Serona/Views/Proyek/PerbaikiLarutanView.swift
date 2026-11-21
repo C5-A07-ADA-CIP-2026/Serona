@@ -241,7 +241,7 @@ extension PerbaikiLarutanView {
 
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(additions, id: \.kode) { item in
-                    Text("Tambahkan \(item.kode) sebanyak\n\(formatGram(item.gram))")
+                    Text("Tambahkan \(item.kode) sebanyak \(formatGram(item.gram))")
                         .font(.subheadline.bold())
                         .foregroundStyle(.primary)
                 }
@@ -296,9 +296,20 @@ extension PerbaikiLarutanView {
 
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(additions, id: \.kode) { item in
-                    Text("Tambahkan \(item.kode) sebanyak\n\(formatGram(item.gram))")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.primary)
+                    
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 0) {
+                            Text("Tambahkan \(item.kode) sebanyak ")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.primary)
+                            Text("\(formatGram(item.gram))")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.primary)
+                        }
+                        Text("Larutkan dengan air panas secukupnya")
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                    }
                 }
             }
             .padding(16)

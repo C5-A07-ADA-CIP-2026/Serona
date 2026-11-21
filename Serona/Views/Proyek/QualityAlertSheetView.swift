@@ -47,6 +47,7 @@ struct QualityAlertSheetView: View {
                 }
 
                 Button {
+                    QualityAlarmPlayer.shared.stop()
                     onPerbaiki()
                     dismiss()
                 } label: {
@@ -65,6 +66,7 @@ struct QualityAlertSheetView: View {
             .frame(minWidth: sheetMinWidth)
 
             Button {
+                QualityAlarmPlayer.shared.stop()
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
@@ -82,6 +84,12 @@ struct QualityAlertSheetView: View {
         .presentationSizing(.fitted)
         .presentationBackground(Color.white)
         .presentationDragIndicator(.hidden)
+        .onAppear {
+            QualityAlarmPlayer.shared.start()
+        }
+        .onDisappear {
+            QualityAlarmPlayer.shared.stop()
+        }
     }
 }
 
