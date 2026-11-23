@@ -206,20 +206,20 @@ struct ProyekDetailViewModelTests {
 
     // MARK: Finishing
 
-    @Test("Finishing without a scan does nothing")
-    func finishWithoutScanDoesNothing() {
+    @Test("Finishing without a scan still resets the bak and saves")
+    func finishWithoutScanResetsBak() {
         let proyek = makeProyek()
         let persistence = RecordingModelPersistence()
         let viewModel = makeViewModel(proyek: proyek)
 
         let didFinish = viewModel.selesaikan(in: persistence)
 
-        #expect(!didFinish)
-        #expect(proyek.status == .aktif)
-        #expect(persistence.events.isEmpty)
+        #expect(didFinish)
+        #expect(proyek.status == .nonaktif)
+        #expect(persistence.events == [.save])
     }
 
-    @Test("Finishing after a scan saves the final readings and makes the project inactive")
+    @Test("Finishing after a scan resets the bak to unused and saves")
     func finishStoresFinalReadings() async {
         let proyek = makeProyek()
         let persistence = RecordingModelPersistence()
@@ -234,8 +234,9 @@ struct ProyekDetailViewModelTests {
 
         #expect(didFinish)
         #expect(proyek.status == .nonaktif)
-        #expect(proyek.kepekatanAkhir == 85)
-        #expect(proyek.phAkhir == 6.5)
+        #expect(proyek.kepekatanAkhir == nil)
+        #expect(proyek.phAkhir == nil)
+        #expect(proyek.namaWarna == "-")
         #expect(persistence.events == [.save])
     }
 

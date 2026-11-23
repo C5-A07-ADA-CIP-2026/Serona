@@ -6,20 +6,6 @@
 import SwiftData
 import SwiftUI
 
-struct ProyekRepairTarget: Identifiable {
-    let id: UUID
-    let proyek: Proyek
-    let viewModel: ProyekDetailViewModel
-    let issue: QualityIssue
-}
-
-struct ProyekQualityAlertTarget: Identifiable {
-    let id: UUID
-    let proyek: Proyek
-    let viewModel: ProyekDetailViewModel
-    let alert: QualityAlert
-}
-
 struct ProyekListView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Query(sort: \Proyek.tanggal, order: .forward) private var semuaProyek: [Proyek]
