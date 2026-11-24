@@ -92,7 +92,7 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
         String(
             format: "%.1f%%",
             locale: Locale(identifier: "en_US_POSIX"),
-            percentage
+            min(percentage, 100)
         )
     }
 
