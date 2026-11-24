@@ -1,8 +1,3 @@
-//
-//  PerbaikiLarutanViewModel.swift
-//  Serona
-//
-
 import Foundation
 import Observation
 
@@ -29,7 +24,6 @@ final class PerbaikiLarutanViewModel {
     private(set) var pHSebelum: Double?
     private(set) var activeIndex = 0
 
-    /// `pHSebelum` is the live sensor pH right before adding water (C1), NOT `proyek.phAwal`.
     init(
         issue: QualityIssue,
         proyek: Proyek? = nil,
@@ -46,7 +40,6 @@ final class PerbaikiLarutanViewModel {
         activeIndex = resolvedSteps.firstIndex(of: initialStep) ?? 0
     }
 
-    /// Keeps `pHSebelum` synced to the live reading right until the user starts adding water in Step 1.
     func syncPHBeforeWater(_ livePH: Double?) {
         guard currentStep == .air, jumlahAir == 0, let livePH else { return }
         pHSebelum = livePH
@@ -76,7 +69,6 @@ final class PerbaikiLarutanViewModel {
         return formatter.string(from: NSNumber(value: jumlahAir)) ?? "\(jumlahAir)"
     }
 
-    /// Fallback bath volume only if pH did not drop enough in Step 1 to solve C1 * V1 = C2 * V2.
     var totalVolumeLiter: Double {
         let baseVolume: Double = if let proyek, proyek.volumeAwalLiter > 0 {
             proyek.volumeAwalLiter
@@ -88,7 +80,6 @@ final class PerbaikiLarutanViewModel {
         return baseVolume + Double(max(0, jumlahAir))
     }
 
-    /// Post-dilution bath volume V2 (L) from C1 * V1 = C2 * V2, falling back to `totalVolumeLiter`.
     var volumeBakLiter: Double? {
         penambahanSoda?.volumeSekarang ?? totalVolumeLiter
     }

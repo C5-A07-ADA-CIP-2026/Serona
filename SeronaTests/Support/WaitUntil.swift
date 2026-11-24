@@ -1,10 +1,3 @@
-//
-//  WaitUntil.swift
-//  SeronaTests
-//
-
-/// Polls `condition` on the main actor until it holds or `timeout` elapses.
-/// Returns whether the condition held, so tests can `#expect(await waitUntil { ... })`.
 @MainActor
 func waitUntil(
     timeout: Duration = .seconds(2),

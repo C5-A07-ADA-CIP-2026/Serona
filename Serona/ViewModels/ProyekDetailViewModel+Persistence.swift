@@ -1,13 +1,6 @@
-//
-//  ProyekDetailViewModel+Persistence.swift
-//  Serona
-//
-
 import Foundation
 
-/// Finishing a bath and switching its device, both of which save the project and roll back when saving fails.
 extension ProyekDetailViewModel {
-    /// Finishes the active bath: clears all saved bath data and resets the bak to unused (`nonaktif`).
     @discardableResult
     func selesaikan(in persistence: some ModelPersisting) -> Bool {
         guard proyek.status == .aktif else { return false }
@@ -52,7 +45,6 @@ extension ProyekDetailViewModel {
         return true
     }
 
-    /// Points the active bath at `device` after reconnecting to another sensor, keeping all saved bath data.
     @discardableResult
     func gantiPerangkat(_ device: DiscoveredDevice, in persistence: some ModelPersisting) -> Bool {
         guard proyek.status == .aktif else { return false }
@@ -72,7 +64,6 @@ extension ProyekDetailViewModel {
         return true
     }
 
-    /// Switches the project to `device` (see `gantiPerangkat`) and reconnects with saved bath data intact.
     @discardableResult
     func pindahPerangkat(_ device: DiscoveredDevice, in persistence: some ModelPersisting) async -> Bool {
         guard gantiPerangkat(device, in: persistence) else { return false }

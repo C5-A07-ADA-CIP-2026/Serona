@@ -1,4 +1,0 @@
-interface:
-  display_name: "HIG Compliance"
-  short_description: "Apply current Apple UI and accessibility guidance"
-  default_prompt: "Use $hig-compliance to review this Apple-platform UI against current HIG guidance."

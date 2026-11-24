@@ -1,8 +1,3 @@
-//
-//  ColorMeasurementTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing
@@ -30,9 +25,6 @@ struct ColorMeasurementTests {
         #expect(measurement.formattedConcentration(relativeTo: 0) == "0.0%")
     }
 
-    // MARK: - Per-channel ratios against clear
-
-    /// F1-F4 are read with `clearFirst`, F5-F8 with `clear`.
     private func channelReading(
         _ channels: [UInt16]? = [100, 200, 300, 400, 100, 200, 300, 400],
         clearFirst: UInt16? = 1000,
@@ -60,7 +52,7 @@ struct ColorMeasurementTests {
     @Test("Concentration is the lowest channel transmittance against the baseline ratios")
     func concentrationFromMostAbsorbedChannel() {
         let baseline = [0.1, 0.2, 0.3, 0.4, 0.2, 0.4, 0.6, 0.8]
-        // F5 drops to 0.144 (72% of 0.2); every other channel is unchanged.
+
         let darker = ColorMeasurement(
             visibleAverage: 250,
             clear: 500,

@@ -1,6 +1,5 @@
 import Foundation
 
-/// Fan-out router used by BLE sessions. Measurements never cross device identifiers.
 final nonisolated class MeasurementStreamRouter: @unchecked Sendable {
     private let lock = NSLock()
     private var continuations: [UUID: [UUID: AsyncStream<ColorMeasurement>.Continuation]] = [:]

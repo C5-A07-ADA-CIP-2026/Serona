@@ -1,13 +1,6 @@
-//
-//  PerbaikiLarutanView+Steps.swift
-//  Serona
-//
-
 import SwiftUI
 
 extension PerbaikiLarutanView {
-    // MARK: - Step Views
-
     @ViewBuilder
     var stepContent: some View {
         switch guide.currentStep {
@@ -41,7 +34,6 @@ extension PerbaikiLarutanView {
                 .foregroundStyle(Color.black)
                 .fixedSize(horizontal: false, vertical: true)
 
-            // At accessibility sizes the label gets its own line so it is not squeezed into broken words.
             let rowLayout = dynamicTypeSize.isAccessibilitySize
                 ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
                 : AnyLayout(HStackLayout(spacing: 12))

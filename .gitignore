@@ -50,9 +50,3 @@ fastlane/test_output/
 # --------------------------------------------------
 *.swp
 *.lock
-
-# --------------------------------------------------
-# XcodeBuildMCP local session defaults
-# (machine-specific paths/sim UUID)
-# --------------------------------------------------
-.xcodebuildmcp/

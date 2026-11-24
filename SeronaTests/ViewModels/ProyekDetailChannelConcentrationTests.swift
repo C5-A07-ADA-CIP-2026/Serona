@@ -1,22 +1,13 @@
-//
-//  ProyekDetailChannelConcentrationTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing
 
-/// The app, not the device, computes the concentration: the absorbance of the dominant (most absorbed) channel
-/// against the fixed clean water, as a share of the absorbance of the ratios saved with the initial color.
 @MainActor
 struct ProyekDetailChannelConcentrationTests {
     private func makeProyek() -> Proyek {
         Proyek(nama: "Seragam RT 5", perangkatNama: "ESP 32", resep: .sample(batasKepekatan: 80), jumlahKain: 3)
     }
 
-    /// All channels at 200 against a clear of 1000, except F3 (`channel3`, default 200), the most absorbed one
-    /// against the clean water.
     private func reading(channel3: UInt16 = 200, average: Double = 1000, channels: Bool = true) -> ColorMeasurement {
         ColorMeasurement(
             visibleAverage: average,
@@ -52,7 +43,6 @@ struct ProyekDetailChannelConcentrationTests {
         #expect(viewModel.latestConcentration == 100)
     }
 
-    /// Absorbance of `ratios` as a percentage of the baseline's, against the fixed clean water.
     private func expectedConcentration(of ratios: [Double], baseline: [Double]) -> Double {
         let clean = ProyekDetailViewModel.defaultCleanWaterRatios
         let now = ColorMeasurement.absorbance(ratios: ratios, cleanRatios: clean) ?? 0
@@ -61,7 +51,7 @@ struct ProyekDetailChannelConcentrationTests {
     }
 
     private static let baselineRatios = [Double](repeating: 0.2, count: 8)
-    /// F3 lightens to 0.3, so the next channel becomes the most absorbed one.
+
     private static let lighterRatios: [Double] = [0.2, 0.2, 0.3, 0.2, 0.2, 0.2, 0.2, 0.2]
 
     @Test("Afterwards the concentration follows the most absorbed channel, not the visible average")
@@ -69,7 +59,6 @@ struct ProyekDetailChannelConcentrationTests {
         let (viewModel, liveReadings) = await makeLive(initial: reading())
         viewModel.tetapkanWarnaAwal(in: RecordingModelPersistence())
 
-        // The visible average barely moves (990 of 1000) while the dominant channel changes.
         liveReadings.yield(reading(channel3: 300, average: 990))
         let expected = expectedConcentration(of: Self.lighterRatios, baseline: Self.baselineRatios)
         let applied = await waitUntil { viewModel.latestConcentration != 100 }

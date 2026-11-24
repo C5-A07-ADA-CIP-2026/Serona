@@ -1,13 +1,5 @@
-//
-//  BarisAwalView.swift
-//  Serona
-//
-
 import SwiftUI
 
-/// An "awal" row whose value comes from the live reading right above it.
-/// Not set yet: a small "Tetapkan" button (or "Menunggu sensor…" while there is no reading) takes the value's place.
-/// Set: the value, with a small button to measure again. Stacked at accessibility sizes, like `BarisInfo`.
 struct BarisAwalView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 

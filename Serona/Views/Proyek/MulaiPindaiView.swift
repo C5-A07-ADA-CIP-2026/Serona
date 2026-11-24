@@ -1,10 +1,3 @@
-//
-//  MulaiPindaiView.swift
-//  Serona
-//
-//  Created by Steffany Florence on 14/11/26.
-//
-
 import SwiftData
 import SwiftUI
 

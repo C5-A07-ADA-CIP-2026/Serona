@@ -1,8 +1,3 @@
-//
-//  DiscoveredDeviceNameTests.swift
-//  SeronaTests
-//
-
 @testable import Serona
 import Testing
 

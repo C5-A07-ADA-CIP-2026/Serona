@@ -1,6 +1,5 @@
 import Foundation
 
-/// Reassembles one or more JSON objects from BLE notification fragments.
 struct MeasurementFrameDecoder: Sendable {
     private(set) var buffer = Data()
     private let maximumBufferSize = 4096
@@ -34,14 +33,12 @@ struct MeasurementFrameDecoder: Sendable {
     }
 }
 
-/// Tracks braces outside JSON strings so a complete top-level object can be cut out of a byte stream.
 private struct JSONObjectScanner {
     private(set) var depth = 0
     private var start: Data.Index?
     private var inString = false
     private var escaped = false
 
-    /// Feeds one byte; returns the start index of a top-level object when `byte` closes it.
     mutating func consume(_ byte: UInt8, at index: Data.Index) -> Data.Index? {
         if inString {
             updateString(with: byte)

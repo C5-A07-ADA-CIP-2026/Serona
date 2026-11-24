@@ -1,8 +1,3 @@
-//
-//  PerbaikiLarutanView.swift
-//  Serona
-//
-
 import SwiftUI
 
 struct PerbaikiLarutanView: View {
@@ -37,14 +32,6 @@ struct PerbaikiLarutanView: View {
         }
     }
 
-//    private var headerTitle: String {
-//        let warna = viewModel.proyek.namaWarna.trimmingCharacters(in: .whitespacesAndNewlines)
-//        if !warna.isEmpty, warna != "-" {
-//            return warna
-//        }
-//        return viewModel.proyek.nama
-//    }
-
     var isPHReached: Bool {
         guard let currentPH = viewModel.latestWaterPH else { return false }
         return currentPH >= PerbaikiLarutanViewModel.targetPH
@@ -64,8 +51,6 @@ struct PerbaikiLarutanView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            // Fill the current detent height so content stays at the top and the button stays at the bottom,
-            // while scrolling smoothly when resized to a shorter detent or larger Dynamic Type.
             ScrollView {
                 guideContent
                     .frame(minHeight: proxy.size.height, alignment: .top)
@@ -96,11 +81,8 @@ struct PerbaikiLarutanView: View {
 }
 
 extension PerbaikiLarutanView {
-    // MARK: - Layout
-
     var guideContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            // The close button lives in the title row, so it scrolls with the content instead of covering it.
             ZStack(alignment: .trailing) {
                 Text("Perbaiki Larutan")
                     .font(.headline.bold())
@@ -111,13 +93,6 @@ extension PerbaikiLarutanView {
 
                 closeButton
             }
-
-//            Text(
-//                "Ikuti panduan penambahan bahan di bawah ini untuk mengembalikan kualitas larutan sesuai threshold."
-//            )
-//            .font(.subheadline)
-//            .foregroundStyle(.primary)
-//            .fixedSize(horizontal: false, vertical: true)
 
             stepContent
 
@@ -165,8 +140,6 @@ extension PerbaikiLarutanView {
         .buttonStyle(.plain)
         .accessibilityLabel("Tutup")
     }
-
-    // MARK: - Formatting
 
     var concentrationStatusSymbol: String {
         isConcentrationReached ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"

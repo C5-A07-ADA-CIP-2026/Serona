@@ -1,12 +1,6 @@
-//
-//  PenambahanPewarnaTests.swift
-//  SeronaTests
-//
-
 @testable import Serona
 import Testing
 
-/// Dye to add = (target - bath g/L) x bath volume, split like the recipe. The recipe is per liter of water.
 @Suite("Penambahan pewarna")
 @MainActor
 struct PenambahanPewarnaTests {
@@ -35,8 +29,6 @@ struct PenambahanPewarnaTests {
 
     @Test("With the bath volume after the soda step the dose scales from the recipe volume")
     func scalesWithTheBathVolume() {
-        // Recipe water 1 L with 15 g of dye: C_target = 15 g/L.
-        // At 70% in 20 L: 15 x 20 x 0.3 = 90 g, split 1 : 2 like the recipe.
         let tambahan = makeProyek().pewarnaYangDitambah(kepekatan: 70, volumeLiter: 20)
 
         #expect(abs(tambahan[0].gram - 30) < 1e-9)
@@ -62,7 +54,7 @@ struct PenambahanPewarnaTests {
 
     @Test("The target is the recipe's dye over its water in g/L; the bath holds that share of it")
     func dyeConcentrationInGramPerLiter() {
-        let proyek = makeProyek() // 15 g of dye over 1 L of water
+        let proyek = makeProyek()
 
         #expect(abs(proyek.targetPewarnaGramPerLiter - 15) < 1e-9)
         #expect(abs(proyek.konsentrasiPewarnaGramPerLiter(kepekatan: 100) - 15) < 1e-9)

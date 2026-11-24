@@ -1,12 +1,5 @@
-//
-//  BakCardView+Previews.swift
-//  Serona
-//
-
 import SwiftData
 import SwiftUI
-
-// MARK: - Previews
 
 #Preview("3 Stages Grid (iPad Landscape)", traits: .landscapeLeft) {
     BakCardStagesPreview()
@@ -73,8 +66,6 @@ private struct PreviewMeasurementSource: ColorMeasurementSource {
         }
     }
 }
-
-// MARK: - Preview Helpers
 
 private extension Proyek {
     static var previewActiveSample: Proyek {

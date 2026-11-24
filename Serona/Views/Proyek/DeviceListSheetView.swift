@@ -1,8 +1,3 @@
-//
-//  DeviceListSheetView.swift
-//  Serona
-//
-
 import SwiftUI
 
 struct DeviceListSheetView: View {
@@ -12,11 +7,9 @@ struct DeviceListSheetView: View {
     private let onConnected: (DiscoveredDevice) -> Void
     private let onDisconnected: (DiscoveredDevice) -> Void
     private let assignedDeviceIDs: Set<UUID>
-    /// True when pushed inside a `NavigationStack`: the system bar replaces the custom header and Back button.
+
     private let isPushed: Bool
 
-    /// No vertical inset: every row is as tall as its 44 pt minimum, so the connected row (with its 44 pt button)
-    /// and the others stay the same height.
     private static let rowInsets = EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
 
     private let oliveGreen = Color("oliveGreen")
@@ -104,7 +97,7 @@ struct DeviceListSheetView: View {
         .onChange(of: viewModel.connectedDevice) { _, device in
             guard let device else { return }
             onConnected(device)
-            // Pushed, the list stays so the connected device shows at the top; the Back button leaves it.
+
             if !isPushed {
                 dismiss()
             }
@@ -127,8 +120,6 @@ struct DeviceListSheetView: View {
             Text(message)
         }
     }
-
-    // MARK: - Header Bar
 
     private var modalHeaderBar: some View {
         HStack {
@@ -172,10 +163,6 @@ struct DeviceListSheetView: View {
         }
     }
 
-    // MARK: - Device Rows
-
-    /// The whole row is the button: tapping it connects. A device that another active bak uses is not a button, and
-    /// stays in secondary text (not the dimmed disabled style) so "Dipakai bak lain" remains readable.
     @ViewBuilder
     private func deviceRow(_ device: DiscoveredDevice) -> some View {
         if assignedDeviceIDs.contains(device.id) {
@@ -247,8 +234,6 @@ struct DeviceListSheetView: View {
         .accessibilityElement(children: .contain)
     }
 
-    // MARK: - Alert Bindings
-
     private var connectingIsPresented: Binding<Bool> {
         Binding(
             get: { viewModel.connectingDevice != nil },
@@ -271,8 +256,6 @@ struct DeviceListSheetView: View {
         )
     }
 }
-
-// MARK: - Previews
 
 #Preview("Device List Sheet", traits: .landscapeLeft) {
     BackgroundGradient()

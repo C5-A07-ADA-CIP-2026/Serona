@@ -1,13 +1,4 @@
-//
-//  ResepFormComponents.swift
-//  Serona
-//
-//  Subviews shared by the recipe form (`HalamanTambahResep`).
-//
-
 import SwiftUI
-
-// MARK: - Helper Subviews
 
 struct SectionHeader: View {
     let title: String

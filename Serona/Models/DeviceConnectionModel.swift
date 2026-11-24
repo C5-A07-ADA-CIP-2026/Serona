@@ -1,8 +1,3 @@
-//
-//  DeviceConnectionModel.swift
-//  Serona
-//
-
 import Foundation
 
 struct ColorMeasurement: Equatable, Decodable, Sendable {
@@ -10,9 +5,9 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
     let clear: UInt16
     let nir: UInt16
     let waterPH: Double?
-    /// Raw F1...F8 counts; nil from firmware that does not send them.
+
     let channels: [UInt16]?
-    /// Clear read together with F1-F4 (`clear` is the one read with F5-F8); nil when not sent.
+
     let clearFirst: UInt16?
 
     init(
@@ -42,8 +37,6 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
         clearFirst = try container.decodeIfPresent(UInt16.self, forKey: .clearFirst)
     }
 
-    /// Each of F1...F8 divided by the clear of the cycle that read it (F1-F4 by `clearFirst`, F5-F8 by `clear`).
-    /// Dividing by clear cancels fluctuations of the LED and distance. Nil without 8 channels or a positive clear.
     var channelRatios: [Double]? {
         guard let channels, channels.count == 8, let clearFirst, clearFirst > 0, clear > 0 else { return nil }
         return channels.enumerated().map { index, count in
@@ -51,8 +44,6 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
         }
     }
 
-    /// Percentage of the baseline in the channel that absorbs the most: the lowest `ratio / baseline` of
-    /// the 8 channels. Channels without baseline signal are skipped. Nil without channel data to compare.
     func concentration(relativeToRatios baseline: [Double]) -> Double? {
         guard let ratios = channelRatios, baseline.count == ratios.count else { return nil }
         let transmittances = zip(ratios, baseline).compactMap { ratio, base in
@@ -61,13 +52,8 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
         return transmittances.min().map { $0 * 100 }
     }
 
-    /// Channels whose transmittances differ by less than this are read as one color, so they are averaged.
     private static let transmittanceSpreadLimit = 0.08
 
-    /// A = -log10(T) of a bath, with T = ratio / clean-water ratio per channel. T is the mean of the channels
-    /// when they differ by less than `transmittanceSpreadLimit`, else the lowest (the dominant color).
-    /// A channel with no clean-water signal counts as T = 1; one with no signal in the bath is skipped.
-    /// Nil when no channel is left, or the sizes differ.
     static func absorbance(ratios: [Double], cleanRatios: [Double]) -> Double? {
         guard ratios.count == cleanRatios.count else { return nil }
         let transmittances = zip(ratios, cleanRatios).compactMap { ratio, clean -> Double? in
@@ -78,13 +64,11 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
         let rawEffective = highest - lowest < transmittanceSpreadLimit
             ? transmittances.reduce(0, +) / Double(transmittances.count)
             : lowest
-        // Clamp transmittance to <= 1.0 so minor sensor noise above clean water does not yield negative absorbance.
+
         let effective = min(1.0, rawEffective)
         return -log10(effective)
     }
 
-    /// Absorbance as a percentage of the baseline's, both against the same clean water. It follows the dye in
-    /// the bath: less dye, less absorbance. Nil without channels, or when the baseline has no absorbance.
     func concentration(relativeToRatios baseline: [Double], cleanRatios: [Double]) -> Double? {
         guard let ratios = channelRatios,
               let current = Self.absorbance(ratios: ratios, cleanRatios: cleanRatios),
@@ -94,7 +78,6 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
         return max(0, current / initial * 100)
     }
 
-    /// Percentage of `baseline`; nil when there is no positive baseline to compare with.
     func concentration(relativeTo baseline: Double) -> Double? {
         guard baseline > 0 else { return nil }
         return (visibleAverage / baseline) * 100
@@ -125,9 +108,6 @@ struct ColorMeasurement: Equatable, Decodable, Sendable {
 }
 
 extension ColorMeasurement {
-    /// Static clean water ("air bersih") AS7341 calibration reading.
-    /// Update `channels` (F1...F8), `clearFirst` (clear1 for F1–F4), and `clear` (clear for F5–F8)
-    /// with your measured clean-water counts from the ESP32.
     static let defaultCleanWater = ColorMeasurement(
         visibleAverage: 1572.3,
         clear: 7266,
@@ -136,20 +116,15 @@ extension ColorMeasurement {
         clearFirst: 7266
     )
 
-    /// Normalized 8-channel ratios (`F1...F4 / clearFirst`, `F5...F8 / clear`) for clean water.
     static let defaultCleanWaterRatios: [Double] = defaultCleanWater.channelRatios ?? Array(repeating: 1.0, count: 8)
 }
 
-/// A Serona device found while scanning.
 struct DiscoveredDevice: Identifiable, Hashable, Sendable {
-    /// Shown while a device has not revealed its name yet.
     static let unnamed = "Tanpa Nama"
 
     let id: UUID
     let nama: String
 
-    /// The name to show for a peripheral. The advertised name comes first because iOS caches `peripheralName`
-    /// and can keep an old one. Blank names count as missing; nil means neither source has a name yet.
     nonisolated static func resolveName(peripheralName: String?, advertisedName: String?) -> String? {
         [advertisedName, peripheralName]
             .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -157,17 +132,14 @@ struct DiscoveredDevice: Identifiable, Hashable, Sendable {
     }
 }
 
-/// Finds and connects to devices. This is all `DeviceListViewModel` needs.
 protocol DeviceConnecting: Sendable {
-    /// Emits each device as it is found and finishes when the scan ends.
     func scanDevices() -> AsyncThrowingStream<DiscoveredDevice, any Error>
-    /// Connects to `device`. Cancelling the calling task abandons the attempt with `CancellationError`.
+
     func connect(to device: DiscoveredDevice) async throws
-    /// Drops the connection to `device`.
+
     func disconnect(from device: DiscoveredDevice) async
 }
 
-/// Reads color measurements from a connected device. This is all `ProyekViewModel` needs.
 protocol ColorMeasurementSource: Sendable {
     func readInitialColorMeasurement() async throws -> ColorMeasurement
     func measurementUpdates() -> AsyncStream<ColorMeasurement>
@@ -189,12 +161,10 @@ enum DeviceConnectionState: Equatable, Sendable {
     case failed(String)
 }
 
-/// Creates a measurement source permanently bound to one peripheral.
 protocol DeviceMeasurementProviding: Sendable {
     func measurementSource(for deviceID: UUID) -> any ColorMeasurementSource
 }
 
-/// A service that discovers devices and creates independent measurement sessions for them.
 protocol DeviceConnectionService: DeviceConnecting, DeviceMeasurementProviding, Sendable {}
 
 struct SimulatedDeviceConnectionService: DeviceConnectionService, ColorMeasurementSource {

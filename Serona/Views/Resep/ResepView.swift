@@ -1,8 +1,3 @@
-//
-//  ResepView.swift
-//  Serona
-//
-
 import SwiftData
 import SwiftUI
 
@@ -98,8 +93,6 @@ struct ResepView: View {
     }
 }
 
-// MARK: - Previews
-
 #Preview("ResepView", traits: .landscapeLeft) {
     NavigationStack {
         ResepView()
@@ -113,8 +106,6 @@ struct ResepView: View {
     }
     .modelContainer(previewResepContainer(isi: false))
 }
-
-// MARK: - Preview Data Container
 
 @MainActor
 private func previewResepContainer(isi: Bool) -> ModelContainer {

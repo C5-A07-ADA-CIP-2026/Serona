@@ -1,14 +1,7 @@
-//
-//  TambahProyekView+Save.swift
-//  Serona
-//
-
 import SwiftData
 import SwiftUI
 
 extension TambahProyekView {
-    // MARK: - Save Action
-
     func simpanProyek() {
         guard canSubmit, let perangkat = viewModel.perangkat, let resep = viewModel.resep else { return }
         let airLiter = viewModel.jumlahAir > 0 ? viewModel.jumlahAir : resep.air
@@ -50,7 +43,6 @@ extension TambahProyekView {
         }
     }
 
-    /// Starts an existing bath over with the chosen device and recipe: the old readings and baselines are cleared.
     private func resetForReuse(_ proyek: Proyek, perangkat: DiscoveredDevice, resep: Resep, airLiter: Int) {
         proyek.perangkatNama = perangkat.nama
         proyek.perangkatID = perangkat.id
@@ -63,7 +55,7 @@ extension TambahProyekView {
         proyek.jumlahKain = 1
         proyek.tanggal = .now
         proyek.status = .aktif
-//        proyek.tanggalSelesai = nil
+
         proyek.visibleAverageAwal = nil
         proyek.rasioAwal = nil
         proyek.phAwal = nil

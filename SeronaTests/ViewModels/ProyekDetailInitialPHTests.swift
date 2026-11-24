@@ -1,13 +1,7 @@
-//
-//  ProyekDetailInitialPHTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing
 
-/// The initial pH is what the user chooses from the live sensor reading, not whatever the sensor read first.
 @MainActor
 struct ProyekDetailInitialPHTests {
     private func makeProyek() -> Proyek {
@@ -18,7 +12,6 @@ struct ProyekDetailInitialPHTests {
         ColorMeasurement(visibleAverage: 1000, clear: 1200, nir: 200, waterPH: waterPH)
     }
 
-    /// A scanned view model that has already received `waterPH` from the live stream.
     private func makeScanned(
         proyek: Proyek? = nil,
         waterPH: Double? = 11
