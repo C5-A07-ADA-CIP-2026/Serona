@@ -115,10 +115,10 @@ final class QualityAlarmPlayer {
         let envelope = min(fadeIn, fadeOut)
 
         // Metallic two-frequency buzzer carrier (880 Hz + 1108 Hz minor third + odd harmonics)
-        let f1 = 880.0
-        let f2 = 1108.73
-        let angle1 = 2.0 * .pi * f1 * time
-        let angle2 = 2.0 * .pi * f2 * time
+        let baseFrequency = 880.0
+        let thirdFrequency = 1108.73
+        let angle1 = 2.0 * .pi * baseFrequency * time
+        let angle2 = 2.0 * .pi * thirdFrequency * time
 
         let buzzerWave = sin(angle1)
             + 0.65 * sin(angle2)
