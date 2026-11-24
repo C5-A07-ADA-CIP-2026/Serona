@@ -1,12 +1,5 @@
-//
-//  PerbaikiLarutanView+Previews.swift
-//  Serona
-//
-
 import SwiftData
 import SwiftUI
-
-// MARK: - Previews
 
 #Preview("Tahap 1: Volume Air (0 L - Medium)", traits: .landscapeLeft) {
     PerbaikiLarutanStepPreview(
@@ -69,8 +62,6 @@ import SwiftUI
         detent: .large
     )
 }
-
-// MARK: - Preview Helpers
 
 private struct PerbaikiLarutanStepPreview: View {
     let previewID: String

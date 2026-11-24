@@ -1,13 +1,7 @@
-//
-//  ProyekDetailResumeTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing
 
-/// A project whose scan was started keeps its stage when the detail screen is opened again.
 @MainActor
 struct ProyekDetailResumeTests {
     private func makeProyek() -> Proyek {

@@ -1,15 +1,8 @@
-//
-//  MeasurementWarningTracker.swift
-//  Serona
-//
-
 import Foundation
 
-/// Decides when a reading deserves a warning and what it says.
 nonisolated struct MeasurementWarningTracker {
     private var hasWarnedAboutLowConcentration = false
 
-    /// The concentration warning is emitted once per dip; it re-arms when the concentration reaches the limit again.
     mutating func concentrationWarning(for concentration: Double, limit: Double) -> String? {
         guard concentration < limit else {
             hasWarnedAboutLowConcentration = false
@@ -33,13 +26,11 @@ nonisolated struct MeasurementWarningTracker {
     static let bothMessage = "pH air dan kepekatan warna saat ini berada di bawah batas aman yang ditentukan. "
         + "Tindakan perbaikan disarankan agar hasil optimal."
 
-    /// The pH warning is repeated for every reading below the limit.
     static func waterPHWarning(for waterPH: Double, limit: Double) -> String? {
         guard waterPH < limit else { return nil }
         return waterPHMessage(limit: limit)
     }
 
-    /// Locale-independent, drops trailing zeros: 80 -> "80", 87.5 -> "87.5".
     private static func format(_ value: Double) -> String {
         String(format: "%g", value)
     }

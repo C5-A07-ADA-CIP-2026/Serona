@@ -1,8 +1,3 @@
-//
-//  ModelPersistingTests.swift
-//  SeronaTests
-//
-
 @testable import Serona
 import SwiftData
 import Testing

@@ -1,12 +1,5 @@
-//
-//  TambahProyekView+Previews.swift
-//  Serona
-//
-
 import SwiftData
 import SwiftUI
-
-// MARK: - Previews
 
 #Preview("Tambah Proyek Sheet", traits: .landscapeLeft) {
     BackgroundGradient()
@@ -34,7 +27,6 @@ import SwiftUI
 }
 
 private extension TambahProyekViewModel {
-    /// A form with a device, a color, a customer name and water already filled in.
     static var previewTerisi: TambahProyekViewModel {
         let viewModel = TambahProyekViewModel()
         viewModel.pilihPerangkat(DiscoveredDevice(id: UUID(), nama: "Serona Sensor"))

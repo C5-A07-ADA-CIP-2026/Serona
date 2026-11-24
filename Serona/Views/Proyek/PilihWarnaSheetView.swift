@@ -1,12 +1,5 @@
-//
-//  PilihWarnaSheetView.swift
-//  Serona
-//
-
 import SwiftData
 import SwiftUI
-
-// MARK: - Pilih Warna Sub-Sheet
 
 struct PilihWarnaSheetView: View {
     @Query(sort: \Resep.dibuat, order: .reverse) private var daftarResep: [Resep]
@@ -16,7 +9,7 @@ struct PilihWarnaSheetView: View {
     @State private var chosenResep: Resep?
 
     var onConfirm: (Resep) -> Void
-    /// True when pushed inside a `NavigationStack`: the system bar replaces the custom header and Back button.
+
     let isPushed: Bool
 
     private let oliveGreen = Color("oliveGreen")
@@ -44,7 +37,6 @@ struct PilihWarnaSheetView: View {
             } else {
                 ScrollView {
                     LazyVGrid(
-                        // One column at accessibility sizes so names and the placeholder text have room.
                         columns: Array(
                             repeating: GridItem(.flexible(), spacing: 20),
                             count: dynamicTypeSize.isAccessibilitySize ? 1 : 2
@@ -127,8 +119,6 @@ struct PilihWarnaSheetView: View {
         .padding(.top, 24)
     }
 
-    /// Stands in for the color swatch of a recipe that has no color yet. Square at normal sizes; at accessibility
-    /// sizes it grows with its text instead of clipping or overflowing it.
     private var placeholderTile: some View {
         let content = VStack(spacing: 8) {
             Image(systemName: "photo")
@@ -138,7 +128,6 @@ struct PilihWarnaSheetView: View {
             Text("Warna akan muncul\nsetelah digunakan")
                 .font(.caption)
                 .multilineTextAlignment(.center)
-                // Primary at reduced opacity keeps this above 4.5:1 on the gray tile; plain gray was about 2.4:1.
                 .foregroundStyle(.primary.opacity(0.75))
         }
         .padding(8)

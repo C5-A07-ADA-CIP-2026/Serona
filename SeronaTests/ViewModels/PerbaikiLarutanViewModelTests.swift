@@ -1,8 +1,3 @@
-//
-//  PerbaikiLarutanViewModelTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing
@@ -91,7 +86,6 @@ struct PerbaikiLarutanViewModelTests {
         viewModel.jumlahAir = 1
         viewModel.lanjut(waterPH: 14 + log10(2.0 / 40))
 
-        // C_target = 15 g/L, V2 = 2 L, 70%: 15 x 2 x 0.3 = 9 g, split 1 : 2.
         #expect(viewModel.volumeBakLiter != nil)
         let tambahan = viewModel.proyek?.pewarnaYangDitambah(kepekatan: 70, volumeLiter: viewModel.volumeBakLiter)
 

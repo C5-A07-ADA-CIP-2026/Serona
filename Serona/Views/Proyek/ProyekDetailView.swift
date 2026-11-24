@@ -1,12 +1,6 @@
-//
-//  ProyekDetailView.swift
-//  Serona
-//
-
 import SwiftData
 import SwiftUI
 
-/// One project: its device, color and recipe, and the scan that finishes it.
 struct ProyekDetailView: View {
     @State private var isShowingKonfirmasiSelesai = false
     @State private var isMemulai = false
@@ -121,14 +115,6 @@ struct ProyekDetailView: View {
                         Image(systemName: "exclamationmark.circle.fill")
                             .foregroundStyle(Color.peringatan)
                             .accessibilityLabel("Kualitas larutan menurun")
-//                        Button {
-//                            viewModel.tampilkanQualityAlert()
-//                        } label: {
-//                            Image(systemName: "exclamationmark.circle.fill")
-//                                .foregroundStyle(Color.peringatan)
-//                        }
-//                        .accessibilityLabel("Kualitas larutan menurun")
-//                        .accessibilityHint("Menampilkan peringatan")
                     }
                 }
                 WarnaSwatchView(namaWarna: proyek.namaWarna, warnaHex: proyek.warnaHex)
@@ -175,14 +161,12 @@ struct ProyekDetailView: View {
         }
     }
 
-    /// Clears the alert; when the user chose "Perbaiki Larutan", opens the guide now that the sheet is gone.
     private func perbaikiSetelahAlert() {
         viewModel.clearQualityAlert()
         perbaikiIssue = pendingPerbaiki
         pendingPerbaiki = nil
     }
 
-    /// Shows the sheet as soon as the loading is gone and the readings are on screen.
     private func tampilkanQualityAlert() {
         Task {
             while isMemulai {
@@ -255,7 +239,6 @@ struct ProyekDetailView: View {
     }
 }
 
-/// Shown over the project while the first scan reads the device.
 private struct MemulaiPemindaianOverlay: View {
     var body: some View {
         ZStack {
@@ -303,7 +286,6 @@ private struct MemulaiPemindaianOverlay: View {
     }
 }
 
-/// Reads full color and pH 12 at first, then `reading`, to try the quality alert.
 private struct LowReadingPreviewSource: ColorMeasurementSource {
     let reading: ColorMeasurement
 

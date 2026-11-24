@@ -1,11 +1,5 @@
-//
-//  ProyekFormSections.swift
-//  Serona
-//
-
 import SwiftUI
 
-/// Label on the left, value on the right; stacked at accessibility sizes so long text does not wrap mid-word.
 struct BarisInfo: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -35,7 +29,6 @@ struct BarisInfo: View {
     }
 }
 
-/// Heading used by every section of the project forms.
 struct JudulBagian: View {
     let teks: String
 
@@ -46,7 +39,6 @@ struct JudulBagian: View {
     }
 }
 
-/// "Perangkat   ESP 32"
 struct PerangkatBaris: View {
     let nama: String
 
@@ -58,7 +50,6 @@ struct PerangkatBaris: View {
     }
 }
 
-/// The color of a recipe as a swatch with its name, and an optional button to remove it.
 struct WarnaSwatchView: View {
     let namaWarna: String
     let warnaHex: String?
@@ -89,7 +80,6 @@ struct WarnaSwatchView: View {
     }
 }
 
-/// "Resep Warna": the dye and auxiliary ingredients of the chosen recipe.
 struct ResepWarnaView: View {
     let pewarna: [Bahan]
     let zatPembantu: [Bahan]
@@ -148,7 +138,6 @@ struct JumlahKainBaris: View {
 }
 
 extension Bahan {
-    /// Locale-independent, drops trailing zeros: 5 -> "5 g", 2.5 -> "2.5 g".
     var gramTeks: String {
         "\(String(format: "%g", gram)) g"
     }

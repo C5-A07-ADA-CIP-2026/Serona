@@ -1,8 +1,3 @@
-//
-//  BakCardContent.swift
-//  Serona
-//
-
 import SwiftUI
 
 struct LiveRevision: Hashable {
@@ -13,17 +8,12 @@ struct LiveRevision: Hashable {
 struct BakCardContent: View {
     let proyek: Proyek
     var viewModel: ProyekDetailViewModel?
-    /// Changes with every new reading and every timeline tick. `viewModel` is a plain reference, so without a
-    /// changing input SwiftUI sees identical parameters and skips re-rendering this view (the numbers only
-    /// refreshed after a rotation).
+
     var liveRevision: LiveRevision = .init()
     var onMulaiPindai: (() -> Void)?
     var onSelesai: (() -> Void)?
     var onPerbaikiLarutan: (() -> Void)?
 
-    // MARK: - Stage & Threshold Resolution
-
-    /// True while this bak is in active use (including when the IoT sensor is disconnected).
     private var isUsedBak: Bool {
         proyek.status == .aktif
     }
@@ -88,8 +78,6 @@ struct BakCardContent: View {
         return ProyekColorMeasurements.format(waterPH)
     }
 
-    // MARK: - Body
-
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             headerRow
@@ -113,8 +101,6 @@ struct BakCardContent: View {
 }
 
 extension BakCardContent {
-    // MARK: - Card Subviews
-
     private var headerRow: some View {
         let status = connectionStatus
         return ViewThatFits(in: .horizontal) {
@@ -160,7 +146,6 @@ extension BakCardContent {
     }
 
     private var swatchColor: Color {
-        // Keep the color displayed when the bak is in use (even when the sensor is disconnected).
         guard isUsedBak, let hex = proyek.warnaHex else {
             return Color.gray.opacity(0.85)
         }
@@ -287,8 +272,6 @@ extension BakCardContent {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Stage Styling Helpers
-
     private var statusIcon: String {
         switch stage {
         case .active: "checkmark.circle.fill"
@@ -307,7 +290,6 @@ extension BakCardContent {
 
     private var statusForeground: Color {
         switch stage {
-        // Darker than the brand tints so small status text keeps 4.5:1 on the tinted pill.
         case .active: Color.oliveGreenText
         case .activeWarning: Color(hex: "#C8191C")
         case .inactive, .disconnected: Color.primary.opacity(0.7)

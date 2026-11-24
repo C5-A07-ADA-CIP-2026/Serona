@@ -1,12 +1,6 @@
-//
-//  BLEDeviceConnectionService+Session.swift
-//  Serona
-//
-
 import CoreBluetooth
 import Foundation
 
-/// Connecting a sensor and subscribing to its measurement characteristic, with timeouts.
 extension BLEDeviceConnectionService {
     func prepare(_ session: PeripheralSession, reconnecting: Bool) async throws {
         if session.peripheral.state != .connected {

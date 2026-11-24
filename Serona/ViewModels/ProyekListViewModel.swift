@@ -1,19 +1,12 @@
-//
-//  ProyekListViewModel.swift
-//  Serona
-//
-
 import Foundation
 import Observation
 
-/// The Proyek list: deleting a finished project, after the user confirms it.
 @MainActor
 @Observable
 final class ProyekListViewModel {
     private(set) var proyekAkanDihapus: Proyek?
     private(set) var deleteError: String?
 
-    /// Asks for confirmation to delete `proyek`. Only inactive (finished) projects can be deleted.
     func mintaHapus(_ proyek: Proyek) {
         guard proyek.status == .nonaktif else { return }
         proyekAkanDihapus = proyek
@@ -23,7 +16,6 @@ final class ProyekListViewModel {
         proyekAkanDihapus = nil
     }
 
-    /// Deletes the confirmed inactive project and saves. Returns `false` when it is not deletable or saving fails.
     @discardableResult
     func hapus(_ proyek: Proyek, in persistence: some ModelPersisting) -> Bool {
         proyekAkanDihapus = nil

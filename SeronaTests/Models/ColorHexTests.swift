@@ -1,8 +1,3 @@
-//
-//  ColorHexTests.swift
-//  SeronaTests
-//
-
 @testable import Serona
 import SwiftUI
 import Testing

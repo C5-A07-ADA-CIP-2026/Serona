@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  Serona
-//
-//  Created by Hana Azizah Nurhadi on 21/10/26.
-//
-
 import SwiftData
 import SwiftUI
 
@@ -24,7 +17,7 @@ struct ContentView: View {
     @State private var isShowingTambahProyek = false
     @State private var isShowingTambahResep = false
     @State private var newlyCreatedProyek: Proyek?
-    /// Lives as long as the app, so switching to the Resep tab never stops a running bak.
+
     @State private var measurementStore = ProyekMeasurementStore()
     @FocusState private var isSearchFieldFocused: Bool
 
@@ -80,7 +73,6 @@ struct ContentView: View {
         horizontalSizeClass == .compact
     }
 
-    /// Tabs fill the row on a phone and at accessibility text sizes, where their labels need the room.
     private var tabsFillWidth: Bool {
         isCompactWidth || dynamicTypeSize.isAccessibilitySize
     }
@@ -94,7 +86,6 @@ struct ContentView: View {
         }
     }
 
-    /// iPad: the tabs stay centered while the actions sit at the trailing edge.
     private var regularHeaderBar: some View {
         ZStack {
             segmentedPill
@@ -113,8 +104,6 @@ struct ContentView: View {
         .padding(.top)
     }
 
-    /// iPhone: the tabs share the row with the actions, so they must give way. While searching, the field takes
-    /// the room of the tabs. When the text is too large for one row (Dynamic Type), the actions move below the tabs.
     private var compactHeaderBar: some View {
         ViewThatFits(in: .horizontal) {
             compactSingleRow
@@ -157,7 +146,6 @@ struct ContentView: View {
     }
 
     private var segmentedPill: some View {
-        // At accessibility text sizes the tabs stack, so neither label is cut off.
         let layout = dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(spacing: 4))
             : AnyLayout(HStackLayout(spacing: 4))

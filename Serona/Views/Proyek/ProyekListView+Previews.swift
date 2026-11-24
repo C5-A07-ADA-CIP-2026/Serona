@@ -1,12 +1,5 @@
-//
-//  ProyekListView+Previews.swift
-//  Serona
-//
-
 import SwiftData
 import SwiftUI
-
-// MARK: - Previews
 
 #Preview("Empty State", traits: .landscapeLeft) {
     NavigationStack {
@@ -61,8 +54,6 @@ private struct ListPreviewMeasurementSource: ColorMeasurementSource {
     }
 }
 
-// MARK: - Sample Data Container
-
 @MainActor
 private let previewGridContainer: ModelContainer = {
     let container = SeronaSchema.makePreviewContainer()
@@ -81,7 +72,6 @@ private let previewGridContainer: ModelContainer = {
         air: 1000, kepekatan: 80, batasPH: 7
     )
 
-    // Bak 1: Stage 1 (Active - Good Quality)
     let bak1 = Proyek(
         nama: "Bak 1",
         perangkatNama: "Bu Fanny",
@@ -93,7 +83,6 @@ private let previewGridContainer: ModelContainer = {
     bak1.phAwal = 12
     context.insert(bak1)
 
-    // Bak 2: Stage 3 (Inactive / Unscanned)
     let bak2 = Proyek(
         nama: "Bak 2",
         perangkatNama: "ESP 32",
@@ -104,7 +93,6 @@ private let previewGridContainer: ModelContainer = {
     bak2.selesaikan(kepekatanAkhir: nil, phAkhir: nil)
     context.insert(bak2)
 
-    // Bak 3: Stage 2 (Active Warning)
     let bak3 = Proyek(
         nama: "Bak 3",
         perangkatNama: "Bu Fanny",
@@ -116,7 +104,6 @@ private let previewGridContainer: ModelContainer = {
     bak3.phAwal = 8
     context.insert(bak3)
 
-    // Bak 4: Stage 1 (Active - Good Quality)
     let bak4 = Proyek(
         nama: "Bak 4",
         perangkatNama: "Bu Fanny",
@@ -128,7 +115,6 @@ private let previewGridContainer: ModelContainer = {
     bak4.phAwal = 12
     context.insert(bak4)
 
-    // Bak 5: Stage 2 (Active Warning)
     let bak5 = Proyek(
         nama: "Bak 5",
         perangkatNama: "Bu Fanny",
@@ -140,7 +126,6 @@ private let previewGridContainer: ModelContainer = {
     bak5.phAwal = 8
     context.insert(bak5)
 
-    // Bak 6: Stage 3 (Inactive / Unscanned)
     let bak6 = Proyek(
         nama: "Bak 6",
         perangkatNama: "ESP 32",

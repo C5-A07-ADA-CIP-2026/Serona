@@ -1,8 +1,3 @@
-//
-//  ProyekDetailQualityAlertTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing

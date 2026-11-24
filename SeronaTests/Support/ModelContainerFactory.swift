@@ -1,14 +1,6 @@
-//
-//  ModelContainerFactory.swift
-//  SeronaTests
-//
-
 @testable import Serona
 import SwiftData
 
-/// Containers must outlive their contexts: a `ModelContext` does not retain its container,
-/// and using one after the container is released traps. Tests are short-lived and the
-/// containers are in-memory, so they are simply kept for the whole test process.
 @MainActor private var retainedContainers: [ModelContainer] = []
 
 @MainActor

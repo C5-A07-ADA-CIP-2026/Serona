@@ -1,12 +1,6 @@
-//
-//  TambahProyekViewModel.swift
-//  Serona
-//
-
 import Foundation
 import Observation
 
-/// The "Tambahkan Proyek" form: name, device, color (a recipe) and amount of fabric.
 @MainActor
 @Observable
 final class TambahProyekViewModel {
@@ -36,7 +30,6 @@ final class TambahProyekViewModel {
         self.perangkat = perangkat
     }
 
-    /// Clears the chosen device and drops its connection.
     func hapusPerangkat() async {
         guard let perangkat else { return }
         self.perangkat = nil
@@ -51,8 +44,6 @@ final class TambahProyekViewModel {
         resep = nil
     }
 
-    /// Inserts the new active project. Returns nil, and changes nothing, when the form is incomplete,
-    /// was saved already, or the save fails (the form is kept so the user can retry).
     @discardableResult
     func simpan(in persistence: some ModelPersisting) -> Proyek? {
         guard canSubmit, !isSaved, let perangkat, let resep else { return nil }
@@ -74,8 +65,6 @@ final class TambahProyekViewModel {
         return proyek
     }
 
-    /// Updates an existing Stage 3 Bak project with the chosen device, recipe, customer name, and water volume,
-    /// then marks it active so scanning can start immediately.
     @discardableResult
     func simpanUntukPindai(_ proyek: Proyek, in persistence: some ModelPersisting) -> Bool {
         guard canSubmitScan, let perangkat, let resep else { return false }
@@ -96,7 +85,7 @@ final class TambahProyekViewModel {
         proyek.visibleAverageAwal = nil
         proyek.phAwal = nil
         proyek.rasioAwal = nil
-//        proyek.rasioAirBersih = nil
+
         proyek.rasioAirBersih = ProyekDetailViewModel.defaultCleanWaterRatios
 
         do {

@@ -1,8 +1,3 @@
-//
-//  ProyekListViewModelTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import SwiftData
@@ -94,8 +89,6 @@ struct ProyekListViewModelTests {
         #expect(viewModel.deleteError == nil)
     }
 
-    // MARK: Against a real SwiftData store
-
     @Test("Deleting removes the project from the store and keeps the rest")
     func deleteRemovesFromStore() throws {
         let context = try makeTestContext()
@@ -114,11 +107,11 @@ struct ProyekListViewModelTests {
         let didDelete = viewModel.hapus(dihapus, in: context)
 
         #expect(didDelete)
-        // A fresh context only sees what was really saved.
+
         let freshContext = ModelContext(context.container)
         let names = try freshContext.fetch(FetchDescriptor<Proyek>()).map(\.nama).sorted()
         #expect(names == ["Aktif", "Tetap"])
-        // The recipe the project came from is not deleted with it.
+
         #expect(try freshContext.fetch(FetchDescriptor<Resep>()).count == 1)
     }
 

@@ -1,8 +1,3 @@
-//
-//  ResepRowView.swift
-//  Serona
-//
-
 import SwiftUI
 
 struct ResepRowView: View {

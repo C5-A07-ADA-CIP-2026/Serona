@@ -1,15 +1,7 @@
-//
-//  QualityAlarmPlayer.swift
-//  Serona
-//
-//  Created by Steffany Florence on 21/11/26.
-//
-
 import AudioToolbox
 import AVFoundation
 import Foundation
 
-/// Plays a synthesized repeating alarm tone while `QualityAlertSheetView` is visible.
 @MainActor
 final class QualityAlarmPlayer {
     static let shared = QualityAlarmPlayer()
@@ -33,7 +25,6 @@ final class QualityAlarmPlayer {
             player.play()
             audioPlayer = player
         } catch {
-            // Fallback to standard system alert sound if AVAudioPlayer cannot initialize.
             AudioServicesPlayAlertSound(1005)
         }
     }
@@ -54,11 +45,10 @@ final class QualityAlarmPlayer {
         try? session.setActive(true)
     }
 
-    /// Generates a 1.0-second synthesized constant-pulse electronic buzzer alarm cycle (16-bit mono PCM WAV).
     private static func makeAlarmWAVData() -> Data {
         let sampleRate = 44100
         let bytesPerSample = 2
-        // 1.0 second at 2.0 Hz produces exactly 2 identical pulses per buffer, looping seamlessly.
+
         let duration = 1.00
         let numSamples = Int(Double(sampleRate) * duration)
         let dataSize = numSamples * bytesPerSample
@@ -85,8 +75,8 @@ final class QualityAlarmPlayer {
         data.append(contentsOf: "WAVE".utf8)
         data.append(contentsOf: "fmt ".utf8)
         append(UInt32(16), to: &data)
-        append(UInt16(1), to: &data) // PCM
-        append(UInt16(1), to: &data) // Mono
+        append(UInt16(1), to: &data)
+        append(UInt16(1), to: &data)
         append(UInt32(sampleRate), to: &data)
         append(UInt32(sampleRate * bytesPerSample), to: &data)
         append(UInt16(bytesPerSample), to: &data)
@@ -98,13 +88,11 @@ final class QualityAlarmPlayer {
     private static func alarmSample(at time: Double) -> Double {
         let amplitude = 0.85
 
-        // Constant 2.0 Hz pulse rate (1 pulse every 0.5 seconds, seamlessly looped)
         let pulseRate = 2.0
         let pulsePhase = (time * pulseRate).truncatingRemainder(dividingBy: 1.0)
         let pulseDuration = 1.0 / pulseRate
         let pulseTime = pulsePhase * pulseDuration
 
-        // Smooth 8 ms attack/release on each pulse to avoid clicks
         let edgeFade = 0.008
         let dutyCycle = 0.60
         let activeTime = pulseDuration * dutyCycle
@@ -114,7 +102,6 @@ final class QualityAlarmPlayer {
         let fadeOut = min(1.0, (activeTime - pulseTime) / edgeFade)
         let envelope = min(fadeIn, fadeOut)
 
-        // Metallic two-frequency buzzer carrier (880 Hz + 1108 Hz minor third + odd harmonics)
         let baseFrequency = 880.0
         let thirdFrequency = 1108.73
         let angle1 = 2.0 * .pi * baseFrequency * time
