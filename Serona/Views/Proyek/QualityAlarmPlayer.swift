@@ -9,7 +9,7 @@ import AudioToolbox
 import AVFoundation
 import Foundation
 
-/// Plays a repeating alarm tone while `QualityAlertSheetView` is visible.
+/// Plays a synthesized repeating alarm tone while `QualityAlertSheetView` is visible.
 @MainActor
 final class QualityAlarmPlayer {
     static let shared = QualityAlarmPlayer()
@@ -20,21 +20,13 @@ final class QualityAlarmPlayer {
     private init() {}
 
     func start() {
-        // Avoid playing audio inside Xcode Canvas previews.
-        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
-            return
-        }
         guard !isPlaying else { return }
         isPlaying = true
 
         configureAudioSession()
 
         do {
-            let player: AVAudioPlayer = if let bundledURL = Self.bundledAlarmURL() {
-                try AVAudioPlayer(contentsOf: bundledURL)
-            } else {
-                try AVAudioPlayer(data: Self.makeFallbackAlarmWAVData())
-            }
+            let player = try AVAudioPlayer(data: Self.makeAlarmWAVData())
             player.numberOfLoops = -1
             player.volume = 1.0
             player.prepareToPlay()
@@ -62,20 +54,13 @@ final class QualityAlarmPlayer {
         try? session.setActive(true)
     }
 
-    private static func bundledAlarmURL() -> URL? {
-        for ext in ["wav", "mp3", "caf", "m4a"] {
-            if let url = Bundle.main.url(forResource: "alarm", withExtension: ext) {
-                return url
-            }
-        }
-        return nil
-    }
-
-    /// Generates a 1.25-second two-tone alarm pulse (16-bit mono PCM WAV) so no external audio file is required.
-    private static func makeFallbackAlarmWAVData() -> Data {
+    /// Generates a 1.0-second synthesized constant-pulse electronic buzzer alarm cycle (16-bit mono PCM WAV).
+    private static func makeAlarmWAVData() -> Data {
         let sampleRate = 44100
         let bytesPerSample = 2
-        let numSamples = Int(Double(sampleRate) * 1.25)
+        // 1.0 second at 2.0 Hz produces exactly 2 identical pulses per buffer, looping seamlessly.
+        let duration = 1.00
+        let numSamples = Int(Double(sampleRate) * duration)
         let dataSize = numSamples * bytesPerSample
 
         var data = Data(capacity: 44 + dataSize)
@@ -110,25 +95,37 @@ final class QualityAlarmPlayer {
         append(UInt32(dataSize), to: &data)
     }
 
-    private struct AlarmPulse {
-        let start: Double
-        let end: Double
-        let frequency: Double
-    }
-
-    /// Three short alert pulses (A5 -> D6 -> D6) followed by a brief pause.
-    private static let alarmPulses = [
-        AlarmPulse(start: 0.00, end: 0.16, frequency: 880.00),
-        AlarmPulse(start: 0.24, end: 0.40, frequency: 1174.66),
-        AlarmPulse(start: 0.48, end: 0.64, frequency: 1174.66),
-    ]
-
     private static func alarmSample(at time: Double) -> Double {
-        let fadeDuration = 0.012
         let amplitude = 0.85
-        guard let pulse = alarmPulses.first(where: { time >= $0.start && time <= $0.end }) else { return 0 }
-        let fadeIn = min(1.0, (time - pulse.start) / fadeDuration)
-        let fadeOut = min(1.0, (pulse.end - time) / fadeDuration)
-        return sin(2.0 * .pi * pulse.frequency * time) * amplitude * min(fadeIn, fadeOut)
+
+        // Constant 2.0 Hz pulse rate (1 pulse every 0.5 seconds, seamlessly looped)
+        let pulseRate = 2.0
+        let pulsePhase = (time * pulseRate).truncatingRemainder(dividingBy: 1.0)
+        let pulseDuration = 1.0 / pulseRate
+        let pulseTime = pulsePhase * pulseDuration
+
+        // Smooth 8 ms attack/release on each pulse to avoid clicks
+        let edgeFade = 0.008
+        let dutyCycle = 0.60
+        let activeTime = pulseDuration * dutyCycle
+        guard pulseTime <= activeTime else { return 0 }
+
+        let fadeIn = min(1.0, pulseTime / edgeFade)
+        let fadeOut = min(1.0, (activeTime - pulseTime) / edgeFade)
+        let envelope = min(fadeIn, fadeOut)
+
+        // Metallic two-frequency buzzer carrier (880 Hz + 1108 Hz minor third + odd harmonics)
+        let f1 = 880.0
+        let f2 = 1108.73
+        let angle1 = 2.0 * .pi * f1 * time
+        let angle2 = 2.0 * .pi * f2 * time
+
+        let buzzerWave = sin(angle1)
+            + 0.65 * sin(angle2)
+            + 0.45 * sin(3.0 * angle1)
+            + 0.30 * sin(3.0 * angle2)
+            + 0.20 * sin(5.0 * angle1)
+
+        return (buzzerWave / 2.60) * amplitude * envelope
     }
 }
