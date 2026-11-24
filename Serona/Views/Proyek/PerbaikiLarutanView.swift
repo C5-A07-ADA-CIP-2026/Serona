@@ -152,7 +152,7 @@ extension PerbaikiLarutanView {
 
     var formattedCurrentConcentration: String {
         guard let conc = viewModel.latestConcentration else { return "-" }
-        return String(format: "%.0f%%", conc)
+        return String(format: "%.0f%%", min(conc, 100))
     }
 
     func formatGram(_ gram: Double) -> String {

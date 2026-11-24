@@ -31,8 +31,17 @@ final class ProyekDetailViewModel: ObservableObject {
     private(set) var latestMeasurement: ColorMeasurement?
     var warningTracker = MeasurementWarningTracker()
 
+    @Published private var publishedConnectionState: DeviceConnectionState = .disconnected
+
     var connectionState: DeviceConnectionState {
         service.connectionState
+    }
+
+    private func refreshConnectionState() {
+        let current = service.connectionState
+        if current != publishedConnectionState {
+            publishedConnectionState = current
+        }
     }
 
     func isMeasurementStale(at date: Date = .now) -> Bool {
@@ -164,12 +173,16 @@ final class ProyekDetailViewModel: ObservableObject {
     private func startStreaming() {
         measurementTask?.cancel()
         measurementTask = Task { [weak self] in
-            guard let self else { return }
-            for await measurement in service.measurementUpdates() {
-                if Task.isCancelled {
-                    break
+            while let self, !Task.isCancelled {
+                for await measurement in service.measurementUpdates() {
+                    if Task.isCancelled {
+                        break
+                    }
+                    updateCurrentColorMeasurement(measurement)
                 }
-                updateCurrentColorMeasurement(measurement)
+                if Task.isCancelled { break }
+                refreshConnectionState()
+                try? await Task.sleep(for: .seconds(2))
             }
         }
     }
@@ -177,6 +190,7 @@ final class ProyekDetailViewModel: ObservableObject {
     private func updateCurrentColorMeasurement(_ measurement: ColorMeasurement) {
         latestMeasurement = measurement
         lastMeasurementAt = .now
+        refreshConnectionState()
         var updated = measurements
         if let waterPH = measurement.waterPH {
             updated = updated.withCurrentWaterPH(waterPH)
