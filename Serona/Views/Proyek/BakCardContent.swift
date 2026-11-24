@@ -69,7 +69,7 @@ struct BakCardContent: View {
     private var kepekatanDisplay: String {
         guard stage == .active || stage == .activeWarning,
               let concentration = viewModel?.latestConcentration else { return "-" }
-        return String(format: "%.0f%%", concentration)
+        return String(format: "%.0f%%", min(concentration, 100))
     }
 
     private var phDisplay: String {
