@@ -315,6 +315,7 @@
 				DEVELOPMENT_TEAM = 984P4SW3VJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Serona memerlukan Bluetooth untuk terhubung ke perangkat ESP32.";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "Serona memerlukan Bluetooth untuk terhubung ke perangkat ESP32.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -355,6 +356,7 @@
 				DEVELOPMENT_TEAM = 984P4SW3VJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Serona memerlukan Bluetooth untuk terhubung ke perangkat ESP32.";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "Serona memerlukan Bluetooth untuk terhubung ke perangkat ESP32.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
