@@ -1,8 +1,3 @@
-//
-//  PilihResepSheetView.swift
-//  Serona
-//
-
 import SwiftData
 import SwiftUI
 
@@ -22,13 +17,11 @@ struct PilihResepSheetView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Modal Header Bar (Title center, X right)
             modalHeaderBar
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
 
             VStack(spacing: 16) {
-                // Search Input Bar
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(titleColor.opacity(0.6))
@@ -48,7 +41,6 @@ struct PilihResepSheetView: View {
                 .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
                 .padding(.horizontal, 20)
 
-                // Recipe Color Cards 3-Column Grid
                 ScrollView {
                     if daftar.isEmpty {
                         ContentUnavailableView(
@@ -86,8 +78,6 @@ struct PilihResepSheetView: View {
         .background(sheetBg.ignoresSafeArea())
     }
 
-    // MARK: - Header Bar
-
     private var modalHeaderBar: some View {
         HStack {
             Spacer()
@@ -113,8 +103,6 @@ struct PilihResepSheetView: View {
         }
     }
 }
-
-// MARK: - Previews
 
 #Preview("Pilih Warna Sheet", traits: .landscapeLeft) {
     PilihResepSheetView { _ in }

@@ -1,10 +1,3 @@
-//
-//  ResepViewModel.swift
-//  Serona
-//
-//  Created by Dina on 22/10/26.
-//
-
 import Observation
 import SwiftData
 import SwiftUI
@@ -26,7 +19,6 @@ final class FormResepViewModel {
     ]
     let daftarPilihanZatPembantu = ["Kostik", "Abu"]
 
-    /// Resep yang sedang dilihat. `nil` berarti mode tambah.
     private(set) var resepAsli: Resep?
 
     var sedangMengedit: Bool {
@@ -35,7 +27,7 @@ final class FormResepViewModel {
 
     var formLengkap: Bool {
         namaWarna.tidakKosong
-//            && warnaDipilih != nil
+
             && (ukuranAir ?? 0) > 0
             && (kepekatan ?? 0) > 0
             && (batasPH ?? 0) > 0
@@ -43,7 +35,6 @@ final class FormResepViewModel {
             && zatPembantu.valid
     }
 
-    /// Kode yang sudah dipilih baris lain tidak ditawarkan lagi, supaya pewarna tidak dobel.
     func pilihanPewarna(untuk baris: BahanInput) -> [String] {
         pewarna.pilihan(dari: daftarPilihanPewarna, untukBaris: baris.id)
     }
@@ -52,7 +43,6 @@ final class FormResepViewModel {
         zatPembantu.pilihan(dari: daftarPilihanZatPembantu, untukBaris: baris.id)
     }
 
-    /// Baris baru hanya berguna kalau baris terakhir sudah lengkap dan masih ada kode yang belum dipakai.
     var bisaTambahPewarna: Bool {
         pewarna.semuaTerisi && pewarna.masihAdaPilihan(dari: daftarPilihanPewarna)
     }
@@ -61,11 +51,10 @@ final class FormResepViewModel {
         zatPembantu.semuaTerisi && zatPembantu.masihAdaPilihan(dari: daftarPilihanZatPembantu)
     }
 
-    /// `true` kalau ada isian yang berbeda dari resep asli.
     var adaPerubahan: Bool {
         guard let asli = resepAsli, !asli.isDeleted else { return false }
         return namaWarna != asli.namaWarna
-//            || warnaDipilih?.hexString != asli.warnaHex
+
             || ukuranAir != asli.air
             || kepekatan != asli.kepekatan
             || batasPH != asli.batasPH
@@ -73,18 +62,16 @@ final class FormResepViewModel {
             || zatPembantu.barisTerisi.map(\.bahan) != asli.zatPembantu
     }
 
-    /// Tombol centang aktif (biru) hanya kalau form valid dan ada yang berubah.
     var bisaSimpan: Bool {
         sedangMengedit ? (formLengkap && adaPerubahan) : formLengkap
     }
 
     init() {}
 
-    /// Mengisi form dari resep yang sudah tersimpan (untuk mode baca).
     init(resep: Resep) {
         resepAsli = resep
         namaWarna = resep.namaWarna
-//        warnaDipilih = Color(hex: resep.warnaHex)
+
         ukuranAir = resep.air
         kepekatan = resep.kepekatan
         batasPH = resep.batasPH
@@ -92,10 +79,9 @@ final class FormResepViewModel {
         zatPembantu = resep.zatPembantu.map { BahanInput(kode: $0.kode, gram: $0.gram) }
     }
 
-    /// Menyimpan form sebagai `Resep` baru. Tidak melakukan apa pun bila form belum lengkap.
     func simpan(context: some ModelPersisting) throws {
         guard formLengkap,
-//              let warna = warnaDipilih,
+
               let air = ukuranAir,
               let kepekatan,
               let batasPH
@@ -103,7 +89,7 @@ final class FormResepViewModel {
 
         if let resep = resepAsli {
             resep.namaWarna = namaWarna
-//            resep.warnaHex = warna.hexString
+
             resep.air = air
             resep.kepekatan = kepekatan
             resep.batasPH = batasPH

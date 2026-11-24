@@ -1,8 +1,3 @@
-//
-//  TambahProyekView.swift
-//  Serona
-//
-
 import SwiftData
 import SwiftUI
 
@@ -57,8 +52,7 @@ struct TambahProyekView: View {
     var body: some View {
         NavigationStack {
             formContent
-                // The bar stays visible on the root so pushing a screen never toggles it from hidden to
-                // visible; that toggle made the pushed header start too high and snap down inside the sheet.
+
                 .navigationTitle(resolvedBakTitle)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { headerToolbar }
@@ -104,10 +98,8 @@ struct TambahProyekView: View {
         }
     }
 
-    /// A native grouped `Form`: system rows, row height, separators, chevrons and Dynamic Type behavior.
     private var formContent: some View {
         Form {
-            // One section per row gives the separate rounded rows of the design without custom drawing.
             Section {
                 NavigationLink {
                     deviceListScreen
@@ -148,8 +140,6 @@ struct TambahProyekView: View {
         .scrollBounceBehavior(.basedOnSize)
         .scrollDismissesKeyboard(.interactively)
     }
-
-    // MARK: - Navigation Bar
 
     @ToolbarContentBuilder
     private var headerToolbar: some ToolbarContent {

@@ -1,18 +1,10 @@
-//
-//  PenambahanSodaTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing
 
-/// Soda from pH: C = 10^(pH - 14) x 40 g/L, the bath volume from C1 V = C2 (V + V_air),
-/// and dm = max(0, (C_target - C2) x V2), split like the recipe's auxiliaries.
 @Suite("Penambahan soda")
 @MainActor
 struct PenambahanSodaTests {
-    /// Recipe water 1 L with 30 g of auxiliaries, so C_target = 30 g/L.
     private static let zatBawaan = [Bahan(kode: "Soda Abu", gram: 20), Bahan(kode: "Soda Kostik", gram: 10)]
 
     private func makeProyek(zatPembantu: [Bahan] = zatBawaan, air: Int = 1) -> Proyek {
@@ -31,8 +23,6 @@ struct PenambahanSodaTests {
 
     @Test("Volume, soda dose and the per-ingredient split follow the dilution equation")
     func computesTheDose() throws {
-        // C1 = 4 g/L (pH 13), C2 = 2 g/L, 1 L of water added: V_pakai = 2 x 1 / (4 - 2) = 1 L, V2 = 2 L.
-        // dm = (30 - 2) x 2 = 56 g, split 20 : 10.
         let pH2 = 14 + log10(2.0 / 40)
 
         let soda = try #require(makeProyek().penambahanSoda(pHSebelum: 13, pHSesudah: pH2, airDitambahkanLiter: 1))
@@ -47,7 +37,6 @@ struct PenambahanSodaTests {
 
     @Test("Nothing is added once the bath already has the target soda")
     func noNegativeDose() throws {
-        // No auxiliaries in the recipe means a target of 0 g/L, which any C2 already meets.
         let soda = try #require(makeProyek(zatPembantu: []).penambahanSoda(
             pHSebelum: 13, pHSesudah: 12.5, airDitambahkanLiter: 1
         ))

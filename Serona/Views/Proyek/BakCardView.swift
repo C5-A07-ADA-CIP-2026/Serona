@@ -1,10 +1,3 @@
-//
-//  BakCardView.swift
-//  Serona
-//
-//  Created by Steffany Florence on 10/11/26.
-//
-
 import SwiftUI
 
 enum BakCardStage {
@@ -81,7 +74,6 @@ private struct ObservedBakCardBody: View {
     }
 
     var body: some View {
-        // Re-evaluate periodically so BLE disconnect/reconnect transitions update the card immediately.
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let stage = currentStage
 

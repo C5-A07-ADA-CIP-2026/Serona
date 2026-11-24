@@ -1,8 +1,3 @@
-//
-//  SeronaSchema.swift
-//  Serona
-//
-
 import SwiftData
 
 enum SeronaSchema {
@@ -15,7 +10,6 @@ enum SeronaSchema {
         )
     }
 
-    /// In-memory container for SwiftUI previews; failing to build one is a programmer error.
     @MainActor
     static func makePreviewContainer() -> ModelContainer {
         do {

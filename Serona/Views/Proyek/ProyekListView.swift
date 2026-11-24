@@ -1,8 +1,3 @@
-//
-//  ProyekListView.swift
-//  Serona
-//
-
 import SwiftData
 import SwiftUI
 
@@ -13,7 +8,6 @@ struct ProyekListView: View {
     @State private var viewModel = ProyekListViewModel()
     @State private var searchText: String = ""
 
-    /// Owned by the app root, so measurements keep running while this view is not on screen.
     let store: ProyekMeasurementStore
     @State private var scanSetupTarget: Proyek?
     @State private var deviceSwitchTarget: Proyek?
@@ -153,8 +147,6 @@ struct ProyekListView: View {
         }
     }
 
-    // MARK: - Subviews
-
     private var emptyState: some View {
         VStack(spacing: 12) {
             Image("IconBakWarna")
@@ -178,7 +170,6 @@ struct ProyekListView: View {
         .padding(.bottom, 48)
     }
 
-    /// One column on a phone, two or three on an iPad, so a card is never narrower than 320 pt.
     private static func gridColumns(forWidth width: CGFloat, singleColumn: Bool) -> [GridItem] {
         AdaptiveLayout.gridColumns(
             forWidth: width, minimumItemWidth: 320, spacing: 20, limits: singleColumn ? 1 ... 1 : 1 ... 3
@@ -229,8 +220,6 @@ struct ProyekListView: View {
 }
 
 extension ProyekListView {
-    // MARK: - Auto Alert Presentation & Queue
-
     private func handleQualityAlert(for proyek: Proyek, viewModel: ProyekDetailViewModel, alert: QualityAlert) {
         guard proyek.status == .aktif else { return }
 
@@ -284,8 +273,6 @@ extension ProyekListView {
         }
     }
 
-    // MARK: - Scanning & State Lifecycle
-
     private func getOrMakeViewModel(for proyek: Proyek) -> ProyekDetailViewModel {
         store.viewModel(for: proyek, service: serviceProvider(proyek))
     }
@@ -309,7 +296,6 @@ extension ProyekListView {
         }
     }
 
-    /// Reconnects an active bak whose IoT sensor disconnected, retrieving and preserving its saved `Proyek` data.
     private func reconnectProyek(proyek: Proyek) {
         print("[List] 🔄 reconnectProyek \(proyek.nama)")
         guard proyek.perangkatID != nil else {
@@ -347,8 +333,6 @@ extension ProyekListView {
         }
         store.remove(proyek.id)
     }
-
-    // MARK: - Alert Bindings
 
     private var activeScanError: (proyek: Proyek?, message: String)? {
         guard let failed = store.allViewModels.first(where: { $0.colorMeasurementError != nil }),

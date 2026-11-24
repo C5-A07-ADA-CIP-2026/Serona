@@ -1,21 +1,13 @@
-//
-//  AbsorbanceConcentrationTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing
 
-/// Concentration from absorbance: A = -log10(T), T = ratio / clean-water ratio, and
-/// concentration = A / A of the baseline x 100. Unlike `min(T)`, it falls as the dye is used up.
 @Suite("Absorbance concentration")
 @MainActor
 struct AbsorbanceConcentrationTests {
     private let clean = [Double](repeating: 0.4, count: 8)
 
     private func reading(ratio: Double) -> ColorMeasurement {
-        // clear is 1000 for both cycles, so each channel's ratio is count / 1000.
         let count = UInt16((ratio * 1000).rounded())
         return ColorMeasurement(
             visibleAverage: 0,
@@ -39,7 +31,7 @@ struct AbsorbanceConcentrationTests {
     @Test("Absorbance uses the lowest transmittance once the channels differ by 0.08 or more")
     func absorbanceOfUnevenChannels() throws {
         var ratios = [Double](repeating: 0.36, count: 8)
-        ratios[4] = 0.2 // T = 0.5 against 0.9 elsewhere
+        ratios[4] = 0.2
 
         let absorbance = try #require(ColorMeasurement.absorbance(ratios: ratios, cleanRatios: clean))
 
@@ -48,8 +40,8 @@ struct AbsorbanceConcentrationTests {
 
     @Test("Absorbance averages the channels when they differ by less than 0.08")
     func absorbanceAveragesCloseChannels() throws {
-        var ratios = [Double](repeating: 0.2, count: 8) // T = 0.5
-        ratios[0] = 0.208 // T = 0.52, a spread of 0.02
+        var ratios = [Double](repeating: 0.2, count: 8)
+        ratios[0] = 0.208
 
         let absorbance = try #require(ColorMeasurement.absorbance(ratios: ratios, cleanRatios: clean))
         let transmittances = ratios.map { $0 / 0.4 }
@@ -68,14 +60,13 @@ struct AbsorbanceConcentrationTests {
 
     @Test("A channel without clean-water signal counts as T = 1 instead of being skipped")
     func cleanChannelWithoutSignalCountsAsFullTransmittance() throws {
-        let even = [Double](repeating: 0.2, count: 8) // T = 0.5 where the clean water has signal
+        let even = [Double](repeating: 0.2, count: 8)
         var cleanWithGap = clean
-        cleanWithGap[3] = 0 // T = 1 for this channel, so the spread (0.5) picks the lowest T
+        cleanWithGap[3] = 0
 
         let absorbance = try #require(ColorMeasurement.absorbance(ratios: even, cleanRatios: cleanWithGap))
         #expect(abs(absorbance - -log10(0.5)) < 1e-9)
 
-        // With no clean-water signal at all every T is 1, so there is no absorbance.
         let dark = [Double](repeating: 0, count: 8)
         let none = try #require(ColorMeasurement.absorbance(ratios: even, cleanRatios: dark))
         #expect(abs(none) < 1e-9)
@@ -83,9 +74,9 @@ struct AbsorbanceConcentrationTests {
 
     @Test("The baseline reads 100% and less dye reads lower")
     func concentrationFollowsDye() throws {
-        let baseline = [Double](repeating: 0.2, count: 8) // T = 0.5, A = 0.301
+        let baseline = [Double](repeating: 0.2, count: 8)
         let atBaseline = try #require(reading(ratio: 0.2).concentration(relativeToRatios: baseline, cleanRatios: clean))
-        // Clearer bath: T = 0.75.
+
         let lessDye = try #require(reading(ratio: 0.3).concentration(relativeToRatios: baseline, cleanRatios: clean))
 
         #expect(abs(atBaseline - 100) < 1e-9)
@@ -98,7 +89,7 @@ struct AbsorbanceConcentrationTests {
         let noChannels = ColorMeasurement(visibleAverage: 1, clear: 1000, nir: 0)
 
         #expect(noChannels.concentration(relativeToRatios: clean, cleanRatios: clean) == nil)
-        // A baseline as clear as the water has no absorbance to compare with.
+
         #expect(reading(ratio: 0.3).concentration(relativeToRatios: clean, cleanRatios: clean) == nil)
     }
 }

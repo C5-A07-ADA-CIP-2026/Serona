@@ -1,13 +1,7 @@
-//
-//  ServiceSegregationTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing
 
-/// Conforms only to `DeviceConnecting`: it cannot read colors.
 private struct ConnectingOnlyService: DeviceConnecting {
     var devices = [DiscoveredDevice(id: UUID(), nama: "ESP 32")]
 
@@ -26,7 +20,6 @@ private struct ConnectingOnlyService: DeviceConnecting {
     func disconnect(from _: DiscoveredDevice) async {}
 }
 
-/// Conforms only to `ColorMeasurementSource`: it cannot connect.
 private struct MeasurementOnlySource: ColorMeasurementSource {
     func readInitialColorMeasurement() async throws -> ColorMeasurement {
         ColorMeasurement(visibleAverage: 1000, clear: 1200, nir: 200)

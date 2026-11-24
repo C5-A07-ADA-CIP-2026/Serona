@@ -1,13 +1,7 @@
-//
-//  ProyekDetailInitialColorTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing
 
-/// The initial color (100%) is captured during first-time bath setup and reused after reconnection.
 @MainActor
 struct ProyekDetailInitialColorTests {
     private func makeProyek() -> Proyek {
@@ -18,7 +12,6 @@ struct ProyekDetailInitialColorTests {
         ColorMeasurement(visibleAverage: visibleAverage, clear: 1200, nir: 200, waterPH: 11)
     }
 
-    /// A scanned view model whose live stream the test controls.
     private func makeLive(
         proyek: Proyek? = nil
     ) async -> (ProyekDetailViewModel, AsyncStream<ColorMeasurement>.Continuation) {

@@ -1,14 +1,7 @@
-//
-//  ProyekMeasurementStoreTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing
 
-/// A bak keeps measuring when its screen goes away (for example when the user opens the Resep tab),
-/// because its view model lives in a store that outlives the Proyek list view.
 @MainActor
 struct ProyekMeasurementStoreTests {
     private func makeProyek() -> Proyek {
@@ -35,7 +28,6 @@ struct ProyekMeasurementStoreTests {
         ))
         await viewModel.pindaiDenganWarnaAwal()
 
-        // The Proyek tab is torn down and shown again: it asks the store, it does not build anew.
         let afterTabSwitch = store.viewModel(for: proyek, service: StubDeviceConnectionService())
         let didUpdate = await waitUntil { afterTabSwitch.latestWaterPH == 10.5 }
 

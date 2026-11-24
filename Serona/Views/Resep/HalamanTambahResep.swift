@@ -1,10 +1,3 @@
-//
-//  HalamanTambahResep.swift
-//  Serona
-//
-//  Created by Dina on 21/10/26.
-//
-
 import SwiftData
 import SwiftUI
 
@@ -85,8 +78,6 @@ struct HalamanTambahResep: View {
         }
     }
 
-    // MARK: - Header
-
     private var headerBar: some View {
         HStack {
             Button {
@@ -126,8 +117,6 @@ struct HalamanTambahResep: View {
         }
     }
 
-    // MARK: - Nama Warna & Jumlah Air
-
     private var namaWarnaCard: some View {
         HStack {
             Text("Nama Warna")
@@ -148,8 +137,6 @@ struct HalamanTambahResep: View {
     private var jumlahAirCard: some View {
         JumlahAirCard(ukuranAir: $viewModel.ukuranAir)
     }
-
-    // MARK: - Napthol
 
     private var pewarnaSection: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -185,8 +172,6 @@ struct HalamanTambahResep: View {
         }
     }
 
-    // MARK: - Zat Pembantu
-
     private var zatPembantuSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             ForEach(Array(viewModel.zatPembantu.enumerated()), id: \.element.id) { index, item in
@@ -220,8 +205,6 @@ struct HalamanTambahResep: View {
             }
         }
     }
-
-    // MARK: - Hapus
 
     private var hapusButton: some View {
         Button(role: .destructive) {
@@ -259,8 +242,6 @@ struct HalamanTambahResep: View {
         )
     }
 
-    // MARK: - Actions
-
     private func simpan() {
         do {
             try viewModel.simpan(context: modelContext)
@@ -279,8 +260,6 @@ struct HalamanTambahResep: View {
         }
     }
 }
-
-// MARK: - Previews
 
 #Preview("Tambah Warna Sheet (iPadOS)", traits: .landscapeLeft) {
     BackgroundGradient()

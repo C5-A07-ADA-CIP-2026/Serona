@@ -1,8 +1,3 @@
-//
-//  ProyekAlertTargets.swift
-//  Serona
-//
-
 import Foundation
 
 struct ProyekRepairTarget: Identifiable {

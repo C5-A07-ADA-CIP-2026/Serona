@@ -1,42 +1,30 @@
-//
-//  PenambahanSodaModel.swift
-//  Serona
-//
-
 import Foundation
 
-/// The soda to add after water was added to the bath, worked out from the pH before and after the water.
 struct PenambahanSoda: Equatable {
-    /// Bath volume before the water was added (L), from C1 x V = C2 x (V + V_air).
     let volumeDipakai: Double
-    /// Bath volume after the water was added (L): V2.
+
     let volumeSekarang: Double
-    /// Soda concentration before and after the water (g/L).
+
     let konsentrasiSebelum: Double
     let konsentrasiSesudah: Double
-    /// Soda to add (g), split by auxiliary like the recipe in `bahan`.
+
     let gramSoda: Double
     let bahan: [Bahan]
 
-    /// Soda (NaOH, 40 g/mol) concentration in g/L from the pH: 10^(pH - 14) x 40.
     static func konsentrasiSoda(nilaiPH: Double) -> Double {
         pow(10, nilaiPH - 14) * 40
     }
 
-    /// Differences in concentration at or below this cannot give a volume.
     static let selisihMinimum = 0.0001
 }
 
 @MainActor
 extension Proyek {
-    /// The soda target (g/L): the recipe's auxiliaries over the recipe water (L).
     var targetSodaGramPerLiter: Double {
         guard volumeResepLiter > 0 else { return 0 }
         return zatPembantu.reduce(0) { $0 + $1.gram } / volumeResepLiter
     }
 
-    /// The soda to add after `airDitambahkanLiter` of water took the pH from `pHSebelum` to `pHSesudah`.
-    /// Nil when the pH did not drop enough to tell the bath volume, or there is no water or recipe volume.
     func penambahanSoda(pHSebelum: Double, pHSesudah: Double, airDitambahkanLiter: Double) -> PenambahanSoda? {
         guard airDitambahkanLiter > 0, volumeResepLiter > 0, pHSebelum - pHSesudah >= 0.01 else { return nil }
         let sebelum = PenambahanSoda.konsentrasiSoda(nilaiPH: pHSebelum)

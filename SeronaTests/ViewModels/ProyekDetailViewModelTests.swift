@@ -1,8 +1,3 @@
-//
-//  ProyekDetailViewModelTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing
@@ -25,8 +20,6 @@ struct ProyekDetailViewModelTests {
         ProyekDetailViewModel(proyek: proyek ?? makeProyek(), service: service)
     }
 
-    // MARK: Before scanning
-
     @Test("Starts unscanned with the limits of the project")
     func startsWithProjectLimits() {
         let viewModel = makeViewModel(proyek: makeProyek(batasKepekatan: 90, batasPH: 7.5))
@@ -38,8 +31,6 @@ struct ProyekDetailViewModelTests {
         #expect(viewModel.latestConcentration == nil)
         #expect(viewModel.latestWaterPH == nil)
     }
-
-    // MARK: Scanning
 
     @Test("Scanning reads the baseline and streams current values")
     func scanStreamsCurrentValues() async {
@@ -203,8 +194,6 @@ struct ProyekDetailViewModelTests {
 
         #expect(!didChange)
     }
-
-    // MARK: Finishing
 
     @Test("Finishing without a scan still resets the bak and saves")
     func finishWithoutScanResetsBak() {

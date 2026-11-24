@@ -1,8 +1,3 @@
-//
-//  ProyekRowView.swift
-//  Serona
-//
-
 import SwiftUI
 
 struct ProyekRowView: View {
@@ -44,7 +39,6 @@ struct ProyekRowView: View {
 }
 
 extension Proyek {
-    /// A project for previews. It is not inserted into any context.
     static var previewSample: Proyek {
         Proyek(
             nama: "Seragam RT 5",

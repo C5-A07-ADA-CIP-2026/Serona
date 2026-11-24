@@ -1,8 +1,3 @@
-//
-//  ProyekMeasurementModel.swift
-//  Serona
-//
-
 import Foundation
 
 struct ProyekMeasurement: Identifiable, Equatable {
@@ -79,7 +74,6 @@ struct ProyekColorMeasurements: Equatable {
         self.current = current
     }
 
-    /// Locale-independent, drops trailing zeros: 7 -> "7", 7.5 -> "7.5".
     static func format(_ value: Double) -> String {
         String(format: "%g", value)
     }
@@ -132,7 +126,6 @@ struct ProyekColorMeasurements: Equatable {
         return replacingCurrent(updatedCurrent)
     }
 
-    /// Clears the current concentration (the baseline it was measured against is gone).
     func withoutCurrentConcentration() -> ProyekColorMeasurements {
         var updatedCurrent = current
         guard let index = updatedCurrent.firstIndex(where: { $0.id == "current-color-concentration" }) else {
@@ -148,12 +141,10 @@ struct ProyekColorMeasurements: Equatable {
         return replacingCurrent(updatedCurrent)
     }
 
-    /// Shows `waterPH` as the initial pH, or the unknown value when it is nil.
     func withInitialWaterPH(_ waterPH: Double?) -> ProyekColorMeasurements {
         replacingInitial(id: "initial-water-ph", value: waterPH.map(Self.format) ?? Self.unknownValue)
     }
 
-    /// Shows the initial concentration (always 100%) once the user has set it, the unknown value before.
     func withInitialConcentration(isSet: Bool) -> ProyekColorMeasurements {
         replacingInitial(id: "initial-color-concentration", value: isSet ? "100%" : Self.unknownValue)
     }

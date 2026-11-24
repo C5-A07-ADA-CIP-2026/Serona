@@ -1,8 +1,3 @@
-//
-//  ProyekEntityTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import SwiftData

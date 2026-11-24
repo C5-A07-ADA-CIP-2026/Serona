@@ -1,14 +1,7 @@
-//
-//  ProyekDetailCleanWaterTests.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import Testing
 
-/// The clean-water reading is fixed to `ProyekDetailViewModel.defaultCleanWaterRatios`, so the concentration is
-/// always absorbance against the baseline and the user never sets or resets it.
 @MainActor
 struct ProyekDetailCleanWaterTests {
     private let cleanRatios = ProyekDetailViewModel.defaultCleanWaterRatios
@@ -29,7 +22,6 @@ struct ProyekDetailCleanWaterTests {
         )
     }
 
-    /// Absorbance of a reading as a percentage of the baseline's, both against the fixed clean water.
     private func expectedConcentration(baseline: Double, current: Double) -> Double {
         let baselineRatios = [Double](repeating: baseline, count: 8)
         let currentRatios = [Double](repeating: current, count: 8)
@@ -106,7 +98,7 @@ struct ProyekDetailCleanWaterTests {
         #expect(expected < 100)
         let tambahan = viewModel.penambahanPewarna
         #expect(tambahan?.first?.kode == "Merah")
-        // C_target = 10 g of dye over 1 L; the bath is at the project's starting volume of 1 L.
+
         #expect(abs((tambahan?.first?.gram ?? 0) - 10 * (1 - expected / 100)) < 1e-6)
     }
 

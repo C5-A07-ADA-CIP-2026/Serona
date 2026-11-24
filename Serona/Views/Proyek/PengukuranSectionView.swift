@@ -1,17 +1,9 @@
-//
-//  PengukuranSectionView.swift
-//  Serona
-//
-
 import SwiftData
 import SwiftUI
 
-/// The live readings of a scanned project. The initial color and pH are set from the "awal" rows,
-/// right below the "sekarang" row they take their value from. The clean water row comes first: with the probe in
-/// clean water it is the reference the color concentration is measured against.
 struct PengukuranSectionView: View {
     @ObservedObject var viewModel: ProyekDetailViewModel
-    /// Opens the repair guide for what is below its limit; the banner calls it.
+
     var onPerbaiki: (QualityIssue) -> Void = { _ in }
     @Environment(\.modelContext) private var modelContext
     @State private var successFeedbackTrigger = 0

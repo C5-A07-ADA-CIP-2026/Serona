@@ -1,8 +1,3 @@
-//
-//  RecordingModelPersistence.swift
-//  SeronaTests
-//
-
 import Foundation
 @testable import Serona
 import SwiftData
@@ -13,7 +8,6 @@ struct StubSaveError: LocalizedError {
     }
 }
 
-/// A `ModelPersisting` test double that records every call and can fail on `save()`.
 final class RecordingModelPersistence: ModelPersisting {
     enum Event: Equatable {
         case insert
@@ -44,8 +38,6 @@ final class RecordingModelPersistence: ModelPersisting {
     }
 }
 
-/// Identity comparison for models. Written out here because `(model as AnyObject) === other` inside `#expect`
-/// crashes the Swift 6.4 compiler.
 func isSameModel(_ recorded: any PersistentModel, _ expected: any PersistentModel) -> Bool {
     ObjectIdentifier(recorded as AnyObject) == ObjectIdentifier(expected as AnyObject)
 }

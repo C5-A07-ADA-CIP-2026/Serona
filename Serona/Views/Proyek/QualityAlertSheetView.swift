@@ -1,11 +1,5 @@
-//
-//  QualityAlertSheetView.swift
-//  Serona
-//
-
 import SwiftUI
 
-/// "Perhatian": tells the user which reading fell below its limit and what to do.
 struct QualityAlertSheetView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -93,7 +87,6 @@ struct QualityAlertSheetView: View {
     }
 }
 
-/// The red banner under the readings while the solution is below a limit. Tapping it opens the repair guide.
 struct LarutanMenurunBanner: View {
     var onTap: (() -> Void)?
 
