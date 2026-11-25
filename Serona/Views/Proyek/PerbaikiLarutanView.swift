@@ -6,7 +6,7 @@ struct PerbaikiLarutanView: View {
     @State var guide: PerbaikiLarutanViewModel
     @ObservedObject var viewModel: ProyekDetailViewModel
 
-    var onClose: (() -> Void)? = nil
+    var onClose: (() -> Void)?
 
     @ScaledMetric(relativeTo: .body) var closeButtonSize: CGFloat = 40
     @ScaledMetric(relativeTo: .body) var numericFieldWidth: CGFloat = 68
