@@ -127,8 +127,10 @@ details { background: var(--card); border-radius: 20px; padding: 0 22px; margin-
 summary { cursor: pointer; padding: 18px 0; font-weight: 600; font-size: 1.05rem; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
 summary::-webkit-details-marker { display: none; }
 summary::after { content: "+"; font-size: 1.4rem; line-height: 1; color: var(--olive-dark); }
+details[open] { padding-bottom: 22px; }
 details[open] summary::after { content: "–"; }
 details p, details ol, details ul { margin: 0 0 18px; color: var(--muted); }
+details > :last-child { margin-bottom: 0; }
 details ol, details ul { padding-left: 22px; }
 
 .req { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
