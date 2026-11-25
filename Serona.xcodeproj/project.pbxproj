@@ -6,6 +6,10 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		3638AC3530B6D3320047FFD4 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 3638AC3430B6D3320047FFD4 /* Localizable.xcstrings */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		2BAE39DE3088417B00150250 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -19,6 +23,7 @@
 /* Begin PBXFileReference section */
 		2BAE39CE3088417A00150250 /* Serona.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Serona.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2BAE39DD3088417B00150250 /* SeronaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SeronaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		3638AC3430B6D3320047FFD4 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -51,6 +56,7 @@
 		2BAE39C53088417A00150250 = {
 			isa = PBXGroup;
 			children = (
+				3638AC3430B6D3320047FFD4 /* Localizable.xcstrings */,
 				2BAE39D03088417A00150250 /* Serona */,
 				2BAE39E03088417B00150250 /* SeronaTests */,
 				2BAE39CF3088417A00150250 /* Products */,
@@ -133,6 +139,7 @@
 			knownRegions = (
 				en,
 				Base,
+				id,
 			);
 			mainGroup = 2BAE39C53088417A00150250;
 			minimizedProjectReferenceProxies = 1;
@@ -151,6 +158,7 @@
 		2BAE39CC3088417A00150250 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
+				3638AC3530B6D3320047FFD4 /* Localizable.xcstrings in Resources */,
 			);
 		};
 		2BAE39DB3088417B00150250 /* Resources */ = {
@@ -243,6 +251,7 @@
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -301,6 +310,7 @@
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
