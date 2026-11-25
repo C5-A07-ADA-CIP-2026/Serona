@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-#Preview("Tahap 1: Volume Air (0 L - Medium)", traits: .landscapeLeft) {
+#Preview("Tahap 1: Volume Air (0 L)", traits: .landscapeLeft) {
     PerbaikiLarutanStepPreview(
         previewID: "step1-0L",
         step: .air,
@@ -11,55 +11,53 @@ import SwiftUI
     )
 }
 
-#Preview("Tahap 1: Volume Air (2 L - Medium)", traits: .landscapeLeft) {
+#Preview("Tahap 1: Volume Air (1 L)", traits: .landscapeLeft) {
     PerbaikiLarutanStepPreview(
-        previewID: "step1-2L",
+        previewID: "step1-1L",
         step: .air,
-        jumlahAir: 2,
+        jumlahAir: 1,
         visibleAverage: 72,
         waterPH: 8
     )
 }
 
-#Preview("Tahap 2: pH Air (pH 8 - Medium)", traits: .landscapeLeft) {
+#Preview("Tahap 2: pH Air (pH 8)", traits: .landscapeLeft) {
     PerbaikiLarutanStepPreview(
         previewID: "step2-ph8",
         step: .phAir,
-        jumlahAir: 2,
+        jumlahAir: 1,
         visibleAverage: 72,
         waterPH: 8
     )
 }
 
-#Preview("Tahap 2: pH Air (Target 12 - Large)", traits: .landscapeLeft) {
+#Preview("Tahap 2: pH Air (Target 12)", traits: .landscapeLeft) {
     PerbaikiLarutanStepPreview(
         previewID: "step2-ph12",
         step: .phAir,
-        jumlahAir: 2,
-        visibleAverage: 72,
-        waterPH: 12,
-        detent: .large
-    )
-}
-
-#Preview("Tahap 3: Kepekatan (72% - Medium)", traits: .landscapeLeft) {
-    PerbaikiLarutanStepPreview(
-        previewID: "step3-72",
-        step: .kepekatan,
-        jumlahAir: 2,
+        jumlahAir: 1,
         visibleAverage: 72,
         waterPH: 12
     )
 }
 
-#Preview("Tahap 3: Kepekatan (Target 100% - Large)", traits: .landscapeLeft) {
+#Preview("Tahap 3: Kepekatan (72%)", traits: .landscapeLeft) {
+    PerbaikiLarutanStepPreview(
+        previewID: "step3-72",
+        step: .kepekatan,
+        jumlahAir: 1,
+        visibleAverage: 72,
+        waterPH: 12
+    )
+}
+
+#Preview("Tahap 3: Kepekatan (Target 100%)", traits: .landscapeLeft) {
     PerbaikiLarutanStepPreview(
         previewID: "step3-100",
         step: .kepekatan,
-        jumlahAir: 2,
+        jumlahAir: 1,
         visibleAverage: 100,
-        waterPH: 12,
-        detent: .large
+        waterPH: 12
     )
 }
 
@@ -67,7 +65,6 @@ private struct PerbaikiLarutanStepPreview: View {
     let previewID: String
     let step: PerbaikiStep
     let jumlahAir: Int
-    @State private var selectedDetent: PresentationDetent
     @StateObject private var previewViewModel: ProyekDetailViewModel
 
     init(
@@ -75,13 +72,11 @@ private struct PerbaikiLarutanStepPreview: View {
         step: PerbaikiStep,
         jumlahAir: Int,
         visibleAverage: Double,
-        waterPH: Double,
-        detent: PresentationDetent = .medium
+        waterPH: Double
     ) {
         self.previewID = previewID
         self.step = step
         self.jumlahAir = jumlahAir
-        _selectedDetent = State(initialValue: detent)
         _previewViewModel = StateObject(wrappedValue: ProyekDetailViewModel(
             proyek: .previewRepairSample,
             service: PreviewRepairMeasurementSource(
@@ -96,20 +91,23 @@ private struct PerbaikiLarutanStepPreview: View {
     }
 
     var body: some View {
-        BackgroundGradient()
-            .sheet(isPresented: .constant(true)) {
-                PerbaikiLarutanView(
-                    issue: .keduanya,
-                    viewModel: previewViewModel,
-                    initialStep: step,
-                    initialJumlahAir: jumlahAir
-                )
-                .presentationDetents([.medium, .large], selection: $selectedDetent)
-                .task(id: previewID) {
-                    await previewViewModel.mulaiPindai()
-                }
+        ZStack {
+            BackgroundGradient()
+
+            Color.black.opacity(0.28)
+                .ignoresSafeArea()
+
+            PerbaikiLarutanView(
+                issue: .keduanya,
+                viewModel: previewViewModel,
+                initialStep: step,
+                initialJumlahAir: jumlahAir
+            )
+            .task(id: previewID) {
+                await previewViewModel.mulaiPindai()
             }
-            .id(previewID)
+        }
+        .id(previewID)
     }
 }
 

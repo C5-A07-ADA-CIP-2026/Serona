@@ -6,19 +6,24 @@ struct PerbaikiLarutanView: View {
     @State var guide: PerbaikiLarutanViewModel
     @ObservedObject var viewModel: ProyekDetailViewModel
 
-    @ScaledMetric(relativeTo: .body) var closeButtonSize: CGFloat = 38
+    var onClose: (() -> Void)? = nil
+
+    @ScaledMetric(relativeTo: .body) var closeButtonSize: CGFloat = 40
     @ScaledMetric(relativeTo: .body) var numericFieldWidth: CGFloat = 68
 
     let alertRed = Color(hex: "#DE2428")
     let successGreen = Color(hex: "#28A745")
+    let pillBackground = Color(red: 0.95, green: 0.95, blue: 0.97)
 
     init(
         issue: QualityIssue,
         viewModel: ProyekDetailViewModel,
         initialStep: PerbaikiStep? = nil,
-        initialJumlahAir: Int? = nil
+        initialJumlahAir: Int? = nil,
+        onClose: (() -> Void)? = nil
     ) {
         self.viewModel = viewModel
+        self.onClose = onClose
         if initialStep != nil || initialJumlahAir != nil {
             _guide = State(wrappedValue: PerbaikiLarutanViewModel(
                 issue: issue,
@@ -50,32 +55,34 @@ struct PerbaikiLarutanView: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            ScrollView {
-                guideContent
-                    .frame(minHeight: proxy.size.height, alignment: .top)
+        guideContent
+            .frame(width: 520, height: 610)
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 32))
+            .shadow(color: Color.black.opacity(0.14), radius: 26, x: 0, y: 12)
+            .presentationBackground(.clear)
+            .interactiveDismissDisabled()
+            .onChange(of: viewModel.qualityAlert) { _, alert in
+                if let alert {
+                    guide.updateIssue(alert.issue)
+                }
             }
-            .scrollBounceBehavior(.basedOnSize)
-        }
-        .background(Color.white)
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-        .presentationContentInteraction(.scrolls)
-        .presentationBackground(Color.white)
-        .onChange(of: viewModel.qualityAlert) { _, alert in
-            if let alert {
-                guide.updateIssue(alert.issue)
+            .onChange(of: viewModel.latestWaterPH) { _, newPH in
+                guide.syncPHBeforeWater(newPH)
             }
-        }
-        .onChange(of: viewModel.latestWaterPH) { _, newPH in
-            guide.syncPHBeforeWater(newPH)
-        }
-        .onChange(of: guide.isFinished) { _, isFinished in
-            if isFinished {
-                viewModel.clearRepairGuide()
-                viewModel.clearQualityAlert()
-                dismiss()
+            .onChange(of: guide.isFinished) { _, isFinished in
+                if isFinished {
+                    viewModel.clearRepairGuide()
+                    viewModel.clearQualityAlert()
+                    closeModal()
+                }
             }
+    }
+
+    func closeModal() {
+        if let onClose {
+            onClose()
+        } else {
+            dismiss()
         }
     }
 }
@@ -83,27 +90,60 @@ struct PerbaikiLarutanView: View {
 extension PerbaikiLarutanView {
     var guideContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            ZStack(alignment: .trailing) {
+            HStack {
+                if guide.currentStep != .air {
+                    backButton
+                } else {
+                    Color.clear
+                        .frame(width: closeButtonSize, height: closeButtonSize)
+                }
+
+                Spacer()
+
                 Text("Perbaiki Larutan")
                     .font(.headline.bold())
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(.black)
                     .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.horizontal, closeButtonSize + 8)
+
+                Spacer()
 
                 closeButton
             }
 
             stepContent
 
-            Spacer(minLength: 20)
+            Spacer()
 
             nextButton
         }
         .padding(.horizontal, 28)
         .padding(.top, 24)
         .padding(.bottom, 28)
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    var backButton: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                let previousStep: PerbaikiStep = (guide.currentStep == .kepekatan) ? .phAir : .air
+                guide = PerbaikiLarutanViewModel(
+                    issue: viewModel.qualityAlert?.issue ?? .keduanya,
+                    proyek: viewModel.proyek,
+                    pHSebelum: viewModel.latestWaterPH,
+                    initialStep: previousStep,
+                    initialJumlahAir: guide.jumlahAir
+                )
+            }
+        } label: {
+            Image(systemName: "chevron.left")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.black)
+                .frame(width: closeButtonSize, height: closeButtonSize)
+                .background(Color.white, in: Circle())
+                .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Kembali")
     }
 
     var nextButton: some View {
@@ -113,10 +153,9 @@ extension PerbaikiLarutanView {
             }
         } label: {
             Text(guide.buttonTitle(for: guide.currentStep))
-                .font(.subheadline.bold())
+                .font(.headline.bold())
                 .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
+                .frame(width: 300, height: 52)
                 .background(
                     canProceed ? Color.oliveGreen : Color.gray.opacity(0.75),
                     in: Capsule()
@@ -124,15 +163,16 @@ extension PerbaikiLarutanView {
         }
         .buttonStyle(.plain)
         .disabled(!canProceed)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     var closeButton: some View {
         Button {
-            dismiss()
+            closeModal()
         } label: {
             Image(systemName: "xmark")
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(.black)
                 .frame(width: closeButtonSize, height: closeButtonSize)
                 .background(Color.white, in: Circle())
                 .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
