@@ -3,6 +3,7 @@ import SwiftUI
 struct PerbaikiLarutanView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.dynamicTypeSize) var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @State var guide: PerbaikiLarutanViewModel
     @ObservedObject var viewModel: ProyekDetailViewModel
 
@@ -55,11 +56,7 @@ struct PerbaikiLarutanView: View {
     }
 
     var body: some View {
-        guideContent
-            .frame(width: 520, height: 610)
-            .background(Color.white, in: RoundedRectangle(cornerRadius: 32))
-            .shadow(color: Color.black.opacity(0.14), radius: 26, x: 0, y: 12)
-            .presentationBackground(.clear)
+        modalContainer
             .interactiveDismissDisabled()
             .onChange(of: viewModel.qualityAlert) { _, alert in
                 if let alert {
@@ -76,6 +73,22 @@ struct PerbaikiLarutanView: View {
                     closeModal()
                 }
             }
+    }
+
+    @ViewBuilder
+    var modalContainer: some View {
+        if horizontalSizeClass == .compact {
+            guideContent
+                .background(Color.white)
+                .presentationDetents([.large])
+                .presentationBackground(Color.white)
+        } else {
+            guideContent
+                .frame(width: 520, height: 610)
+                .background(Color.white, in: RoundedRectangle(cornerRadius: 32))
+                .shadow(color: Color.black.opacity(0.14), radius: 26, x: 0, y: 12)
+                .presentationBackground(.clear)
+        }
     }
 
     func closeModal() {
