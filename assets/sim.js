@@ -1,4 +1,4 @@
-// Interactive Serona demo: a dye bath drifts as cloths are dipped, then the guided repair brings it back.
+// Interactive Serona demo: a dye bath weakens (even one dip can cross the limit), then the guided repair brings it back.
 // The numbers are illustrative; nothing here reads a real sensor.
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -35,11 +35,11 @@
     repairBody: $("simRepairBody"), next: $("simNext"), toast: $("simToast"), progress: $("simProgress")
   };
 
-  var state = { cloths: 0, phase: "monitor", dismissed: false, steps: [], step: 0, water: 0 };
+  var state = { drop: 0, phase: "monitor", dismissed: false, steps: [], step: 0, water: 0 };
   var toastTimer = null;
 
   function readings() {
-    var c = state.cloths / 600;
+    var c = state.drop / 100;
     return { k: 100 - 21 * c, ph: PH_START - 1.3 * c };
   }
 
@@ -79,9 +79,10 @@
     var low = issue(r);
     var bad = low.k || low.ph;
 
-    el.output.textContent = state.cloths + " kain";
+    el.output.textContent = state.drop ? "Turun " + state.drop + "%" : "Sesuai resep";
     el.tileK.querySelector("strong").textContent = Math.round(r.k) + "%";
     el.tileP.querySelector("strong").textContent = fmtPh(r.ph);
+    el.output.classList.toggle("low", bad);
     el.tileK.classList.toggle("low", low.k);
     el.tileP.classList.toggle("low", low.ph);
     el.bak.dataset.state = bad ? "bad" : "ok";
@@ -172,7 +173,7 @@
   }
 
   function finish() {
-    state.cloths = 0;
+    state.drop = 0;
     state.phase = "monitor";
     state.dismissed = false;
     el.slider.value = 0;
@@ -188,7 +189,7 @@
   function resetAll() {
     clearTimeout(toastTimer);
     el.toast.hidden = true;
-    state.cloths = 0;
+    state.drop = 0;
     state.phase = "monitor";
     state.dismissed = false;
     el.slider.value = 0;
@@ -197,7 +198,7 @@
   }
 
   el.slider.addEventListener("input", function () {
-    state.cloths = parseInt(el.slider.value, 10) || 0;
+    state.drop = parseInt(el.slider.value, 10) || 0;
     render();
   });
   el.reset.addEventListener("click", resetAll);
@@ -228,10 +229,10 @@
   document.querySelectorAll("[data-preset]").forEach(function (b) {
     b.addEventListener("click", function () {
       if (state.phase === "repair") return;
-      state.cloths = parseInt(b.getAttribute("data-preset"), 10);
+      state.drop = parseInt(b.getAttribute("data-preset"), 10);
       state.dismissed = false;
       state.phase = "monitor";
-      el.slider.value = state.cloths;
+      el.slider.value = state.drop;
       render();
     });
   });

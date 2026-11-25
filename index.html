@@ -10,7 +10,7 @@
   <meta property="og:image" content="assets/icon.png">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="assets/style.css?v=6">
+  <link rel="stylesheet" href="assets/style.css?v=8">
 </head>
 <body>
   <a class="skip" href="#konten">Lewati ke konten</a>
@@ -111,7 +111,7 @@
     <section id="simulasi">
       <span class="eyebrow">Simulasi</span>
       <h2>Coba sendiri, tanpa sensor.</h2>
-      <p class="section-lead">Geser jumlah kain yang dicelup dan lihat bak mulai menyimpang. Saat melewati batas, ikuti panduan perbaikannya.</p>
+      <p class="section-lead">Satu kali celup saja sudah bisa membuat larutan turun melewati batas. Geser slider untuk menurunkan kualitas larutan, lalu ikuti panduan perbaikannya.</p>
 
       <div class="sim-wrap">
         <div class="sim-panel">
@@ -121,15 +121,15 @@
           </div>
 
           <div class="card sim-controls">
-            <label for="simSlider"><strong>Kain yang sudah dicelup</strong></label>
+            <label for="simSlider"><strong>Penurunan kualitas larutan</strong></label>
             <div class="slider-row">
-              <input id="simSlider" type="range" min="0" max="600" step="10" value="0" aria-describedby="simHelp">
-              <output id="simOutput" for="simSlider">0 kain</output>
+              <input id="simSlider" type="range" min="0" max="100" step="1" value="0" aria-describedby="simHelp">
+              <output id="simOutput" for="simSlider">Sesuai resep</output>
             </div>
             <div class="presets" role="group" aria-label="Lompat ke kondisi bak">
               <button type="button" data-preset="0">Awal</button>
-              <button type="button" data-preset="150">Mulai bergeser</button>
-              <button type="button" data-preset="500">Lewat batas</button>
+              <button type="button" data-preset="25">Mulai bergeser</button>
+              <button type="button" data-preset="80">Lewat batas</button>
             </div>
             <p id="simHelp" class="muted">Batas resep: kepekatan 90%, pH 11,0. Angka di sini hanya ilustrasi, bukan pembacaan nyata.</p>
             <button type="button" class="btn ghost small" id="simReset">Ulangi dari awal</button>
@@ -281,6 +281,6 @@
   </footer>
 
   <script src="assets/turntable.js?v=5"></script>
-  <script src="assets/sim.js?v=5"></script>
+  <script src="assets/sim.js?v=7"></script>
 </body>
 </html>
