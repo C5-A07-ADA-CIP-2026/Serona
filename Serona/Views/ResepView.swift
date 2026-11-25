@@ -12,26 +12,55 @@ struct ResepWarnaContentView: View {
     let onSelectResep: (DummyResepItem) -> Void
 
     var body: some View {
-        ScrollView {
-            LazyVGrid(
-                columns: [
-                    GridItem(.flexible(), spacing: 24),
-                    GridItem(.flexible(), spacing: 24),
-                    GridItem(.flexible(), spacing: 24),
-                    GridItem(.flexible(), spacing: 24)
-                ],
-                spacing: 24
-            ) {
-                ForEach(reseps) { resep in
-                    ResepCardView(resep: resep)
-                        .onTapGesture {
-                            onSelectResep(resep)
-                        }
+        if reseps.isEmpty {
+            emptyStateView
+        } else {
+            ScrollView {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 24),
+                        GridItem(.flexible(), spacing: 24),
+                        GridItem(.flexible(), spacing: 24),
+                        GridItem(.flexible(), spacing: 24)
+                    ],
+                    spacing: 24
+                ) {
+                    ForEach(reseps) { resep in
+                        ResepCardView(resep: resep)
+                            .onTapGesture {
+                                onSelectResep(resep)
+                            }
+                    }
                 }
+                .padding(.horizontal, 28)
+                .padding(.bottom, 32)
             }
-            .padding(.horizontal, 28)
-            .padding(.bottom, 32)
         }
+    }
+
+    private var emptyStateView: some View {
+        VStack(spacing: 14) {
+            Spacer()
+
+            Image("IconResepWarna") 
+                .resizable()
+                .scaledToFit()
+                .frame(width: 112, height: 112)
+
+            VStack(spacing: 6) {
+                Text("Tidak Ada Resep Warna")
+                    .font(.title3.bold())
+                    .foregroundStyle(Color(red: 0.63, green: 0.57, blue: 0.51))
+
+                Text("Tekan tanda + untuk menambahkan resep")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color(red: 0.63, green: 0.57, blue: 0.51))
+            }
+
+            Spacer()
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

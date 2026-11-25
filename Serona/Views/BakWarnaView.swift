@@ -49,13 +49,14 @@ struct BakWarnaContentView: View {
         VStack(spacing: 14) {
             Spacer()
 
-            Image(systemName: "bucket.fill")
-                .font(.system(size: 108))
-                .foregroundStyle(Color(red: 0.69, green: 0.62, blue: 0.56))
+            Image("IconBakWarna") 
+                .resizable()
+                .scaledToFit()
+                .frame(width: 112, height: 112)
 
             VStack(spacing: 6) {
                 Text("Tidak Ada Bak Warna")
-                    .font(.title2.bold())
+                    .font(.title3.bold())
                     .foregroundStyle(Color(red: 0.63, green: 0.57, blue: 0.51))
 
                 Text("Tekan tanda + untuk menambahkan bak")
