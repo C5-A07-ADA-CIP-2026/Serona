@@ -14,24 +14,22 @@ extension PerbaikiLarutanView {
     }
 
     var tahap1VolumeAirView: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(
-                    "TAHAP 1 DARI 3"
-                )
-                .font(.caption)
-                .foregroundStyle(.black)
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("TAHAP 1 DARI 3")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text("Tahap 1: Penyesuaian Volume Air Larutan")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(.title3.bold())
+                    .foregroundStyle(.black)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Text("Tambahkan air ke dalam wadah untuk menyesuaikan volume dasar larutan.")
-                .font(.body)
-                .foregroundStyle(Color.black)
+                .font(.subheadline)
+                .foregroundStyle(.black.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
 
             let rowLayout = dynamicTypeSize.isAccessibilitySize
@@ -40,8 +38,8 @@ extension PerbaikiLarutanView {
 
             rowLayout {
                 Text("Jumlah Air")
-                    .font(.body)
-                    .foregroundStyle(.primary)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.black)
 
                 if !dynamicTypeSize.isAccessibilitySize {
                     Spacer(minLength: 8)
@@ -49,9 +47,9 @@ extension PerbaikiLarutanView {
 
                 HStack(spacing: 12) {
                     Text("\(guide.jumlahAir) Liter")
-                        .font(.body)
+                        .font(.subheadline.weight(.medium))
                         .monospacedDigit()
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(.black)
 
                     Stepper("Jumlah air", value: $guide.jumlahAir, in: 0 ... 999)
                         .labelsHidden()
@@ -63,131 +61,25 @@ extension PerbaikiLarutanView {
                 }
             }
             .padding(.horizontal, 18)
-            .padding(.vertical, 10)
+            .frame(minHeight: 54)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.systemGray6), in: .capsule)
+            .background(pillBackground, in: .capsule)
         }
     }
 
     var tahap2PHView: some View {
         let additions = guide.sodaAdditions(currentPH: viewModel.latestWaterPH)
 
-        return VStack(alignment: .leading, spacing: 16) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(
-                    "TAHAP 2 DARI 3"
-                )
-                .font(.caption)
-                .foregroundStyle(.black)
-                .fixedSize(horizontal: false, vertical: true)
+        return VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("TAHAP 2 DARI 3")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text("Tahap 2: Penyesuaian pH Air Larutan")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            VStack(alignment: .leading, spacing: 12) {
-                ForEach(additions, id: \.kode) { item in
-                    HStack(alignment: .center, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Tambahkan \(item.kode) sebanyak \(formatGram(item.gram))")
-                                .font(.headline)
-                                .foregroundStyle(.primary)
-                                .fixedSize(horizontal: false, vertical: true)
-
-                            Text("Larutkan dengan air panas secukupnya.")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-
-                        Spacer()
-
-                        Text(formatGram(item.gram))
-                            .font(.headline)
-                            .monospacedDigit()
-                            .foregroundStyle(.primary)
-                    }
-                }
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.systemGray6), in: .rect(cornerRadius: 24, style: .continuous))
-
-            HStack {
-                Text("Target level pH")
-                    .font(.body)
-                    .foregroundStyle(.primary)
-
-                Spacer()
-
-                Text("12")
-                    .font(.body.weight(.semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(.primary)
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.systemGray6), in: .capsule)
-
-            HStack {
-                Text("Level pH sekarang")
-                    .font(.body)
-                    .foregroundStyle(.primary)
-
-                Spacer()
-
-                HStack(spacing: 6) {
-                    Image(systemName: isPHReached ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                        .font(.subheadline)
-                    Text(formattedCurrentPH)
-                        .font(.body.weight(.semibold))
-                        .monospacedDigit()
-                }
-                .foregroundStyle(isPHReached ? Color.green : Color.red)
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                isPHReached ? Color.green.opacity(0.08) : Color.red.opacity(0.08),
-                in: .capsule
-            )
-            .overlay {
-                Capsule()
-                    .stroke(
-                        isPHReached ? Color.green.opacity(0.75) : Color.red.opacity(0.75),
-                        lineWidth: 1.2
-                    )
-            }
-
-            Text("Tunggu beberapa saat agar larutan air mencapai target kepekatan warna semula.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 4)
-        }
-    }
-
-    var tahap3KepekatanView: some View {
-        let additions = guide.pewarnaAdditions(currentConcentration: viewModel.latestConcentration)
-        let isReached = isConcentrationReached
-
-        return VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(
-                    "TAHAP 3 DARI 3"
-                )
-                .font(.caption)
-                .foregroundStyle(.black)
-                .fixedSize(horizontal: false, vertical: true)
-
-                Text("Tahap 3: Penyesuaian Kepekatan Warna Larutan")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(.title3.bold())
+                    .foregroundStyle(.black)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -196,51 +88,153 @@ extension PerbaikiLarutanView {
                     HStack(alignment: .center, spacing: 12) {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Tambahkan \(item.kode)")
-                                .font(.headline)
-                                .foregroundStyle(.primary)
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.black)
                                 .fixedSize(horizontal: false, vertical: true)
 
                             Text("Larutkan dengan air panas secukupnya.")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                                .foregroundStyle(.black.opacity(0.8))
                                 .fixedSize(horizontal: false, vertical: true)
                         }
 
                         Spacer()
 
                         Text(formatGram(item.gram))
-                            .font(.headline)
+                            .font(.subheadline.bold())
                             .monospacedDigit()
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(.black)
                     }
                 }
             }
-            .padding(.horizontal, 18)
+            .padding(.horizontal, 20)
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.systemGray6), in: .rect(cornerRadius: 24, style: .continuous))
+            .background(pillBackground, in: .rect(cornerRadius: 20, style: .continuous))
+
+            HStack {
+                Text("Target level pH")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.black)
+
+                Spacer()
+
+                Text("12")
+                    .font(.subheadline.bold())
+                    .monospacedDigit()
+                    .foregroundStyle(.black)
+            }
+            .padding(.horizontal, 20)
+            .frame(height: 50)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(pillBackground, in: .capsule)
+
+            HStack {
+                Text("Level pH sekarang")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.black)
+
+                Spacer()
+
+                HStack(spacing: 6) {
+                    Image(systemName: isPHReached ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                        .font(.subheadline)
+                    Text(formattedCurrentPH)
+                        .font(.subheadline.bold())
+                        .monospacedDigit()
+                }
+                .foregroundStyle(isPHReached ? successGreen : alertRed)
+            }
+            .padding(.horizontal, 20)
+            .frame(height: 50)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                isPHReached ? Color(red: 0.93, green: 0.98, blue: 0.93) : Color.white,
+                in: .capsule
+            )
+            .overlay {
+                Capsule()
+                    .stroke(
+                        isPHReached ? Color.clear : alertRed.opacity(0.65),
+                        lineWidth: 1.2
+                    )
+            }
+
+            Text("Tunggu beberapa saat agar larutan air mencapai target level pH semula.")
+                .font(.caption)
+                .foregroundStyle(.black.opacity(0.75))
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 2)
+        }
+    }
+
+    var tahap3KepekatanView: some View {
+        let additions = guide.pewarnaAdditions(currentConcentration: viewModel.latestConcentration)
+        let isReached = isConcentrationReached
+
+        return VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("TAHAP 3 DARI 3")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("Tahap 3: Penyesuaian Kepekatan Warna Larutan")
+                    .font(.title3.bold())
+                    .foregroundStyle(.black)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(additions, id: \.kode) { item in
+                    HStack(alignment: .center, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Tambahkan \(item.kode)")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.black)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            Text("Larutkan dengan air panas secukupnya.")
+                                .font(.caption)
+                                .foregroundStyle(.black.opacity(0.8))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        Spacer()
+
+                        Text(formatGram(item.gram))
+                            .font(.subheadline.bold())
+                            .monospacedDigit()
+                            .foregroundStyle(.black)
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(pillBackground, in: .rect(cornerRadius: 20, style: .continuous))
 
             HStack {
                 Text("Target kepekatan warna")
-                    .font(.body)
-                    .foregroundStyle(.primary)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.black)
 
                 Spacer()
 
                 Text("100%")
-                    .font(.body.weight(.semibold))
+                    .font(.subheadline.bold())
                     .monospacedDigit()
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(.black)
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 20)
+            .frame(height: 50)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.systemGray6), in: .capsule)
+            .background(pillBackground, in: .capsule)
 
             HStack {
                 Text("Kepekatan warna sekarang")
-                    .font(.body)
-                    .foregroundStyle(.primary)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.black)
 
                 Spacer()
 
@@ -248,31 +242,31 @@ extension PerbaikiLarutanView {
                     Image(systemName: isReached ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                         .font(.subheadline)
                     Text(formattedCurrentConcentration)
-                        .font(.body.weight(.semibold))
+                        .font(.subheadline.bold())
                         .monospacedDigit()
                 }
-                .foregroundStyle(isReached ? Color.green : Color.red)
+                .foregroundStyle(isReached ? successGreen : alertRed)
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 20)
+            .frame(height: 50)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                isReached ? Color.green.opacity(0.08) : Color.red.opacity(0.08),
+                isReached ? Color(red: 0.93, green: 0.98, blue: 0.93) : Color.white,
                 in: .capsule
             )
             .overlay {
                 Capsule()
                     .stroke(
-                        isReached ? Color.green.opacity(0.75) : Color.red.opacity(0.75),
+                        isReached ? Color.clear : alertRed.opacity(0.65),
                         lineWidth: 1.2
                     )
             }
 
             Text("Tunggu beberapa saat agar larutan air mencapai target kepekatan warna semula.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+                .font(.caption)
+                .foregroundStyle(.black.opacity(0.75))
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 4)
+                .padding(.top, 2)
         }
     }
 }
