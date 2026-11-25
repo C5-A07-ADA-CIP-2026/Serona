@@ -180,7 +180,9 @@ final class ProyekDetailViewModel: ObservableObject {
                     }
                     updateCurrentColorMeasurement(measurement)
                 }
-                if Task.isCancelled { break }
+                if Task.isCancelled {
+                    break
+                }
                 refreshConnectionState()
                 try? await Task.sleep(for: .seconds(2))
             }
