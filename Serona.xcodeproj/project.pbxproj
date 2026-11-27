@@ -310,9 +310,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 984P4SW3VJ;
+				DEVELOPMENT_TEAM = LY8Q5V9J34;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Serona Dummy";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Serona memerlukan Bluetooth untuk terhubung ke perangkat ESP32.";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "Serona memerlukan Bluetooth untuk terhubung ke perangkat ESP32.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -325,7 +326,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.hanaazizah.Serona;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hanaazizah.SeronaDummy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -337,7 +338,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -348,9 +349,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 984P4SW3VJ;
+				DEVELOPMENT_TEAM = LY8Q5V9J34;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Serona Dummy";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Serona memerlukan Bluetooth untuk terhubung ke perangkat ESP32.";
 				INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription = "Serona memerlukan Bluetooth untuk terhubung ke perangkat ESP32.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -363,7 +365,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.hanaazizah.Serona;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hanaazizah.SeronaDummy;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -375,7 +377,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};

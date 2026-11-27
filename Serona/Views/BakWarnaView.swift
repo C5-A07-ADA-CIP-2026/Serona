@@ -20,27 +20,29 @@ struct BakWarnaContentView: View {
         if baks.isEmpty {
             emptyStateView
         } else {
-            ScrollView {
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: 22),
-                        GridItem(.flexible(), spacing: 22),
-                        GridItem(.flexible(), spacing: 22)
-                    ],
-                    spacing: 22
-                ) {
-                    ForEach(baks) { bak in
-                        BakCardView(
-                            bak: bak,
-                            onMulaiPindai: { onMulaiPindai(bak) },
-                            onSelesai: { onSelesai(bak) },
-                            onPerbaikiLarutan: { onPerbaikiLarutan(bak) },
-                            onTriggerWarningAlert: { onTriggerWarningAlert(bak) }
-                        )
+            GeometryReader { proxy in
+                let isLandscape = proxy.size.width > proxy.size.height
+                let columnCount = isLandscape ? 3 : 2
+                let columns = Array(
+                    repeating: GridItem(.flexible(), spacing: 22),
+                    count: columnCount
+                )
+
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 22) {
+                        ForEach(baks) { bak in
+                            BakCardView(
+                                bak: bak,
+                                onMulaiPindai: { onMulaiPindai(bak) },
+                                onSelesai: { onSelesai(bak) },
+                                onPerbaikiLarutan: { onPerbaikiLarutan(bak) },
+                                onTriggerWarningAlert: { onTriggerWarningAlert(bak) }
+                            )
+                        }
                     }
+                    .padding(.horizontal, 28)
+                    .padding(.bottom, 32)
                 }
-                .padding(.horizontal, 28)
-                .padding(.bottom, 32)
             }
         }
     }
@@ -49,7 +51,7 @@ struct BakWarnaContentView: View {
         VStack(spacing: 14) {
             Spacer()
 
-            Image("IconBakWarna") 
+            Image("IconBakWarna")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 112, height: 112)

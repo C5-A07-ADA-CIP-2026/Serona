@@ -15,25 +15,26 @@ struct ResepWarnaContentView: View {
         if reseps.isEmpty {
             emptyStateView
         } else {
-            ScrollView {
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: 24),
-                        GridItem(.flexible(), spacing: 24),
-                        GridItem(.flexible(), spacing: 24),
-                        GridItem(.flexible(), spacing: 24)
-                    ],
-                    spacing: 24
-                ) {
-                    ForEach(reseps) { resep in
-                        ResepCardView(resep: resep)
-                            .onTapGesture {
-                                onSelectResep(resep)
-                            }
+            GeometryReader { proxy in
+                let isLandscape = proxy.size.width > proxy.size.height
+                let columnCount = isLandscape ? 4 : 2
+                let columns = Array(
+                    repeating: GridItem(.flexible(), spacing: 24),
+                    count: columnCount
+                )
+
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 24) {
+                        ForEach(reseps) { resep in
+                            ResepCardView(resep: resep)
+                                .onTapGesture {
+                                    onSelectResep(resep)
+                                }
+                        }
                     }
+                    .padding(.horizontal, 28)
+                    .padding(.bottom, 32)
                 }
-                .padding(.horizontal, 28)
-                .padding(.bottom, 32)
             }
         }
     }
@@ -42,7 +43,7 @@ struct ResepWarnaContentView: View {
         VStack(spacing: 14) {
             Spacer()
 
-            Image("IconResepWarna") 
+            Image("IconResepWarna")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 112, height: 112)
